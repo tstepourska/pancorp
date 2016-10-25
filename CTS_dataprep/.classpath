@@ -2,5 +2,39 @@
 <classpath>
 	<classpathentry kind="src" path="implementation/src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk_wl_12"/>
+	<classpathentry kind="lib" path="implementation/lib/commons-beanutils-1.8.0.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/commons-digester-2.0.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/commons-fileupload-1.3.1.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/commons-io-2.2.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/commons-lang3-3.2.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/commons-logging-1.1.3.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/commons-logging-api-1.1.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/commons-validator-1.3.1.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/freemarker-2.3.22.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/javassist-3.11.0.GA.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/log4j.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/ognl-3.0.17.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/rccr.ccr.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/rccr.cob2java.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/slf4j-api-1.7.12.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/slf4j-jcl-1.7.12.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/struts2-core-2.3.29.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/struts2-tiles-plugin-2.3.29.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/tiles-api-2.2.2.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/tiles-core-2.2.2.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/tiles-el-2.2.2.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/tiles-freemarker-2.2.2.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/tiles-jsp-2.2.2.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/tiles-ognl-2.2.2.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/tiles-servlet-2.2.2.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/tiles-template-2.2.2.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/xwork-core-2.3.29.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="C:/Oracle/Middleware/Oracle_Home/wlserver/server/lib/weblogic.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/jaxb-api.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/jaxb-core.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/jaxb-impl.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/jaxb-jxc.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/jaxb-xjc.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

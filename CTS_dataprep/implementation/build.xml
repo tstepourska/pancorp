@@ -1,0 +1,322 @@
+<?xml version="1.0"?>
+<project name="fxit-ctsagent" default="build" basedir=".">
+
+    <target name="init"
+            description="Sets the timestamp properties, creates the neccessary directories and sets the compile classpath">
+        <echo message="Using Java Version: ${java.version}"/>
+        <property file="${basedir}/build.properties"/>
+
+        <!-- When building a "production" version, change this property in the build.properties file -->
+        <property name="version" value="Non-Official"/>
+
+        <property name="lib" value="${basedir}/lib"/>
+        <property name="src" value="${basedir}/src"/>
+        <property name="test" value="${basedir}/test"/>
+        <property name="cfg" value="${basedir}/cfg"/>
+        <property name="web" value="${basedir}/web"/>
+        <property name="clf" value="${basedir}/clf"/>
+    	<!-- build directories and files -->
+        <property name="build" 		value="${basedir}/build"/>
+        <property name="classes" 	value="${build}/classes"/>
+    	<property name="dist" 		value="${build}/dist"/>
+    	<property name="ejb.build" 	value="${build}/ejb"/>
+        <property name="earfile" 	value="fxit.ctsagent.ear" />
+        <property name="jarfile" 	value="fxit.ctsagent.jar"/>
+        <property name="cfgjarfile" value="aaaa.fxit.ctsagent.cfg.jar"/>
+        <property name="warfile" 	value="fxit.ctsagent.war" />
+    	<property name="jarsdir" 	value="${build}/jars" />
+    	<!-- end of build directories and files-->
+        <property name="propsfile" value="fxit.ctsagent.xml"/>     
+        <property name="metainf" value="${src}/META-INF"/>
+        <property name="webinf" value="${src}/WEB-INF"/>    
+        <property name="debug" value="on"/>
+    	<!-- value depends on data owner/project: crs, cbc, etr, ftc -->
+    	<property name="data.owner" value="ftc" />
+    	<property name="schema.custom" value="${basedir}/schema/${data.owner}"/>
+    	
+        <property name="appsdir" value="${weblogic.domain.dir}/autodeploy" />
+        <property name="envdir" value="${weblogic.domain.dir}/env" />
+
+        <path id="compile-classpath">
+            <fileset dir="${lib}">
+                <include name="**/*.jar"/>
+            </fileset>
+        	
+            <fileset dir="${weblogic.lib.dir}">
+                <include name="weblogic.jar" />
+            </fileset>
+        </path>
+        
+    	<tstamp>
+    	    <format property="buildtime" pattern="yyyy-MM-dd HH:mm:ss"/>
+    	</tstamp>
+    	
+    	<!-- This definition is created to use the version of the XJC compiler from the JAXB RI jars in the implementation\lib folder. --> 
+ <!--       <taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask">
+            <classpath refid="compile-classpath" />
+        </taskdef>
+    	
+        <taskdef name="cob2java" classname="ca.gc.ccra.rccr.cob2java.Cob2JavaTask">
+            <classpath refid="compile-classpath" />
+        </taskdef>
+-->
+
+    	<delete includeEmptyDirs="true" verbose="true">
+    	  <fileset dir="${build}" excludes=".gitignore" includes="**/*" defaultexcludes="no"/>
+    	</delete>
+    	
+        <mkdir dir="${dist}"/>
+        <mkdir dir="${classes}"/>
+    	<mkdir dir="${ejb.build}"/>
+    	<mkdir dir="${jarsdir}"/>
+    </target>
+
+ <!--   <target name="gen" depends="init">
+        <cob2java 
+            destdir="${src}/ca/gc/cra/fxit/ctsagent/generated"
+            package="ca.gc.cra.fxit.ctsagent.generated">
+            <fileset dir="${src}/ca/gc/cra/fxit/ctsagent/generated">
+                <include name="*.cbl" />
+            </fileset>
+            <replaceItems>
+                <replaceItem from=":TAG:"  to="" />
+                <replaceItem from="XX"  to="" />
+            </replaceItems>
+        </cob2java>
+    </target>
+-->	
+ <!--   <target name="jaxbgen" depends="init" 
+		description="Generate Java source files from FATCA XML schema">
+-->        
+    	<!-- Use a customized copy of the schema to avoid failure to pass invalid country/currency codes as-is from the flat file to XML. -->
+    	<!-- This code invokes xjc from the JAXB RI jars in the implementation\lib folder. -->   
+ <!--   	<echo message="generating java classes from XML schema..."/>
+    	<xjc schema="${schema.custom}/main_schema" 
+        	destdir="${src}" 
+        	package="ca.gc.cra.fxit.ctsagent.generated.xml.${data.owner}">
+            <depends dir="${schema.custom}">
+                <include name="*.xsd"/>
+            </depends>
+            <produces dir="${src}/ca/gc/cra/fxit/ctsagent/generated/xml/${data.owner}">
+                <include name="*.java"/>
+            </produces>
+        </xjc>   
+-->
+    	<!-- This code invokes xjc from the JDK.  
+        <echo message="generating java classes from XML schema..."/>
+    	<exec executable="xjc">
+    		<arg line="-d ${src}/ -p ca.gc.cra.fxit.ctsagent.generated.xml.${data.owner} ${schema.custom}/${data.owner}/main_schema.xsd"/>
+    	</exec>
+    	-->
+  <!--  </target>-->
+
+    <target name="compile" depends="init"> <!--  depends="gen"-->
+        <javac destdir="${classes}"
+               debug="${debug}"
+               deprecation="true"
+               target="1.7"
+               source="1.7">
+            <src path="${src}" />
+            <classpath refid="compile-classpath"/>
+        	<!-- Force compile to pick up the JAXB version from the jars included in the classpath -->
+        	<!-- instead of the version of JAXB that is embedded in the Java JDK. -->
+        	<compilerarg value="-Djava.endorsed.dirs=${basedir}/lib"/>
+        </javac>
+    </target>
+
+    <target name="jar" depends="compile">
+        <mkdir dir="${ejb.build}"/>
+        <mkdir dir="${ejb.build}/META-INF" />
+    
+        <copy file="${metainf}/ejb-jar.xml" tofile="${ejb.build}/META-INF/ejb-jar.xml" />
+        <copy file="${metainf}/weblogic-ejb-jar.xml" tofile="${ejb.build}/META-INF/weblogic-ejb-jar.xml" />
+        
+        <copy todir="${ejb.build}">
+            <fileset dir="${classes}">
+                <include name="ca/gc/cra/fxit/ctsagent/batch/**/*.class"/>
+                <include name="ca/gc/cra/fxit/ctsagent/generated/**/*.class"/>
+            	<include name="ca/gc/cra/fxit/ctsagent/exception/**/*.class"/>
+            	<include name="ca/gc/cra/fxit/ctsagent/model/**/*.class"/>
+            	<include name="ca/gc/cra/fxit/ctsagent/steps/**/**/*.class"/>
+            	<include name="ca/gc/cra/fxit/ctsagent/util/**/*.class"/>
+            	<include name="ca/gc/cra/fxit/ctsagent/web/**/*.class"/>
+            </fileset>
+            <fileset dir="${src}">
+                <include name="ca/gc/cra/fxit/ctsagent/resources/**/*.properties"/>
+            </fileset>
+        </copy>
+
+        <jar destfile="${jarsdir}/${jarfile}" 
+             basedir="${ejb.build}" 
+             update="true" />
+    </target>
+
+    <target name="war" depends="jar">
+        <war update="true" destfile="${jarsdir}/${warfile}" webxml="${webinf}/web.xml">
+            <zipfileset prefix="pub" dir="${web}">
+                <include name="**/*.html" />
+                <include name="**/*.jsp" />
+                <include name="**/*.gif" />
+                <include name="**/*.jpg" />
+                <include name="**/*.png" />
+                <include name="**/*.ico" />
+                <include name="**/*.js" />
+                <include name="**/*.css" />
+                <include name="**/*.xml" />
+                <include name="**/*.svg" />
+                <include name="**/*.ico" />
+                <include name="**/*.eot" />
+                <include name="**/*.ttf" />
+                <include name="**/*.woff" />
+            </zipfileset>
+
+            <lib dir="${lib}">
+                <include name="commons-beanutils-1.8.0.jar"/>
+                <include name="commons-digester-2.0.jar"/>
+                <include name="commons-fileupload-1.3.1.jar"/>
+                <include name="commons-io-2.2.jar"/>
+                <include name="commons-lang3-3.2.jar"/>
+                <include name="commons-validator-1.3.1.jar"/>
+                <include name="freemarker-2.3.22.jar"/>
+                <include name="javassist-3.11.0.GA.jar"/>
+            	
+            	<include name="jaxb-api.jar"/>
+            	<include name="jaxb-core.jar"/>
+            	<include name="jaxb-impl.jar"/>
+            	<include name="jaxb-jxc.jar"/>
+            	<include name="jaxb-xjc.jar"/>
+            	
+                <include name="ognl-3.0.17.jar"/>
+                <include name="slf4j-api-1.7.12.jar"/>
+            	<include name="slf4j-jcl-1.7.12.jar"/>
+                <include name="struts2-core-2.3.29.jar"/>
+                <include name="struts2-tiles-plugin-2.3.29.jar"/>
+                <include name="tiles-api-2.2.2.jar"/>
+                <include name="tiles-core-2.2.2.jar"/>
+                <include name="tiles-el-2.2.2.jar"/>
+                <include name="tiles-freemarker-2.2.2.jar"/>
+                <include name="tiles-jsp-2.2.2.jar"/>
+                <include name="tiles-ognl-2.2.2.jar"/>
+                <include name="tiles-servlet-2.2.2.jar"/>
+                <include name="tiles-template-2.2.2.jar"/>
+                <include name="xwork-core-2.3.29.jar"/>   
+            </lib>                  
+            
+            <webinf dir="${webinf}">
+                <exclude name="web.xml"/>
+            </webinf>
+
+            <classes dir="${classes}">
+                <include name="ca/gc/cra/fxit/ctsagent/web/**/*.class"/>
+            </classes>
+            <classes dir="${src}">
+                <include name="ca/gc/cra/fxit/ctsagent/web/**/*.xml"/>
+                <include name="ca/gc/cra/fxit/ctsagent/web/**/*.properties"/>
+                <include name="template/**/*.ftl" /> 
+            </classes>
+            
+            <classes dir="${cfg}">
+                <include name="struts.xml"/>
+                <include name="tiles*.xml"/>
+                <include name="xwork-conversion.properties"/>
+            </classes>
+        </war>
+    </target>
+
+    <target name="cfgjar" depends="init">
+        <!--        
+        Bundle the configuration files in their own jar.  This jar will be
+        stored in the ear file's lib directory, so that we don't have 
+        to use a manifest in the ejb jar.  
+        
+        The ear classloader loads the /lib jar files alphabetically, so
+        we're calling this one "aaaa.fxit.ctsagent.cfg.jar" to 
+        ensure that it's first in the list.    
+        --> 
+        
+
+        <!-- apply platform-specific log location -->
+        <replace file="${cfg}/log4j.xml" token="@@log_directory@@" value="${log4j.dir}"/>
+        
+        <jar update="true" destfile="${jarsdir}/${cfgjarfile}" basedir="${cfg}">
+            <!-- include configuration files -->
+            <include name="log4j.xml" />
+            <manifest>
+                <attribute name="Built-By"                value="${user.name}"/>
+                <attribute name="Built-On"                value="${buildtime}" />
+                <attribute name="Implementation-Title"    value="fxit.ctsagent application"/>
+                <attribute name="Implementation-Version"  value="${version}"/>
+                <attribute name="Implementation-Vendor"   value="development centre"/>
+            </manifest>
+        </jar>
+        
+        <!-- put the file back the way it was so we don't accidentally commit the platform-specific value -->
+        <replace file="${cfg}/log4j.xml" value="@@log_directory@@" token="${log4j.dir}"/>
+        
+    </target>
+    
+
+    <target name="ear" depends="war,jar,cfgjar" description="Create the ear file">
+        <ear earfile="${dist}/${earfile}"
+             appxml="${metainf}/application.xml"
+             update="true" >
+            <manifest>
+                <attribute name="Built-By"                   value="${user.name}"/>
+                <attribute name="Built-On"                   value="${buildtime}" />
+                <section name="Versioning">
+                    <attribute name="Implementation-Title"   value="fxit.ctsagent application"/>
+                    <attribute name="Implementation-Version" value="${version}"/>
+                    <attribute name="Implementation-Vendor"  value="development centre"/>
+                </section>
+            </manifest>
+
+            <metainf dir="${metainf}">
+                <include name="weblogic-application.xml" />
+            </metainf>            
+            
+            <!-- include application jar/war files -->
+            <fileset dir="${jarsdir}">
+                <include name="${jarfile}" />
+                <include name="${warfile}" />
+            </fileset>
+            
+            <!-- include third-party libraries -->                        
+            <fileset dir="${basedir}">
+                <include name="lib/log4j.jar" />
+                <include name="lib/commons-logging*.jar" />
+                <include name="lib/rccr.ccr.jar" />
+            </fileset>
+
+            <!-- include cfg jar in ear /lib directory -->                      
+            <zipfileset dir="${jarsdir}" prefix="lib" >
+                <include name="${cfgjarfile}" />
+            </zipfileset>
+            
+        </ear>
+        
+        <!-- precompile jsps, generate ejb stubs, etc. --> 
+        <echo message="running weblogic.appc"/>
+        <java classname="weblogic.appc" fork="yes" dir="${build}" failonerror="yes" classpathref="compile-classpath">
+            <jvmarg line="-Xms128M -Xmx256M -Djava.io.tmpdir=c:/temp -XX:+UseParallelGC" />
+            <arg line=" -verbose -keepgenerated -iiop -basicclientjar ${dist}/${earfile} -target 1.7 -source 1.7"/>
+        </java>
+        
+    </target>
+
+    <target name="clean" depends="init">
+        <!--<delete dir="${build}" verbose="true" />-->
+    	<delete includeEmptyDirs="true" verbose="true">
+        	  <fileset dir="${build}" excludes=".gitignore" includes="**/*" defaultexcludes="no"/>
+        </delete>
+        <!--<delete dir="${dist}" verbose="true" />-->
+    </target>
+
+    <target name="deploy" depends="build">
+        <copy todir="${appsdir}" file="${dist}/${earfile}"/>
+        <copy todir="${envdir}" file="${cfg}/${propsfile}"/>
+    </target>
+
+    <target name="build" depends="ear">
+    </target>
+
+</project>

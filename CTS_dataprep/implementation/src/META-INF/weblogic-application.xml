@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<weblogic-application xmlns="http://www.bea.com/ns/weblogic/90" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    
+    <prefer-application-packages>
+        <package-name>org.apache.*</package-name>
+        <package-name>org.objectweb.*</package-name>
+        <package-name>com.opensymphony.*</package-name>
+        <package-name>freemarker.*</package-name>
+        <package-name>ognl.*</package-name>
+        <package-name>javassist.*</package-name>
+        <package-name>org.slf4j.*</package-name>
+    </prefer-application-packages>  
+    
+</weblogic-application>

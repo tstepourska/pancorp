@@ -1,0 +1,157 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<web-app xmlns="http://java.sun.com/xml/ns/j2ee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
+	version="2.4">
+
+    <display-name>xxxx web client</display-name>
+    <context-param>
+        <description>
+            Struts2 has changed the way that the plugin loads tiles configurations.
+            This context-param was added to insulate the application from future variability in this configuration assignment.
+        </description>
+        <param-name>
+          org.apache.tiles.definition.DefinitionsFactory.DEFINITIONS_CONFIG
+        </param-name>
+        <param-value>
+          /WEB-INF/classes/tiles.xml,/WEB-INF/classes/tiles_fr.xml
+        </param-value>
+    </context-param>
+    <listener>
+        <listener-class>
+            ca.gc.cra.fxit.ctsagent.web.listeners.WebAppMonitor
+        </listener-class>
+    </listener>
+
+    <listener>
+        <listener-class>
+            org.apache.struts2.tiles.StrutsTilesListener
+        </listener-class>
+    </listener>
+
+    <!-- Bookmark Checker Filter -->
+    <filter>
+        <description>
+            Prevents access to a URL via a bookmark 
+            or by the user keying directly into the 
+            browser's URL location bar.
+        </description>
+        <filter-name>BookmarkChecker</filter-name>
+        <filter-class>
+            ca.gc.ccra.rccr.web.filter.BookmarkChecker
+        </filter-class>
+        <init-param>
+            <param-name>bookmarkCheckFailureUrlLookupKey</param-name>
+            <param-value>
+                ca.gc.cra.fxit.ctsagent.env.web.bookmarkErrorPage 
+            </param-value>
+        </init-param>
+        <init-param>
+            <param-name>bypassUrlsLookupKey</param-name>
+            <param-value>
+                ca.gc.cra.fxit.ctsagent.env.web.bookmarkCheckBypassList
+            </param-value>
+        </init-param>        
+    </filter>
+
+
+    <!-- SessionChecker Filter -->
+    <filter>
+        <description>
+            Checks whether the http session is active
+        </description>
+        <filter-name>SessionChecker</filter-name>
+        <filter-class>
+            ca.gc.ccra.rccr.web.filter.SessionChecker
+        </filter-class>
+        <init-param>
+            <param-name>
+                sessionExpiredUrlLookupKey
+            </param-name>
+            <param-value>
+                ca.gc.cra.fxit.ctsagent.env.web.sessionErrorPage
+            </param-value>
+        </init-param>
+        <init-param>
+            <param-name>bypassUrlsLookupKey</param-name>
+            <param-value>
+                ca.gc.cra.fxit.ctsagent.env.web.sessionCheckBypassList
+            </param-value>
+        </init-param>
+    </filter>
+
+
+ 
+    <filter>
+        <filter-name>struts2</filter-name>
+        <filter-class>org.apache.struts2.dispatcher.ng.filter.StrutsPrepareAndExecuteFilter</filter-class>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>BookmarkChecker</filter-name>
+        <url-pattern>/prot/*</url-pattern>
+        <dispatcher>REQUEST</dispatcher>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>SessionChecker</filter-name>
+        <url-pattern>/prot/*</url-pattern>
+        <dispatcher>REQUEST</dispatcher>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>struts2</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <session-config>
+        <session-timeout>30</session-timeout>
+    </session-config>
+
+    <mime-mapping>
+        <extension>css</extension>
+        <mime-type>text/css;charset=utf-8</mime-type>
+    </mime-mapping>
+    
+    <mime-mapping>
+       	<extension>js</extension>
+       	<mime-type>application/x-javascript;charset=utf-8</mime-type>
+   	</mime-mapping>
+   	
+   	<mime-mapping>
+       	<extension>html</extension>
+       	<mime-type>text/html;charset=utf-8</mime-type>
+   	</mime-mapping>
+
+    <mime-mapping>
+        <extension>svg</extension>
+        <mime-type>image/svg+xml</mime-type>
+    </mime-mapping>
+
+    <mime-mapping>
+        <extension>svgz</extension>
+        <mime-type>image/svg+xml</mime-type>
+    </mime-mapping>
+    
+    <welcome-file-list>
+        <welcome-file>/pub/index.jsp</welcome-file>
+    </welcome-file-list>
+
+    <error-page>
+        <error-code>403</error-code>
+        <location>/pub/403.jsp</location>
+    </error-page>
+    <error-page>
+        <error-code>404</error-code>
+        <location>/pub/404.jsp</location>
+    </error-page>
+    <error-page>
+        <error-code>500</error-code>
+        <location>/pub/500.jsp</location>
+    </error-page>
+    <error-page>
+        <error-code>503</error-code>
+        <location>/pub/503.jsp</location>
+    </error-page>
+
+</web-app>
