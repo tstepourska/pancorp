@@ -16,8 +16,6 @@
 	<classpathentry kind="lib" path="implementation/lib/ognl-3.0.17.jar"/>
 	<classpathentry kind="lib" path="implementation/lib/rccr.ccr.jar"/>
 	<classpathentry kind="lib" path="implementation/lib/rccr.cob2java.jar"/>
-	<classpathentry kind="lib" path="implementation/lib/slf4j-api-1.7.12.jar"/>
-	<classpathentry kind="lib" path="implementation/lib/slf4j-jcl-1.7.12.jar"/>
 	<classpathentry kind="lib" path="implementation/lib/struts2-core-2.3.29.jar"/>
 	<classpathentry kind="lib" path="implementation/lib/struts2-tiles-plugin-2.3.29.jar"/>
 	<classpathentry kind="lib" path="implementation/lib/tiles-api-2.2.2.jar"/>
@@ -31,10 +29,8 @@
 	<classpathentry kind="lib" path="implementation/lib/xwork-core-2.3.29.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="C:/Oracle/Middleware/Oracle_Home/wlserver/server/lib/weblogic.jar"/>
-	<classpathentry kind="lib" path="implementation/lib/jaxb-api.jar"/>
-	<classpathentry kind="lib" path="implementation/lib/jaxb-core.jar"/>
-	<classpathentry kind="lib" path="implementation/lib/jaxb-impl.jar"/>
-	<classpathentry kind="lib" path="implementation/lib/jaxb-jxc.jar"/>
-	<classpathentry kind="lib" path="implementation/lib/jaxb-xjc.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/xml-security-impl-1.0.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/slf4j-api-1.7.12.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/slf4j-jcl-1.7.12.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

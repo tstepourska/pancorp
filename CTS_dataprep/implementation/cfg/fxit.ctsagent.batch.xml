@@ -11,7 +11,6 @@
 	    
 	    <!-- Specify maximum XML file size in bytes. Applicable only when MaxXmlFileSizeIsEnabled is set to true. -->
 	    <MaxXmlFileSize>524288000</MaxXmlFileSize>
-	    <JobConfig>C:/dev/projects/TestProject/implementation/cfg/jobs.properties</JobConfig>
     </ctsagent>
     
 </batch-config>

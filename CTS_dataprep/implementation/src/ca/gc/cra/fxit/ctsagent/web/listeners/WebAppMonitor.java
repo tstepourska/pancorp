@@ -23,6 +23,7 @@ public class WebAppMonitor implements ServletContextListener {
     * Also transfers frequently-used jndi values to application 
     * scope for convenient access. 
     */
+	@Override
     public void contextInitialized( ServletContextEvent ce ) {
     	log.info("contextInitialized()");
 
@@ -30,19 +31,19 @@ public class WebAppMonitor implements ServletContextListener {
         try {
             context = new InitialContext();
             
-            String logLevel = (String)context.lookup("ca.gc.cra.xxxx.struts2base.env.log_level");
+            String logLevel = (String)context.lookup("ca.gc.cra.fxit.ctsagent.env.log_level");
             
             if( logLevel == null ) {
             	log.warn("log_level property not found.  defaulting to INFO.");
                 logLevel = "INFO";
             } else {
-                LogFilter.setLogLevel("ca.gc.cra.xxxx.struts2base", logLevel);
+                LogFilter.setLogLevel("ca.gc.cra.fxit.ctsagent", logLevel);
                 log.info("logLevel set to " + logLevel);
             }
             
             // store the sessionErrorPage value at application scope so that
             // it can be conveniently accessed by the sessionTimeout.jsp. 
-            String sessionErrorPage = (String)context.lookup("ca.gc.cra.xxxx.struts2base.env.web.sessionErrorPage");
+            String sessionErrorPage = (String)context.lookup("ca.gc.cra.fxit.ctsagent.env.web.sessionErrorPage");
 	    	log.info("sessionErrorPage:  " + sessionErrorPage);
 	    	ce.getServletContext().setAttribute("sessionErrorPage", sessionErrorPage);
 	    	
@@ -65,6 +66,7 @@ public class WebAppMonitor implements ServletContextListener {
     /**
      * global web app cleanup. 
      */
+	@Override
     public void contextDestroyed(ServletContextEvent ce) {
     	log.info("contextDestroyed()");
     }

@@ -8,11 +8,12 @@ public class SessionMonitor implements HttpSessionListener {
 
 	Log log = LogFactory.getLog(getClass());
 	
+	@Override
     public void sessionCreated(HttpSessionEvent se) { 
     	log.debug("sessionCreated()");
     }
 
-
+    @Override
     public void sessionDestroyed(HttpSessionEvent se) { 
         log.debug("sessionDestroyed()");
         if( log.isDebugEnabled() ) {

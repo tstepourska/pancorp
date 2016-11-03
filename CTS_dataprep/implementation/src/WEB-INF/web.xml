@@ -4,7 +4,8 @@
 	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
 	version="2.4">
 
-    <display-name>xxxx web client</display-name>
+    <display-name>CTS Agent Web</display-name>
+    
     <context-param>
         <description>
             Struts2 has changed the way that the plugin loads tiles configurations.
@@ -14,9 +15,10 @@
           org.apache.tiles.definition.DefinitionsFactory.DEFINITIONS_CONFIG
         </param-name>
         <param-value>
-          /WEB-INF/classes/tiles.xml,/WEB-INF/classes/tiles_fr.xml
+          /WEB-INF/tiles.xml,/WEB-INF/tiles_fr.xml
         </param-value>
     </context-param>
+    
     <listener>
         <listener-class>
             ca.gc.cra.fxit.ctsagent.web.listeners.WebAppMonitor
@@ -80,8 +82,6 @@
         </init-param>
     </filter>
 
-
- 
     <filter>
         <filter-name>struts2</filter-name>
         <filter-class>org.apache.struts2.dispatcher.ng.filter.StrutsPrepareAndExecuteFilter</filter-class>
@@ -139,19 +139,19 @@
 
     <error-page>
         <error-code>403</error-code>
-        <location>/pub/403.jsp</location>
+        <location>/pub/errors/403.jsp</location>
     </error-page>
     <error-page>
         <error-code>404</error-code>
-        <location>/pub/404.jsp</location>
+        <location>/pub/errors/404.jsp</location>
     </error-page>
     <error-page>
         <error-code>500</error-code>
-        <location>/pub/500.jsp</location>
+        <location>/pub/errors/500.jsp</location>
     </error-page>
     <error-page>
         <error-code>503</error-code>
-        <location>/pub/503.jsp</location>
+        <location>/pub/errors/503.jsp</location>
     </error-page>
 
 </web-app>

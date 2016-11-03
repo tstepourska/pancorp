@@ -4,14 +4,16 @@
     "http://struts.apache.org/dtds/struts-2.0.dtd">
 
 <struts>
-
     <constant name="struts.enable.DynamicMethodInvocation" value="false" />
     <constant name="struts.mapper.action.prefix.enabled" value="true" />
     
-    <constant name="struts.devMode" value="false" />
-    <constant name="struts.custom.i18n.resources" value="ca.gc.cra.xxxx.struts2base.resources.strings" />
-    <constant name="struts.i18n.encoding" value="UTF-8" />
+    <constant name="struts.devMode" value="true" />
+    <constant name="struts.custom.i18n.resources" value="ca.gc.cra.fxit.ctsagent.resources.strings" />
+    <constant name="struts.i18n.encoding" value="UTF-8" />   
     
+ <!--   <constant name="struts.convention.action.fileProtocols" value="jar,zip" />
+	<constant name="struts.convention.action.includeJars" value=".*_wl_cls_gen.*" />
+-->
 
     <package name="default" namespace="/" extends="struts-default">
         <result-types>
@@ -20,7 +22,7 @@
 
     	<interceptors>
             <interceptor name="noCacheSetter" 
-                class="ca.gc.cra.xxxx.struts2base.web.interceptors.NoCacheSetter" />    	
+                class="ca.gc.cra.fxit.ctsagent.web.interceptors.NoCacheSetter" />    	
     	
 			<interceptor-stack name="appDefaultStack">
 			
@@ -44,7 +46,7 @@
 
 
     <package name="pub" namespace="/pub" extends="default">        
-        <action name="rfrsh" class="ca.gc.cra.xxxx.struts2base.web.actions.RefreshSessionAction">
+        <action name="rfrsh" class="ca.gc.cra.fxit.ctsagent.web.actions.RefreshSessionAction">
             <result type="stream">
                 <param name="contentType">text/plain</param>
                 <param name="inputName">responseStream</param>
@@ -53,68 +55,61 @@
     </package>
         
     
-    <package name="prot" namespace="/prot" extends="default">        
-        <action name="ntr" class="ca.gc.cra.xxxx.struts2base.web.actions.EmployeeAction" method="prompt" >
+    <package name="prot" namespace="/prot" extends="default">      
+
+         <action name="ntr" class="ca.gc.cra.fxit.ctsagent.web.actions.PackageInfoAction" method="prompt" >
             <result name="success" type="tiles">.clf.ntr</result>
         </action>
-        
-        <action name="ntrSbmt" class="ca.gc.cra.xxxx.struts2base.web.actions.EmployeeAction" method="retrieve" >
+        <action name="ntrSbmt" class="ca.gc.cra.fxit.ctsagent.web.actions.PackageInfoAction" method="retrieve" >
             <result name="input" type="tiles">.clf.ntr</result>
             <result name="success" type="tiles">.clf.vw</result>
             <result name="error" type="tiles">.clf.ntr</result>
         </action>
-
-        <action name="dlt" class="ca.gc.cra.xxxx.struts2base.web.actions.EmployeeAction" method="retrieve" >
+        <action name="dlt" class="ca.gc.cra.fxit.ctsagent.web.actions.PackageInfoAction" method="retrieve" >
             <result name="success" type="tiles">.clf.dlt</result>
         </action>
-        
-        <action name="dltSbmt" class="ca.gc.cra.xxxx.struts2base.web.actions.EmployeeAction" method="delete" >
+        <action name="dltSbmt" class="ca.gc.cra.fxit.ctsagent.web.actions.PackageInfoAction" method="delete" >
             <result name="success" type="tiles">.clf.vw</result>
             <result name="list" type="chain">lst</result>
         </action>
-
-        <action name="mdfy" class="ca.gc.cra.xxxx.struts2base.web.actions.EmployeeAction" method="retrieve" >
+        <action name="mdfy" class="ca.gc.cra.fxit.ctsagent.web.actions.PackageInfoAction" method="retrieve" >
             <result name="success" type="tiles">.clf.mdfy</result>
         </action>
-        
-        <action name="crt" class="ca.gc.cra.xxxx.struts2base.web.actions.EmployeeAction" method="prompt" >
+        <action name="crt" class="ca.gc.cra.fxit.ctsagent.web.actions.PackageInfoAction" method="prompt" >
             <result name="success" type="tiles">.clf.crt</result>
         </action>
-        
-        <action name="crtSbmt" class="ca.gc.cra.xxxx.struts2base.web.actions.EmployeeAction" method="add" >
+        <action name="crtSbmt" class="ca.gc.cra.fxit.ctsagent.web.actions.PackageInfoAction" method="add" >
             <result name="success" type="chain">ntrSbmt</result>
             <result name="input" type="tiles">.clf.crt</result>
             <result name="list" type="chain">lst</result>
         </action>
-        
-        <action name="mdfySbmt" class="ca.gc.cra.xxxx.struts2base.web.actions.EmployeeAction" method="modify" >
+        <action name="mdfySbmt" class="ca.gc.cra.fxit.ctsagent.web.actions.PackageInfoAction" method="modify" >
             <result name="success" type="chain">ntrSbmt</result>
             <result name="input" type="tiles">.clf.mdfy</result>
             <result name="list" type="chain">lst</result>
         </action>
-
-        <action name="cncl" class="ca.gc.cra.xxxx.struts2base.web.actions.EmployeeAction" method="cancel" >
+        <action name="cncl" class="ca.gc.cra.fxit.ctsagent.web.actions.PackageInfoAction" method="cancel" >
             <result name="vw" type="tiles">.clf.vw</result>
             <result name="ntr" type="chain">.clf.ntr</result>
         </action>
  
-        <action name="lst" class="ca.gc.cra.xxxx.struts2base.web.actions.EmployeeListAction" method="retrieveAll" >
+        <action name="lst" class="ca.gc.cra.fxit.ctsagent.web.actions.PackageInfoListAction" method="retrieveAll" >
             <result name="success" type="tiles">.clf.lst</result>
         </action>
 
-        <action name="nxt" class="ca.gc.cra.xxxx.struts2base.web.actions.EmployeeListAction" method="next" >
+        <action name="nxt" class="ca.gc.cra.fxit.ctsagent.web.actions.PackageInfoListAction" method="next" >
             <result name="success" type="tiles">.clf.lst</result>
         </action>
 
-        <action name="prv" class="ca.gc.cra.xxxx.struts2base.web.actions.EmployeeListAction" method="previous" >
+        <action name="prv" class="ca.gc.cra.fxit.ctsagent.web.actions.PackageInfoListAction" method="previous" >
             <result name="success" type="tiles">.clf.lst</result>
         </action>
 
-        <action name="pg" class="ca.gc.cra.xxxx.struts2base.web.actions.EmployeeListAction" method="retrievePage" >
+        <action name="pg" class="ca.gc.cra.fxit.ctsagent.web.actions.PackageInfoListAction" method="retrievePage" >
             <result name="success" type="tiles">.clf.lst</result>
         </action>
 
-        <action name="lngg" class="ca.gc.cra.xxxx.struts2base.web.actions.LanguageAction" >
+        <action name="lngg" class="ca.gc.cra.fxit.ctsagent.web.actions.LanguageAction" >
             <result name="tiles" type="tiles">${#session.crrntPg}</result>
             <result name="chain" type="chain">${#session.crrntPg}</result>
             <result name="default" type="chain">ntr</result>

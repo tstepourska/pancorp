@@ -18,8 +18,8 @@ import ca.gc.cra.fxit.ctsagent.util.Utils;
  * 
  * @author Txs285
  */
-public class StepManager implements Serializable {
-	private static Logger log = Logger.getLogger(StepManager.class);
+public class JobManager implements Serializable {
+	private static Logger log = Logger.getLogger(JobManager.class);
 	private static final long serialVersionUID = -2920777761984522115L;
 
 	/**
@@ -30,7 +30,7 @@ public class StepManager implements Serializable {
 	 * @return int 
 	 */
 	public int invoke(PackageInfo pInfo, String filename){
-		log.debug("StepController invoked");
+		log.debug("JobManager invoked");
 		int status = Constants.STATUS_CODE_INCOMPLETE;
 		try {
 			//find appropriate job using package info
@@ -106,7 +106,7 @@ public class StepManager implements Serializable {
 		LinkedList<IStep> list = new LinkedList<>();
 
 		//add tasks to the job
-		ClassLoader classLoader = StepManager.class.getClassLoader();
+		ClassLoader classLoader = JobManager.class.getClassLoader();
 		for(String s : arr){
 			Class<?> myObjectClass = classLoader.loadClass(Constants.JAVA_PKG_STEP + s);
 			IStep task = (IStep) myObjectClass.newInstance();

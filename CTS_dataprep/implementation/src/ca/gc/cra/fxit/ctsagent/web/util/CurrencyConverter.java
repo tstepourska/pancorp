@@ -48,6 +48,8 @@ public class CurrencyConverter extends StrutsTypeConverter {
      * Converts a String to a BigDecimal, Integer or Long using a locale-specific 
      * DecimalFormat.
      */
+    @SuppressWarnings("rawtypes")
+	@Override
     public Object convertFromString(Map context, String[] values, Class toClass) {
         
         log.debug("convertFromString()");
@@ -158,6 +160,8 @@ public class CurrencyConverter extends StrutsTypeConverter {
     /**
      * Converts the specified object to a String.
      */
+    @SuppressWarnings("rawtypes")
+	@Override
     public String convertToString(Map context, Object o) {
         log.debug("convertToString(): " + o );
         if( o == null ) {

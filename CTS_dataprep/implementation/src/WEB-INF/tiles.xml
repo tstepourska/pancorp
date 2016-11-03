@@ -18,14 +18,14 @@
     The down side to the approach is that we'd be maintaining i18n
     text in two places:  here as well as in the resourcebundles.
     -->
-    <definition name=".clf" template="/pub/clfLayout.jsp">
+    <definition name=".clf" template="/pub/layout/clfLayout.jsp">
         <put-attribute name="crrntPg"          value=".clf" />
         <put-attribute name="titleKey"         value="title" />
         <put-attribute name="breadcrumbKey"    value="breadcrumb" />
-        <put-attribute name="header"           value="/pub/CraHeadMain-e.jsp" />
-        <put-attribute name="menu"             value="/pub/sidemenu.jsp" />
-        <put-attribute name="date"             value="/pub/dateModified-e.jsp" />
-        <put-attribute name="sessionTimeout"   value="/pub/sessionTimeout.jsp" />
+        <put-attribute name="header"           value="/pub/layout/CraHeadMain-e.jsp" />
+        <put-attribute name="menu"             value="/pub/layout/sidemenu.jsp" />
+        <put-attribute name="date"             value="/pub/layout/dateModified-e.jsp" />
+        <put-attribute name="sessionTimeout"   value="/pub/errors/sessionTimeout.jsp" />
         <!--
         The assumption here is that our own pages are localized internally,
         i.e. that any string literals they contain are extracted from
@@ -34,7 +34,7 @@
         what we've done with the clf header/footer stuff.
         -->
         <put-attribute name="body"  value="" />
-        <put-attribute name="footer"        value="/pub/CraFootMain-e.jsp" />
+        <put-attribute name="footer"        value="/pub/layout/CraFootMain-e.jsp" />
     </definition>
 
     <definition name=".clf.ntr" extends=".clf">
@@ -45,14 +45,14 @@
 
     <definition name=".clf.vw" extends=".clf">
         <put-attribute name="crrntPg"  value=".clf.vw" />
-        <put-attribute name="titleKey"  value="viewEmployee.title" />
-        <put-attribute name="body" value="/pub/viewEmployee.jsp" />
+        <put-attribute name="titleKey"  value="viewPackageInfo.title" />
+        <put-attribute name="body" value="/pub/viewPackageInfo.jsp" />
     </definition>
 
     <definition name=".clf.dlt" extends=".clf">
         <put-attribute name="crrntPg"  value=".clf.dlt" />
-        <put-attribute name="titleKey"  value="deleteEmployee.title" />
-        <put-attribute name="body" value="/pub/deleteEmployee.jsp" />
+        <put-attribute name="titleKey"  value="deletePackageInfo.title" />
+        <put-attribute name="body" value="/pub/deletePackageInfo.jsp" />
     </definition>
     
     <!-- 
@@ -64,20 +64,20 @@
     -->
     <definition name=".clf.mdfy" extends=".clf">
         <put-attribute name="crrntPg"  value="mdfy" />
-        <put-attribute name="titleKey"  value="modifyEmployee.title" />
-        <put-attribute name="body" value="/pub/addModifyEmployee.jsp" />
+        <put-attribute name="titleKey"  value="modifyPackageInfo.title" />
+        <put-attribute name="body" value="/pub/addModifyPackageInfo.jsp" />
     </definition>
 
     <definition name=".clf.crt" extends=".clf">
         <put-attribute name="crrntPg"  value="crt" />
-        <put-attribute name="titleKey"  value="addEmployee.title" />
-        <put-attribute name="body" value="/pub/addModifyEmployee.jsp" />
+        <put-attribute name="titleKey"  value="addPackageInfo.title" />
+        <put-attribute name="body" value="/pub/addModifyPackageInfo.jsp" />
     </definition>
 
     <definition name=".clf.lst" extends=".clf">
         <put-attribute name="crrntPg"  value="pg" />
-        <put-attribute name="titleKey"  value="listEmployee.title" />
-        <put-attribute name="body" value="/pub/employeeList.jsp" />
+        <put-attribute name="titleKey"  value="listPackageInfo.title" />
+        <put-attribute name="body" value="/pub/packageInfoList.jsp" />
     </definition>
 
 </tiles-definitions>

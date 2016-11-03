@@ -1,8 +1,8 @@
 <%@ taglib uri="/struts-tags" prefix="s" %>
 
-<h1 id="wb-cont" property="name"><s:text name="heading.employeeDetails"/></h1>
+<h1 id="wb-cont" property="name"><s:text name="heading.packageInfoDetails"/></h1>
 
-<s:include value="employeeDetails.jsp"/>
+<s:include value="packageInfoDetails.jsp"/>
 
 <br/>
 

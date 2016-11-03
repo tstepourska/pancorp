@@ -18,7 +18,8 @@
     	<!-- build directories and files -->
         <property name="build" 		value="${basedir}/build"/>
         <property name="classes" 	value="${build}/classes"/>
-    	<property name="dist" 		value="${build}/dist"/>
+    	<!--<property name="dist" 		value="${build}/dist"/>-->
+    	 <property name="dist" value="${basedir}/dist"/>
     	<property name="ejb.build" 	value="${build}/ejb"/>
         <property name="earfile" 	value="fxit.ctsagent.ear" />
         <property name="jarfile" 	value="fxit.ctsagent.jar"/>
@@ -64,8 +65,10 @@
     	<delete includeEmptyDirs="true" verbose="true">
     	  <fileset dir="${build}" excludes=".gitignore" includes="**/*" defaultexcludes="no"/>
     	</delete>
+    	<delete includeEmptyDirs="true" verbose="true">
+    	    	  <fileset dir="${dist}" excludes=".gitignore" includes="**/*" defaultexcludes="no"/>
+    	</delete>
     	
-        <mkdir dir="${dist}"/>
         <mkdir dir="${classes}"/>
     	<mkdir dir="${ejb.build}"/>
     	<mkdir dir="${jarsdir}"/>
@@ -112,7 +115,9 @@
 
     <target name="compile" depends="init"> <!--  depends="gen"-->
         <javac destdir="${classes}"
-               debug="${debug}"
+               debug="${debug}" 
+        	   includeantruntime="true" 
+        	   includeJavaRuntime="yes"
                deprecation="true"
                target="1.7"
                source="1.7">
@@ -120,7 +125,7 @@
             <classpath refid="compile-classpath"/>
         	<!-- Force compile to pick up the JAXB version from the jars included in the classpath -->
         	<!-- instead of the version of JAXB that is embedded in the Java JDK. -->
-        	<compilerarg value="-Djava.endorsed.dirs=${basedir}/lib"/>
+        	<!--<compilerarg value="-Djava.endorsed.dirs=${basedir}/lib"/>-->
         </javac>
     </target>
 
@@ -130,7 +135,7 @@
     
         <copy file="${metainf}/ejb-jar.xml" tofile="${ejb.build}/META-INF/ejb-jar.xml" />
         <copy file="${metainf}/weblogic-ejb-jar.xml" tofile="${ejb.build}/META-INF/weblogic-ejb-jar.xml" />
-        
+
         <copy todir="${ejb.build}">
             <fileset dir="${classes}">
                 <include name="ca/gc/cra/fxit/ctsagent/batch/**/*.class"/>
@@ -178,17 +183,8 @@
                 <include name="commons-lang3-3.2.jar"/>
                 <include name="commons-validator-1.3.1.jar"/>
                 <include name="freemarker-2.3.22.jar"/>
-                <include name="javassist-3.11.0.GA.jar"/>
-            	
-            	<include name="jaxb-api.jar"/>
-            	<include name="jaxb-core.jar"/>
-            	<include name="jaxb-impl.jar"/>
-            	<include name="jaxb-jxc.jar"/>
-            	<include name="jaxb-xjc.jar"/>
-            	
+                <include name="javassist-3.11.0.GA.jar"/>            	
                 <include name="ognl-3.0.17.jar"/>
-                <include name="slf4j-api-1.7.12.jar"/>
-            	<include name="slf4j-jcl-1.7.12.jar"/>
                 <include name="struts2-core-2.3.29.jar"/>
                 <include name="struts2-tiles-plugin-2.3.29.jar"/>
                 <include name="tiles-api-2.2.2.jar"/>
@@ -200,6 +196,8 @@
                 <include name="tiles-servlet-2.2.2.jar"/>
                 <include name="tiles-template-2.2.2.jar"/>
                 <include name="xwork-core-2.3.29.jar"/>   
+                <include name="slf4j-api-1.7.12.jar"/>
+            	<include name="slf4j-jcl-1.7.12.jar"/>
             </lib>                  
             
             <webinf dir="${webinf}">
@@ -217,7 +215,6 @@
             
             <classes dir="${cfg}">
                 <include name="struts.xml"/>
-                <include name="tiles*.xml"/>
                 <include name="xwork-conversion.properties"/>
             </classes>
         </war>
@@ -236,7 +233,7 @@
         
 
         <!-- apply platform-specific log location -->
-        <replace file="${cfg}/log4j.xml" token="@@log_directory@@" value="${log4j.dir}"/>
+    <!--    <replace file="${cfg}/log4j.xml" token="@@log_directory@@" value="${log4j.dir}"/>-->
         
         <jar update="true" destfile="${jarsdir}/${cfgjarfile}" basedir="${cfg}">
             <!-- include configuration files -->
@@ -251,7 +248,7 @@
         </jar>
         
         <!-- put the file back the way it was so we don't accidentally commit the platform-specific value -->
-        <replace file="${cfg}/log4j.xml" value="@@log_directory@@" token="${log4j.dir}"/>
+     <!--  <replace file="${cfg}/log4j.xml" value="@@log_directory@@" token="${log4j.dir}"/>-->
         
     </target>
     
@@ -264,9 +261,12 @@
                 <attribute name="Built-By"                   value="${user.name}"/>
                 <attribute name="Built-On"                   value="${buildtime}" />
                 <section name="Versioning">
-                    <attribute name="Implementation-Title"   value="fxit.ctsagent application"/>
-                    <attribute name="Implementation-Version" value="${version}"/>
-                    <attribute name="Implementation-Vendor"  value="development centre"/>
+                	<attribute name="Specification-Title"    value="CTS Agent Application"/>
+                	<attribute name="Specification-Version"  value="${version} ${buildtime}"/>
+                	<attribute name="Specification-Vendor"   value="Development Center"/>
+                    <attribute name="Implementation-Title"   value="CTS Agent Application"/>
+                    <attribute name="Implementation-Version" value="${version} ${buildtime}"/>
+                    <attribute name="Implementation-Vendor"  value="Development Centre"/>
                 </section>
             </manifest>
 
@@ -297,18 +297,20 @@
         <!-- precompile jsps, generate ejb stubs, etc. --> 
         <echo message="running weblogic.appc"/>
         <java classname="weblogic.appc" fork="yes" dir="${build}" failonerror="yes" classpathref="compile-classpath">
-            <jvmarg line="-Xms128M -Xmx256M -Djava.io.tmpdir=c:/temp -XX:+UseParallelGC" />
+            <!--<jvmarg line="-Xms128M -Xmx256M -Djava.io.tmpdir=c:/temp -XX:+UseParallelGC" />-->
+        	<jvmarg line="-Xms128M -Xmx256M -Djava.io.tmpdir=c:/temp" />
             <arg line=" -verbose -keepgenerated -iiop -basicclientjar ${dist}/${earfile} -target 1.7 -source 1.7"/>
         </java>
         
     </target>
 
     <target name="clean" depends="init">
-        <!--<delete dir="${build}" verbose="true" />-->
     	<delete includeEmptyDirs="true" verbose="true">
         	  <fileset dir="${build}" excludes=".gitignore" includes="**/*" defaultexcludes="no"/>
         </delete>
-        <!--<delete dir="${dist}" verbose="true" />-->
+    	<delete includeEmptyDirs="true" verbose="true">
+    	    	  <fileset dir="${dist}" excludes=".gitignore" includes="**/*" defaultexcludes="no"/>
+    	</delete>
     </target>
 
     <target name="deploy" depends="build">

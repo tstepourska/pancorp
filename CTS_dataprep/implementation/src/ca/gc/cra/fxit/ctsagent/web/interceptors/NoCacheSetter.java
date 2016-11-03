@@ -14,14 +14,17 @@ public class NoCacheSetter implements Interceptor {
 	private static final long serialVersionUID = 1L;
 	private Log log = LogFactory.getLog(getClass());
 
+	@Override
 	public void destroy() {
 		log.debug("destroy()");
 	}
 
+	@Override
 	public void init() {
 		log.debug("init()");
 	}
 
+	@Override
 	public String intercept(ActionInvocation actionInvocation) throws Exception {
 		log.debug("intercept()");
 		

@@ -9,16 +9,16 @@
     <!--
     layout definitions for _fr locale.
     -->
-    <definition name=".clf" template="/pub/clfLayout.jsp">
+    <definition name=".clf" template="/pub/layout/clfLayout.jsp">
         <put-attribute name="crrntPg"        value=".clf" />
         <put-attribute name="titleKey"       value="title" />
         <put-attribute name="breadcrumbKey"  value="breadcrumb" />
-        <put-attribute name="header"         value="/pub/CraHeadMain-f.jsp" />
-        <put-attribute name="menu"           value="/pub/sidemenu.jsp" />
-        <put-attribute name="date"           value="/pub/dateModified-f.jsp" />
-        <put-attribute name="sessionTimeout" value="/pub/sessionTimeout.jsp" />
+        <put-attribute name="header"         value="/pub/layout/CraHeadMain-f.jsp" />
+        <put-attribute name="menu"           value="/pub/layout/sidemenu.jsp" />
+        <put-attribute name="date"           value="/pub/layout/dateModified-f.jsp" />
+        <put-attribute name="sessionTimeout" value="/pub/errors/sessionTimeout.jsp" />
         <put-attribute name="body"           value="" />
-        <put-attribute name="footer"         value="/pub/CraFootMain-f.jsp" />
+        <put-attribute name="footer"         value="/pub/layout/CraFootMain-f.jsp" />
     </definition>
 
 </tiles-definitions>

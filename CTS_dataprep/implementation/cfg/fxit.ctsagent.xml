@@ -10,21 +10,26 @@
 		<context name="ca">
 			<context name="gc">
 				<context name="cra">
-					<context name="ctsagent">
-						<context name="env">
-							<property name="validateOutboundSignature" value="NO" description="Validate Signature on signed payload" />
-							<!-- TODO: web configuration from template, to customize -->
-							<context name="web">
-                                <property name="bookmarkErrorPage" value="/ebci/fxit/ctsagent/pub/srvmsgBookmarkError.jsp" />
-                                <context name="bookmarkCheckBypassList">
-                                    <property name="url0" value="/prot/ntr.action"/>
-                                </context>                                        
-                                <property name="sessionErrorPage" value="/ebci/fxit/ctsagent/pub/srvmsgSessionExpired.jsp" />
-                                <context name="sessionCheckBypassList">
-                                    <property name="url0" value="/prot/ntr.action"/>
-                                </context>
-                            </context>                                
-						</context>					
+					<context name="fxit">
+						<context name="ctsagent">
+							<context name="env">
+						 		<property name="log_level" value="DEBUG"  description="log level for the TestProject application for development test environment
+		                	        Valid Values: TRACE  DEBUG  INFO  WARN  ERROR  FATAL
+		                	        See org.apache.commons.logging.Log interface for more information."/>
+								<property name="validateOutboundSignature" value="NO" description="Validate Signature on signed payload" />
+								<!-- TODO: web configuration from template, to customize -->
+								<context name="web">
+                                	<property name="bookmarkErrorPage" value="/ebci/fxit/ctsagent/pub/srvmsgBookmarkError.jsp" />
+                                	<context name="bookmarkCheckBypassList">
+                                    	<property name="url0" value="/prot/ntr.action"/>
+                                	</context>                                        
+                                	<property name="sessionErrorPage" value="/ebci/fxit/ctsagent/pub/srvmsgSessionExpired.jsp" />
+                                	<context name="sessionCheckBypassList">
+                                    	<property name="url0" value="/prot/ntr.action"/>
+                                	</context>
+                            	</context>                                
+							</context>		
+						</context>			
 					</context>
 				</context>
 			</context>
@@ -34,12 +39,13 @@
 		<context name="ca">
 			<context name="gc">
 				<context name="cra">
-					<context name="ctsagent">
-						<context name="env">
-							<!-- <property name="basedir" value="C:/git/repository/CTS_dataprep/test/testfiles/"
+					<context name="fxit">
+						<context name="ctsagent">
+							<context name="env">
+								<!-- <property name="basedir" value="C:/git/repository/CTS_dataprep/test/testfiles/"
 									description="data directory; sub-directories under the base data directory will store input and output"/>-->
-							<property name="validateOutboundSignature" value="NO" description="Validate Signature on signed payload" />
-							<property name="log_level" value="DEBUG"
+								<property name="validateOutboundSignature" value="NO" description="Validate Signature on signed payload" />
+								<property name="log_level" value="DEBUG"
 		                	        description="log level for the TestProject application for development test environment
 		                	        Valid Values: TRACE  DEBUG  INFO  WARN  ERROR  FATAL
 		                	        See org.apache.commons.logging.Log interface for more information."/>	
@@ -48,24 +54,13 @@
 	    							Specify PRODUCTION to use production codes.
 	    							Test codes should ONLY be used to create FATCA XML files to be sent to IRS 
 	    							during system testing periods, and not for PRODUCTION files to be sent to IRS"/>-->
-	    							
-	    					<!-- TODO: web configuration from template, to customize -->	    					
-	    					<context name="web">
-                                <property name="bookmarkErrorPage" value="/ebci/fxit/ctsagent/pub/srvmsgBookmarkError.jsp" />
-                                <context name="bookmarkCheckBypassList">
-                                    <property name="url0" value="/prot/ntr.action"/>
-                                </context>                                        
-                                <property name="sessionErrorPage" value="/ebci/fxit/ctsagent/pub/srvmsgSessionExpired.jsp" />
-                                <context name="sessionCheckBypassList">
-                                    <property name="url0" value="/prot/ntr.action"/>
-                                </context>
-                            </context>    
 
 	                	   <!-- 	<context name="mainframe">
 									<property name="host" value="dchftp.isvcs.net"/>
 									<property name="userid" value="FXITU@FT"/>
 									<property name="password" value="3DSsw44tMQBManS7xsq/Aw=="/>
 								</context>	-->					
+								</context>
 							</context>
 						</context>
 				</context>
@@ -76,11 +71,12 @@
 		<context name="ca">
 			<context name="gc">
 				<context name="cra">
-					<context name="ctsagent">
-						<context name="env">
-							<!-- <property name="basedir" value="/disk/data/weblogic/domains/wls-domain/applications/data/fxit/ctsagent/"
+					<context name="fxit">
+						<context name="ctsagent">
+							<context name="env">
+								<!-- <property name="basedir" value="/disk/data/weblogic/domains/wls-domain/applications/data/fxit/ctsagent/"
 									description="data directory; sub-directories under the base data directory will store input and output"/>-->
-							<property name="validateOutboundSignature" value="NO" description="Validate Signature on signed payload" />						
+								<property name="validateOutboundSignature" value="NO" description="Validate Signature on signed payload" />						
 								<property name="log_level" value="DEBUG"
 		                	        description="log level for the fxit.ca2us application for development test environment
 		                	        Valid Values: TRACE  DEBUG  INFO  WARN  ERROR  FATAL
@@ -91,24 +87,14 @@
 	    							Specify PRODUCTION to use production codes.
 	    							Test codes should ONLY be used to create FATCA XML files to be sent to IRS 
 	    							during system testing periods, and not for PRODUCTION files to be sent to IRS"/>-->
-	    					
-	    					<!-- TODO: web configuration from template, to customize -->			
-	    					<context name="web">
-                                <property name="bookmarkErrorPage" value="/ebci/fxit/ctsagent/pub/srvmsgBookmarkError.jsp" />
-                                <context name="bookmarkCheckBypassList">
-                                    <property name="url0" value="/prot/ntr.action"/>
-                                </context>                                        
-                                <property name="sessionErrorPage" value="/ebci/fxit/ctsagent/pub/srvmsgSessionExpired.jsp" />
-                                <context name="sessionCheckBypassList">
-                                    <property name="url0" value="/prot/ntr.action"/>
-                                </context>
-                            </context>    
+	    					  
 
-	                	    <!-- 	<context name="mainframe">
+	                	    	<!-- 	<context name="mainframe">
 									<property name="host" value="dchftp.isvcs.net"/>
 									<property name="userid" value="FXITU@FT"/>
 									<property name="password" value="3DSsw44tMQBManS7xsq/Aw=="/>
 								</context>		-->					
+							</context>
 						</context>
 					</context>
 				</context>
@@ -119,14 +105,15 @@
 		<context name="ca">
 			<context name="gc">
 				<context name="cra">
-					<context name="ctsagent">
-						<context name="env">
-							<!-- <property name="basedir" value="/disk/data/weblogic/domains/wls-domain/applications/data/fxit/ctsagent/"
+					<context name="fxit">
+						<context name="ctsagent">
+							<context name="env">
+								<!-- <property name="basedir" value="/disk/data/weblogic/domains/wls-domain/applications/data/fxit/ctsagent/"
 									description="data directory; sub-directories under the base data directory will store input and output"/>-->
 
-							<property name="validateOutboundSignature" value="NO" description="Validate Signature on signed payload" />
+								<property name="validateOutboundSignature" value="NO" description="Validate Signature on signed payload" />
 								
-							<property name="log_level" value="INFO"
+								<property name="log_level" value="INFO"
 		                	        description="log level for the fxit.ca2us application for development test environment
 		                	        Valid Values: TRACE  DEBUG  INFO  WARN  ERROR  FATAL
 		                	        See org.apache.commons.logging.Log interface for more information."/>	
@@ -136,24 +123,13 @@
 	    							Specify PRODUCTION to use production codes.
 	    							Test codes should ONLY be used to create FATCA XML files to be sent to IRS 
 	    							during system testing periods, and not for PRODUCTION files to be sent to IRS"/>-->
-	    					
-	    					<!-- TODO: web configuration from template, to customize -->
-	    					<context name="web">
-                                <property name="bookmarkErrorPage" value="/ebci/fxit/ctsagent/pub/srvmsgBookmarkError.jsp" />
-                                <context name="bookmarkCheckBypassList">
-                                    <property name="url0" value="/prot/ntr.action"/>
-                                </context>                                        
-                                <property name="sessionErrorPage" value="/ebci/fxit/ctsagent/pub/srvmsgSessionExpired.jsp" />
-                                <context name="sessionCheckBypassList">
-                                    <property name="url0" value="/prot/ntr.action"/>
-                                </context>
-                           </context>    
-
-	                	   <!-- <context name="mainframe">
+	    				
+	                	   		<!-- <context name="mainframe">
 									<property name="host" value="dchftp.isvcs.net"/>
 									<property name="userid" value="FXITA@FT"/>
 									<property name="password" value="3DSsw44tMQBManS7xsq/Aw=="/>
 								</context>		-->					
+							</context>
 						</context>
 					</context>
 				</context>
@@ -164,12 +140,13 @@
 		<context name="ca">
 			<context name="gc">
 				<context name="cra">
-					<context name="ctsagent">
+					<context name="fxit">
+						<context name="ctsagent">
 							<context name="env">
 								<!-- <property name="basedir" value="/disk/data/weblogic/domains/wls-domain/applications/data/fxit/ca2us/"
 									description="data directory; sub-directories under the base data directory will store input and output"/>-->
 
-							<property name="validateOutboundSignature" value="NO" description="Validate Signature on signed payload" />
+								<property name="validateOutboundSignature" value="NO" description="Validate Signature on signed payload" />
 							
 								<property name="log_level" value="INFO"
 		                	        description="log level for the fxit.ca2us application for user acceptance environment
@@ -182,23 +159,12 @@
 	    							Test codes should ONLY be used to create FATCA XML files to be sent to IRS 
 	    							during system testing periods, and not for PRODUCTION files to be sent to IRS"/>-->
 	    					
-	    					<!-- TODO: web configuration from template, to customize -->
-	    						<context name="web">
-                                    <property name="bookmarkErrorPage" value="/ebci/fxit/ctsagent/pub/srvmsgBookmarkError.jsp" />
-                                    <context name="bookmarkCheckBypassList">
-                                        <property name="url0" value="/prot/ntr.action"/>
-                                    </context>                                        
-                                <property name="sessionErrorPage" value="/ebci/fxit/ctsagent/pub/srvmsgSessionExpired.jsp" />
-                                    <context name="sessionCheckBypassList">
-                                        <property name="url0" value="/prot/ntr.action"/>
-                                    </context>
-                                </context>    
-
-	                	    <!--	<context name="mainframe">
+	                	    	<!--	<context name="mainframe">
 									<property name="host" value="dchftp.isvcs.net"/>
 									<property name="userid" value="FXITO@FT"/>
 									<property name="password" value="3DSsw44tMQBManS7xsq/Aw=="/>
 								</context>							-->
+							</context>
 						</context>
 					</context>
 				</context>
@@ -209,12 +175,13 @@
 		<context name="ca">
 			<context name="gc">
 				<context name="cra">
-					<context name="ctsagent">
+					<context name="fxit">
+						<context name="ctsagent">
 							<context name="env">
 								<!-- <property name="basedir" value="/disk/data/weblogic/domains/wls-domain/applications/data/fxit/ca2us/"
 									description="data directory; sub-directories under the base data directory will store input and output"/>-->
 
-							<property name="validateOutboundSignature" value="NO" description="Validate Signature on signed payload" />
+								<property name="validateOutboundSignature" value="NO" description="Validate Signature on signed payload" />
 						
 								<property name="log_level" value="INFO"
 		                	        description="log level for the fxit.ca2us application for production environment 
@@ -225,24 +192,13 @@
 	    							Specify PRODUCTION to use production codes.
 	    							Test codes should ONLY be used to create FATCA XML files to be sent to IRS 
 	    							during system testing periods, and not for PRODUCTION files to be sent to IRS"/>-->
-	    				
-	    				<!-- TODO: web configuration from template, to customize -->
-	    						<context name="web">
-                                    <property name="bookmarkErrorPage" value="/ebci/fxit/ctsagent/pub/srvmsgBookmarkError.jsp" />
-                                    <context name="bookmarkCheckBypassList">
-                                        <property name="url0" value="/prot/ntr.action"/>
-                                    </context>                                        
-                                  <property name="sessionErrorPage" value="/ebci/fxit/ctsagent/pub/srvmsgSessionExpired.jsp" />
-                                    <context name="sessionCheckBypassList">
-                                        <property name="url0" value="/prot/ntr.action"/>
-                                    </context>
-                                </context>    
-
-	                	   <!-- 	<context name="mainframe">
+	    			
+	                	   		<!-- 	<context name="mainframe">
 									<property name="host" value="dchftp.isvcs.net"/>
 									<property name="userid" value="FXITP@FT"/>
 									<property name="password" value="3DSsw44tMQBManS7xsq/Aw=="/>
 								</context>		-->					
+							</context>
 						</context>
 					</context>
 				</context>
@@ -253,8 +209,9 @@
 		<context name="ca">
 			<context name="gc">
 				<context name="cra">
-					<context name="ctsagent">
-						<context name="env">
+					<context name="fxit">
+						<context name="ctsagent">
+							<context name="env">
 								<!-- <property name="basedir" value="/disk/data/weblogic/domains/wls-domain/applications/data/fxit/ca2us/"
 									description="data directory; sub-directories under the base data directory will store input and output"/>-->
 
@@ -265,35 +222,25 @@
 		                	        Valid Values: TRACE  DEBUG  INFO  WARN  ERROR  FATAL
 		                	        See org.apache.commons.logging.Log interface for more information."/>	
 
-	    					<!-- 	<property name="docTypeIndicEnv" value="TEST"
+	    						<!-- 	<property name="docTypeIndicEnv" value="TEST"
 	    							description = "Specify TEST to use test DocTypeIndic codes. 
 	    							Specify PRODUCTION to use production codes.
 	    							Test codes should ONLY be used to create FATCA XML files to be sent to IRS 
 	    							during system testing periods, and not for PRODUCTION files to be sent to IRS"/>-->
-	    							
-	    				<!-- TODO: web configuration from template, to customize -->
-	    						<context name="web">
-                                    <property name="bookmarkErrorPage" value="/ebci/fxit/ctsagent/pub/srvmsgBookmarkError.jsp" />
-                                    <context name="bookmarkCheckBypassList">
-                                        <property name="url0" value="/prot/ntr.action"/>
-                                    </context>                                        
-                                    <property name="sessionErrorPage" value="/ebci/fxit/ctsagent/pub/srvmsgSessionExpired.jsp" />
-                                    <context name="sessionCheckBypassList">
-                                        <property name="url0" value="/prot/ntr.action"/>
-                                    </context>
-                                </context>                                
-                        <!--      <context name="cics">
+	    				                              
+                        		<!--      <context name="cics">
                                     <property name="crhName" value="ca.gc.ccra.rccr.cics.integration.CTGCICSRequestHandlerHome" />
                                     <property name="user" value="XXSAMP"/>
                                     <property name="password" value="AIByIfgHfXhManS7xsq/Aw=="/>
                                     <property name="tranid" value="XXA3"/>
                                 </context>
 
-	                	   	<context name="mainframe">
+	                	   		<context name="mainframe">
 									<property name="host" value="dchftp.isvcs.net"/>
 									<property name="userid" value="FXITU@FT"/>
 									<property name="password" value="3DSsw44tMQBManS7xsq/Aw=="/>
 								</context>				-->			
+							</context>
 						</context>
 					</context>
 				</context>

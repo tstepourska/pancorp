@@ -12,7 +12,7 @@ import javax.naming.NamingException;
 //import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.Logger;
 
-import ca.gc.ccra.rccr.security.crypto.business.*;
+//import ca.gc.ccra.rccr.security.crypto.business.*;
 
 /**
  * Domain properties used by the transformation process.
@@ -47,7 +47,7 @@ public class AppProperties {
 	 * @throws Exception
 	 */
 	public static void addProperties(Properties pp) throws Exception {
-		Enumeration en = pp.keys();
+		Enumeration<Object> en = pp.keys();
 		
 		while(en.hasMoreElements()){
 			String key = (String)en.nextElement();
