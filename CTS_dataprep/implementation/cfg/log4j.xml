@@ -19,7 +19,6 @@
     </appender>
 
     <!-- suppress struts chatter -->
-    <!-- 
     <logger name="org.apache">
         <level value="WARN"/>
         <appender-ref ref="file"/>
@@ -29,23 +28,21 @@
         <level value="WARN"/>
         <appender-ref ref="file"/>
     </logger>
--->
+    
     <!-- suppress struts chatter -->
-  <!--  <logger name="freemarker">
+    <logger name="freemarker">
         <level value="WARN"/>
         <appender-ref ref="file"/>
     </logger>
-    -->
 
     <!-- JSPs -->
- <!--   <logger name="jsp_servlet">
-        <level value="INFO"/>
+    <logger name="jsp_servlet">
+        <level value="WARN"/>
         <appender-ref ref="file"/>
     </logger>
-    -->
     
     <!-- RCCR -->
- <!--  <logger name="ca.gc.ccra.rccr">
+   <logger name="ca.gc.ccra.rccr">
         <level value="INFO"/>
         <appender-ref ref="file"/>
     </logger>
@@ -54,11 +51,12 @@
         <level value="DEBUG"/>
         <appender-ref ref="file"/>
     </root>
-    -->
     
+<!--     
       <root>
 	<level value="ALL"/>
 	 <appender-ref ref="file"/>
   </root>
+  -->
 
 </log4j:configuration>

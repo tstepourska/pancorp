@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE validators PUBLIC 
+    "-//Apache Struts//XWork Validator 1.0.2//EN" 
+    "http://struts.apache.org/dtds/xwork-validator-1.0.2.dtd">
+<validators>
+    <field name="id">
+        <!--
+        Currently, the default conversion interceptor is enforcing
+        the data type for the id field.  Unfortunately, the conversion
+        failure doesn't short-circuit, so we end up executing the
+        "required" validator as well, which means the user sees
+        both the "not numeric" and the "empty field" errors when
+        he types in a non-numeric value.
+        
+        This is surprisingly crappy, and there's just _got_ to be some
+        easy way to override this behaviour, but I'm stumped at the
+        moment.  
+        -->
+    
+        <field-validator type="required" short-circuit="true" >
+            <message>%{getText('required_error', {getText(fieldName)})}</message>
+        </field-validator>
+        
+        <field-validator type="int" short-circuit="true">
+            <param name="min">1</param>
+            <param name="max">9999</param>
+            <message>%{getText('range_error', {getText(fieldName)})}</message>
+        </field-validator>
+    </field>
+</validators>
+
+
+

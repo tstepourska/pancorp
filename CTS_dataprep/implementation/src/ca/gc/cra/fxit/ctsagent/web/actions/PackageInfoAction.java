@@ -73,7 +73,7 @@ public class PackageInfoAction extends ActionSupport implements ModelDriven<Pack
         	
         //for testing only, use handler
         packageInfo = new PackageInfo(); 
-        packageInfo.setDataOwnerPrefix("crs");
+        packageInfo.setDataProviderPrefix("crs");
         packageInfo.setJobDirection(Constants.JOB_OUTBOUND);
         packageInfo.setPackageType(Constants.PKG_TYPE_DATA);
         	//end of for testing only
@@ -112,7 +112,7 @@ public class PackageInfoAction extends ActionSupport implements ModelDriven<Pack
             
             //for testing only, use handler
             packageInfo = new PackageInfo(); 
-            packageInfo.setDataOwnerPrefix("crs");
+            packageInfo.setDataProviderPrefix("crs");
             packageInfo.setJobDirection(Constants.JOB_OUTBOUND);
             packageInfo.setPackageType(Constants.PKG_TYPE_DATA);
         	//end of for testing only

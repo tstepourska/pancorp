@@ -21,21 +21,26 @@
         </result-types>
 
     	<interceptors>
-            <interceptor name="noCacheSetter" 
-                class="ca.gc.cra.fxit.ctsagent.web.interceptors.NoCacheSetter" />    	
+            <interceptor name="noCacheSetter" class="ca.gc.cra.fxit.ctsagent.web.interceptors.NoCacheSetter" />    	
+            <interceptor name="authentication" class="ca.gc.cra.fxit.ctsagent.web.interceptors.LoginInterceptor" />
     	
 			<interceptor-stack name="appDefaultStack">
-			
-			    <interceptor-ref name="noCacheSetter"/>
-			    
+			    <interceptor-ref name="noCacheSetter"/>    
 	    		<interceptor-ref name="defaultStack">
 	     			<param name="exception.logEnabled">true</param>
 	     			<param name="exception.logLevel">ERROR</param>
 	     			<param name="i18n.attributeName">org.apache.tiles.LOCALE</param>
-	    		</interceptor-ref>
-	    		
+	    		</interceptor-ref>	    		
 	    	</interceptor-stack>
+	    	
+	    	<interceptor-stack name="authenticationStack">
+					<interceptor-ref name="authentication" />
+					<interceptor-ref name="appDefaultStack" />
+			</interceptor-stack>
+			
+			
     	</interceptors>
+    	
 		<default-interceptor-ref name="appDefaultStack" />
 
         <default-action-ref name="index" />
@@ -45,7 +50,12 @@
     </package>
 
 
-    <package name="pub" namespace="/pub" extends="default">        
+    <package name="pub" namespace="/pub" extends="default">   
+    	 <action name="login">
+			<interceptor-ref name="authenticationStack" />
+			<result name="success" type="tiles">.clf.login</result>
+			<result name="error" type="tiles">.clf.login</result>
+		</action>     
         <action name="rfrsh" class="ca.gc.cra.fxit.ctsagent.web.actions.RefreshSessionAction">
             <result type="stream">
                 <param name="contentType">text/plain</param>
@@ -55,9 +65,17 @@
     </package>
         
     
-    <package name="prot" namespace="/prot" extends="default">      
-
-         <action name="ntr" class="ca.gc.cra.fxit.ctsagent.web.actions.PackageInfoAction" method="prompt" >
+    <package name="prot" namespace="/prot" extends="default">       
+    	<action name="logout" class="ca.gc.cra.fxit.ctsagent.web.actions.LogoutAction">
+			<result name="success" type="tiles">.clf.login</result>
+			<result name="error" type="tiles">.clf.login</result>
+		</action>  
+		 <action name= "j_security_check" class="ca.gc.cra.fxit.ctsagent.web.actions.LoginAction" >
+            <result name="success" type="tiles">.clf.ntr</result>
+            <result name="error"  type="tiles">.clf.login</result>
+            <result name="input"  type="tiles">.clf.login</result>
+        </action>
+        <action name="ntr" class="ca.gc.cra.fxit.ctsagent.web.actions.PackageInfoAction" method="prompt" >
             <result name="success" type="tiles">.clf.ntr</result>
         </action>
         <action name="ntrSbmt" class="ca.gc.cra.fxit.ctsagent.web.actions.PackageInfoAction" method="retrieve" >
@@ -92,29 +110,23 @@
             <result name="vw" type="tiles">.clf.vw</result>
             <result name="ntr" type="chain">.clf.ntr</result>
         </action>
- 
         <action name="lst" class="ca.gc.cra.fxit.ctsagent.web.actions.PackageInfoListAction" method="retrieveAll" >
             <result name="success" type="tiles">.clf.lst</result>
         </action>
-
         <action name="nxt" class="ca.gc.cra.fxit.ctsagent.web.actions.PackageInfoListAction" method="next" >
             <result name="success" type="tiles">.clf.lst</result>
         </action>
-
         <action name="prv" class="ca.gc.cra.fxit.ctsagent.web.actions.PackageInfoListAction" method="previous" >
             <result name="success" type="tiles">.clf.lst</result>
         </action>
-
         <action name="pg" class="ca.gc.cra.fxit.ctsagent.web.actions.PackageInfoListAction" method="retrievePage" >
             <result name="success" type="tiles">.clf.lst</result>
         </action>
-
         <action name="lngg" class="ca.gc.cra.fxit.ctsagent.web.actions.LanguageAction" >
             <result name="tiles" type="tiles">${#session.crrntPg}</result>
             <result name="chain" type="chain">${#session.crrntPg}</result>
             <result name="default" type="chain">ntr</result>
         </action>
-
     </package>
     
 </struts>

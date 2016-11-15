@@ -1,6 +1,9 @@
 package ca.gc.cra.fxit.ctsagent.util;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 //import java.util.Calendar;
 //import java.util.Date;
@@ -8,6 +11,12 @@ import java.io.IOException;
 //import java.util.Map;
 //import java.util.TimeZone;
 
+import javax.mail.Message;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+import javax.naming.InitialContext;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.Unmarshaller;
@@ -20,6 +29,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.transform.stream.StreamSource;
 
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 
@@ -32,7 +42,7 @@ import ca.gc.cra.fxit.ctsagent.generated.metadata.FATCAIDESSenderFileMetadataTyp
 import ca.gc.cra.fxit.ctsagent.model.*;
 
 public class Utils {
-	private static Logger logger = Logger.getLogger(Utils.class);
+	private static Logger log = Logger.getLogger(Utils.class);
 	
 	public static void logError(Logger lg, Exception e){
 		lg.error("Error: " + e.getMessage());
@@ -100,17 +110,17 @@ public class Utils {
 		try {
 			isDeleted = inputFile.isFile() && inputFile.delete();
 			if (isDeleted) {
-				logger.info("File deleted: '" + inputFile.getPath() + "'");
+				log.info("File deleted: '" + inputFile.getPath() + "'");
 			}
 			else {
-				logger.error("File not deleted: '" + inputFile.getPath() + "'");
+				log.error("File not deleted: '" + inputFile.getPath() + "'");
 			}
 		}
 		catch (SecurityException ex) {
-			logger.error("File not deleted. Insufficient permissions to delete the file. Exception: " + ex.toString());
+			log.error("File not deleted. Insufficient permissions to delete the file. Exception: " + ex.toString());
 		}
 		catch (Throwable ex) {
-			logger.error("File not deleted. An exception occurred: " + ex.toString());
+			log.error("File not deleted. An exception occurred: " + ex.toString());
 		}
 		
 		return isDeleted;
@@ -222,10 +232,10 @@ public class Utils {
 			File source = new File(sourcePathName);
 			File target = new File(targetPathName);
 			FileUtils.copyFile(source, target);
-			logger.info("File copied. Source: " + sourcePathName + ", Target: " + targetPathName);
+			log.info("File copied. Source: " + sourcePathName + ", Target: " + targetPathName);
 		}
 		catch (IOException ex) {
-			logger.error("File not copied. An exception occurred: " + ex.toString());
+			log.error("File not copied. An exception occurred: " + ex.toString());
 		}
 		
 		return isCopied;
@@ -250,6 +260,123 @@ public class Utils {
 		return file.exists();
 	}
 	
+	public static void sendEmail(String fromAddress,
+								String toAddressList,
+								String docTypeIndicEnv,
+								String fxmtDatabaseEnv,
+								StringBuilder emailBody){
+	try {
+		InitialContext ic = new InitialContext();
+		Session session = (Session) ic.lookup("ca.gc.cra.fxit.mail.Session");
+		
+		// create a message
+		Message msg = new MimeMessage(session);
+		msg.setFrom(new InternetAddress(fromAddress));
+		msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toAddressList));
+		
+		msg.setSentDate(new Date());
+		String emailSubject = "FXIT transfered PRT18 " + docTypeIndicEnv + " Files to the mainframe";
+		msg.setSubject(emailSubject);
+		
+		String newLine = System.lineSeparator();
+		//StringBuilder emailBody = new StringBuilder();
+		/*emailBody.append("FXIT " + docTypeIndicEnv + " file transfer completed.");
+		emailBody.append(newLine);
+		emailBody.append("FXIT Database Environment: " + fxmtDatabaseEnv);
+		emailBody.append(newLine);
+		emailBody.append(newLine);
+		emailBody.append("The following " + targetDataSets.size() + " data sets were successfully transfered to the mainframe for IRMS to load.");
+		emailBody.append(newLine);
+		for (String sFileName : targetDataSets) {
+			emailBody.append(sFileName);
+			emailBody.append(newLine);
+		}
+		emailBody.append(newLine);
+		emailBody.append("The following " + targetArchives.size() + " archive files were successfully transfered to the mainframe for FATCA XML file retention purposes.");
+		emailBody.append(newLine);
+		for (String sFileName : targetArchives) {
+			emailBody.append(sFileName);
+			emailBody.append(newLine);
+		}
+		emailBody.append(newLine);
+		emailBody.append("\nThis email is sent automatically by the eBCI FXIT batch application. eApplid=FXIT, componentID=ca2us"); 
+		*/
+		
+		String content = emailBody.toString();
+		msg.setContent(content,"text/plain; charset=UTF-8");   
+
+		log.info("Sending email to " + toAddressList);
+		
+		log.debug("Email Subject    : " + msg.getSubject());
+		log.debug("Email Body       : " + msg.getContent().toString());
+		
+		Transport.send(msg);
+	}
+	catch(Exception e){
+		Utils.logError(log, e.getMessage());
+	}
+	}
 	
+	public static void cleanXmlFile(String path, String origFileName){
 	
+		String line = null;
+		File file = null;
+		File newfile = null;
+		
+		try {
+			file = new File(path+origFileName);
+			newfile = new File(path+origFileName +".OUTPUT");
+		}
+		catch(Exception e){
+			Utils.logError(log, e);
+		}
+		
+		try (BufferedReader bReader= new BufferedReader(new FileReader(file));
+			FileWriter writer = new FileWriter(newfile);
+		){
+			while((line = bReader.readLine())!=null){
+				line = line.replaceAll("[^\\x20-\\x7e]", "");
+				writer.write(line);
+				writer.flush();
+			}
+		//String XString = writer.toString();
+		//XString = XString.replaceAll("[^\\x20-\\x7e]", "");
+		}
+		catch(Exception e){
+			Utils.logError(log, e);
+		}
+	}
+	
+	public static String xmlToString(String path, String filename){
+		
+		String line = null;
+		File file = null;
+		StringBuilder sb = new StringBuilder();
+		sb.append("|");
+		
+		try {
+			file = new File(path+filename);
+		}
+		catch(Exception e){
+			Utils.logError(log, e);
+		}
+		
+		try (BufferedReader bReader= new BufferedReader(new FileReader(file));
+		){
+			while((line = bReader.readLine())!=null){
+				sb.append(line);			
+			}
+			sb.append("|");
+		}
+		catch(Exception e){
+			Utils.logError(log, e);
+		}
+		return sb.toString();
+	}
+	
+	public static void main(String[] args){
+		String filename = "fxit.ctsagent.batch.xml";	
+		String path = "C:/git/repository/CTS_dataprep/implementation/cfg/";
+		Utils.cleanXmlFile(path, filename);
+	}
 }

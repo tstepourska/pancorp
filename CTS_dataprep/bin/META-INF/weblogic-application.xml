@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='utf-8'?>
+<weblogic-application xmlns="http://www.bea.com/ns/weblogic/90" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    
+    <classloader-structure> 
+    <!-- top level modules -->
+   	<module-ref> 
+   		<!-- EJB -->
+      	<module-uri>fxit.ctsagent.jar</module-uri> 
+   	</module-ref>
+   	<module-ref> 
+   		<!-- Web -->
+      	<module-uri>fxit.ctsagent.war</module-uri> 
+   	</module-ref>
+	</classloader-structure>
+
+    <prefer-application-packages>
+        <package-name>org.apache.commons.logging.*</package-name>
+    	<package-name>org.apache.log4j.*</package-name>
+    </prefer-application-packages>  
+    
+</weblogic-application>

@@ -11,21 +11,32 @@ public class Constants {
 	public static final String PKG_TYPE_DATA					 = "D";
 	public static final String PKG_TYPE_STATUS					 = "S";
 	
-	public static final String SUFFIX_PAYLOAD							= "_PL"; //starts from building XML and ends after its validation and saving it for CASD
-	public static final String SUFFIX_PACKAGE							= "_PK"; // starts from digital signature and ends sending it off to CTS
-	public static final String JAVA_PKG_STEP							= "ca.gc.cra.fxit.ctsagent.steps.";
+	public static final String SUFFIX_PAYLOAD							= "_PL"; //used for outbound, starts from building XML/validating  and ends after its validation and saving it, before CASD
+	public static final String SUFFIX_PACKAGE							= "_PK"; //used for outbound starts from digital signature and ends sending it off to CTS
+	public static final String SUFFIX_PRELIM							= "_PRE"; // used for inbound, saves, uncompresses and validates metadata - before CASD
+	public static final String SUFFIX_UNPAK								= "_UNPK"; // used for inbound, decrypts, uncompreses payload, validates dig signature etc
+	
+	public static final String JAVA_PKG_STEP							= "ca.gc.cra.fxit.ctsagent.task.";
 	
 	public static final String CANADA						= "CA";
 	
 	public static final String KEY_MAX_XML_FILE_SIZE		= "maxXmlFileSize";
+	public static final String KEY_JOB_CONFIG				= "JobConfig";
 	
 	
-	public static final int STATUS_CODE_SUCCESS 		= 0;
-	public static final int STATUS_CODE_ERROR	 	= 9;
-	public static final int STATUS_CODE_NOT_FOUND	= 8;
+	public static final int STATUS_CODE_SUCCESS 			= 0;
+	public static final int STATUS_CODE_ERROR	 			= 9;
+	public static final int STATUS_CODE_NOT_FOUND			= 8;
 	public static final int STATUS_CODE_INCOMPLETE			= -99;
 	public static final String STATUS_MESSAGE_SUCCESS 		= "success";
 	public static final String STATUS_MESSAGE_ERROR			= "error";
+	
+	public static final String AUDIT						= "AUDIT: ";
+	
+	public static final String unprocessedInputToSendDir = "";
+	public static final String unprocessedInputToReceiveDir = "";
+	
+	public static final String DEFAULT_ENCODING = "ISO-8859-1";  
 	
 	////////////////////////////////////////////
 	// out bound create package constants

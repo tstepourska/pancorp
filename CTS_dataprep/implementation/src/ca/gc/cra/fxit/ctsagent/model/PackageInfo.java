@@ -33,22 +33,22 @@ public class PackageInfo {
 	
 	private String headerLine;
 	
-	private String dataOwnerPrefix;
+	private String dataProviderPrefix;
 	
 	
 	
 	/**
-	 * @return the dataOwnerPrefix
+	 * @return the dataProviderPrefix
 	 */
-	public String getDataOwnerPrefix() {
-		return dataOwnerPrefix;
+	public String getDataProviderPrefix() {
+		return dataProviderPrefix;
 	}
 
 	/**
-	 * @param dataOwnerPrefix the dataOwnerPrefix to set
+	 * @param dataProviderPrefix the dataProviderPrefix to set
 	 */
-	public void setDataOwnerPrefix(String dataOwnerPrefix) {
-		this.dataOwnerPrefix = dataOwnerPrefix;
+	public void setDataProviderPrefix(String prefix) {
+		this.dataProviderPrefix = prefix;
 	}
 
 	/**

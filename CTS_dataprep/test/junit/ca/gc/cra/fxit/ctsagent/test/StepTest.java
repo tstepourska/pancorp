@@ -12,7 +12,7 @@ import org.junit.Test;
 
 import junit.framework.TestCase;
 
-import ca.gc.cra.fxit.ctsagent.steps.IStep;
+import ca.gc.cra.fxit.ctsagent.task.ITask;
 
 public class StepTest extends TestCase{
 	private static Logger log = Logger.getLogger(StepTest.class);

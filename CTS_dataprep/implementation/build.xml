@@ -321,4 +321,12 @@
     <target name="build" depends="ear">
     </target>
 
+	<target name="startBatch" depends="init"
+		description="Initiate the batch process.">
+		
+	<java classname="ca.gc.ccra.rccr.batch.BatchController" classpathref="compile-classpath" fork="true">
+			<arg line="-user fxitrunas -password webl0g1c -server t3://localhost:7001 cfg/fxit.ctsagent.batch.xml"/>		
+		</java>	
+	</target>
+	
 </project>

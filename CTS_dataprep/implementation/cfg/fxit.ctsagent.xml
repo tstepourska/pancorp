@@ -19,11 +19,11 @@
 								<property name="validateOutboundSignature" value="NO" description="Validate Signature on signed payload" />
 								<!-- TODO: web configuration from template, to customize -->
 								<context name="web">
-                                	<property name="bookmarkErrorPage" value="/ebci/fxit/ctsagent/pub/srvmsgBookmarkError.jsp" />
+                                	<property name="bookmarkErrorPage" value="/ebci/fxit/ctsagent/pub/errors/srvmsgBookmarkError.jsp" />
                                 	<context name="bookmarkCheckBypassList">
                                     	<property name="url0" value="/prot/ntr.action"/>
                                 	</context>                                        
-                                	<property name="sessionErrorPage" value="/ebci/fxit/ctsagent/pub/srvmsgSessionExpired.jsp" />
+                                	<property name="sessionErrorPage" value="/ebci/fxit/ctsagent/pub/errors/srvmsgSessionExpired.jsp" />
                                 	<context name="sessionCheckBypassList">
                                     	<property name="url0" value="/prot/ntr.action"/>
                                 	</context>
