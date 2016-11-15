@@ -15,7 +15,7 @@ import ca.gc.cra.fxit.ctsagent.util.Utils;
 
 /**
  * 
- * Called from the BatchController EJB or from the ActionServlet of the web tool
+ * Called from the BatchController EJB or from the ActionServlet of the web application
  * 
  * @author Txs285
  */
@@ -71,6 +71,8 @@ public class TaskManager implements Serializable {
 			if(status!=Constants.STATUS_CODE_SUCCESS)
 				break;
 		}
+		
+		//TODO add error handling
 		return status;
 	}
 	    
