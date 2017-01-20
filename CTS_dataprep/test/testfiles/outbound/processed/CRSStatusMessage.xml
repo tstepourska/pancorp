@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<csm:CRSStatusMessage_OECD version="1.1" xmlns:csm="urn:oecd:ties:csm:v1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:iso="urn:oecd:ties:isocsmtypes:v1">
+<csm:MessageSpec>
+<csm:SendingCompanyIN></csm:SendingCompanyIN>
+<csm:TransmittingCountry>CA</csm:TransmittingCountry>
+<csm:ReceivingCountry>FR</csm:ReceivingCountry>
+<csm:MessageType>CRSMessageStatus</csm:MessageType>
+<csm:Contact>casd@cra.gc.ca</csm:Contact>
+<csm:MessageRefId>CA2016FR123456789</csm:MessageRefId>
+<csm:CorrMessageRefId>CA2016FR2345678</csm:CorrMessageRefId>
+<csm:CorrMessageRefId>CA2016FR123467895</csm:CorrMessageRefId>
+<csm:ReportingPeriod>2016-12-31</csm:ReportingPeriod>
+<csm:Timestamp>-9758-03-19T04:51:43.232</csm:Timestamp>
+</csm:MessageSpec>
+<csm:crsStatusMessage>
+<csm:OriginalMessageType><csm:OriginalMessageRefID>CA2016FR2345678,CA2016FR123467895</csm:OriginalMessageRefID>
+<csm:FileMetaData>
+<csm:CTSTransmissionID>asdf89asdfgdfiua0</csm:CTSTransmissionID>
+<csm:CTSSendingTimeStamp>2016-01-01T00:00:00</csm:CTSSendingTimeStamp>
+<csm:SenderFileID>CA2016FR234567891</csm:SenderFileID>
+<csm:UncompressedFileSizeKBQty>26542374</csm:UncompressedFileSizeKBQty>
+</csm:FileMetaData>
+</csm:OriginalMessageType>
+<csm:ValidationErrorsType>
+<csm:NoErrorFound>NoError</csm:NoErrorFound>
+</csm:ValidationErrorsType>
+<csm:ValidationResultType>
+<csm:Status>Accepted</csm:Status>
+</csm:ValidationResultType>
+</csm:crsStatusMessage>
+</csm:CRSStatusMessage_OECD>

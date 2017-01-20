@@ -1,0 +1,200 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<web-app xmlns="http://java.sun.com/xml/ns/j2ee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
+	version="2.4">
+
+    <display-name>CTS Agent Web</display-name>
+    
+    <listener>
+        <listener-class>
+            ca.gc.cra.fxit.ctsagent.web.listeners.WebAppMonitor
+        </listener-class>
+    </listener>
+
+    <listener>
+        <listener-class>
+            org.apache.struts2.tiles.StrutsTilesListener
+        </listener-class>
+    </listener>
+
+    <!-- Bookmark Checker Filter -->
+    <filter>
+        <description>
+            Prevents access to a URL via a bookmark 
+            or by the user keying directly into the 
+            browser's URL location bar.
+        </description>
+        <filter-name>BookmarkChecker</filter-name>
+        <filter-class>
+            ca.gc.ccra.rccr.web.filter.BookmarkChecker
+        </filter-class>
+        <init-param>
+            <param-name>bookmarkCheckFailureUrlLookupKey</param-name>
+            <param-value>
+                ca.gc.cra.fxit.ctsagent.env.web.bookmarkErrorPage 
+            </param-value>
+        </init-param>
+        <init-param>
+            <param-name>bypassUrlsLookupKey</param-name>
+            <param-value>
+                ca.gc.cra.fxit.ctsagent.env.web.bookmarkCheckBypassList
+            </param-value>
+        </init-param>        
+    </filter>
+
+
+    <!-- SessionChecker Filter -->
+    <filter>
+        <description>
+            Checks whether the http session is active
+        </description>
+        <filter-name>SessionChecker</filter-name>
+        <filter-class>
+            ca.gc.ccra.rccr.web.filter.SessionChecker
+        </filter-class>
+        <init-param>
+            <param-name>
+                sessionExpiredUrlLookupKey
+            </param-name>
+            <param-value>
+                ca.gc.cra.fxit.ctsagent.env.web.sessionErrorPage
+            </param-value>
+        </init-param>
+        <init-param>
+            <param-name>bypassUrlsLookupKey</param-name>
+            <param-value>
+                ca.gc.cra.fxit.ctsagent.env.web.sessionCheckBypassList
+            </param-value>
+        </init-param>
+    </filter>
+
+    <filter>
+        <filter-name>struts2</filter-name>
+        <filter-class>org.apache.struts2.dispatcher.ng.filter.StrutsPrepareAndExecuteFilter</filter-class>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>BookmarkChecker</filter-name>
+        <url-pattern>/prot/*</url-pattern>
+        <dispatcher>REQUEST</dispatcher>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>SessionChecker</filter-name>
+        <url-pattern>/prot/*</url-pattern>
+        <dispatcher>REQUEST</dispatcher>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>struts2</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <session-config>
+        <session-timeout>30</session-timeout>
+    </session-config>
+
+    <mime-mapping>
+        <extension>css</extension>
+        <mime-type>text/css;charset=utf-8</mime-type>
+    </mime-mapping>
+    
+    <mime-mapping>
+       	<extension>js</extension>
+       	<mime-type>application/x-javascript;charset=utf-8</mime-type>
+   	</mime-mapping>
+   	
+   	<mime-mapping>
+       	<extension>html</extension>
+       	<mime-type>text/html;charset=utf-8</mime-type>
+   	</mime-mapping>
+
+    <mime-mapping>
+        <extension>svg</extension>
+        <mime-type>image/svg+xml</mime-type>
+    </mime-mapping>
+
+    <mime-mapping>
+        <extension>svgz</extension>
+        <mime-type>image/svg+xml</mime-type>
+    </mime-mapping>
+    
+    <welcome-file-list>
+        <welcome-file>/pub/index.jsp</welcome-file>
+    </welcome-file-list>
+
+    <error-page>
+        <error-code>403</error-code>
+        <location>/pub/errors/403.jsp</location>
+    </error-page>
+    <error-page>
+        <error-code>404</error-code>
+        <location>/pub/errors/404.jsp</location>
+    </error-page>
+    <error-page>
+        <error-code>500</error-code>
+        <location>/pub/errors/500.jsp</location>
+    </error-page>
+    <error-page>
+        <error-code>503</error-code>
+        <location>/pub/errors/503.jsp</location>
+    </error-page>
+    
+    <security-constraint>
+         <web-resource-collection>
+              <web-resource-name>Unprotected Resources</web-resource-name>
+              <url-pattern>/pub/*</url-pattern>
+              <http-method>POST</http-method>
+              <http-method>GET</http-method>
+         </web-resource-collection>
+    </security-constraint>
+    
+    <security-constraint>
+         <web-resource-collection>
+              <web-resource-name>Protected Resources</web-resource-name>
+              <url-pattern>/prot/*</url-pattern>
+              <http-method>POST</http-method>
+              <http-method>GET</http-method>
+         </web-resource-collection>
+         <auth-constraint>
+              <role-name>casd</role-name>
+         </auth-constraint>
+         <!-- User data constraints establish a requirement that the constrained 
+         	  requests be received over a protected transport layer connection.         	  
+         	  This guarantees how the data will be transported between client and server. 
+         	  
+         	  The strength of the required protection is defined by the value of the transport guarantee. 
+         	  
+         	  - A transport guarantee of INTEGRAL is used to establish a requirement for content integrity 
+         	  - A transport guarantee of CONFIDENTIAL is used to establish a requirement for confidentiality.         	  
+         	  - A transport guarantee of NONE indicates that the container must accept the constrained 
+         	  	requests when received on any connection including an unprotected one. 
+         	  	
+         	  When the login authentication method is set to BASIC or FORM, passwords are not protected, 
+         	  meaning that passwords sent between a client and a server on an unprotected session can be viewed 
+         	  and intercepted by third parties. Using a user data constraint with the user authentication 
+         	  mechanism can alleviate this concern. 
+         	  	
+         	  For details please refer : https://docs.oracle.com/cd/E19226-01/820-7627/bncbk/index.html
+          -->
+         <user-data-constraint>
+        	<transport-guarantee>CONFIDENTIAL</transport-guarantee>
+    	</user-data-constraint>
+         
+    </security-constraint>
+    
+      <login-config>
+        <auth-method>FORM</auth-method>
+        <form-login-config>
+            <form-login-page>/pub/login.action</form-login-page>
+            <form-error-page>/pub/login.action?result=error</form-error-page>
+        </form-login-config>
+    </login-config>
+    
+    <security-role>
+    	<description>Users in this group can do everything</description>
+        <role-name>casd</role-name>
+    </security-role>
+
+</web-app>

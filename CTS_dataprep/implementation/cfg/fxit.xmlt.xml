@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE domain-properties SYSTEM "environment.dtd">
+
+<!--
+  Environment configuration file for the xmlt.ear
+-->
+
+<domain-properties>
+	<domain name="default" description="Properties that apply accross all domains.">
+		<context name="ca">
+			<context name="gc">
+				<context name="cra">
+					<context name="fxit">
+						<context name="xmlt">
+							<context name="env">
+						 		<property name="log_level" value="DEBUG"  description="log level for the TestProject application for development test environment
+		                	        Valid Values: TRACE  DEBUG  INFO  WARN  ERROR  FATAL
+		                	        See org.apache.commons.logging.Log interface for more information."/>
+								<property name="validateOutboundSignature" value="NO" description="Validate Signature on signed payload" />
+								<!-- TODO: web configuration from template, to customize -->
+								<context name="web">
+                                	<property name="bookmarkErrorPage" value="/ebci/fxit/xmlt/pub/errors/srvmsgBookmarkError.jsp" />
+                                	<context name="bookmarkCheckBypassList">
+                                    	<property name="url0" value="/prot/ntr.action"/>
+                                	</context>                                        
+                                	<property name="sessionErrorPage" value="/ebci/fxit/xmlt/pub/errors/srvmsgSessionExpired.jsp" />
+                                	<context name="sessionCheckBypassList">
+                                    	<property name="url0" value="/prot/ntr.action"/>
+                                	</context>
+                            	</context>                                
+							</context>		
+						</context>			
+					</context>
+				</context>
+			</context>
+		</context>
+	</domain>
+	<domain name="d-domain01" description="Developer's workstation config.">
+		<context name="ca">
+			<context name="gc">
+				<context name="cra">
+					<context name="fxit">
+						<context name="xmlt">
+							<context name="env">
+								<!-- <property name="basedir" value="C:/git/repository/CTS_dataprep/test/testfiles/"
+									description="data directory; sub-directories under the base data directory will store input and output"/>-->
+								<property name="validateOutboundSignature" value="NO" description="Validate Signature on signed payload" />
+								<property name="log_level" value="DEBUG"
+		                	        description="log level for the TestProject application for development test environment
+		                	        Valid Values: TRACE  DEBUG  INFO  WARN  ERROR  FATAL
+		                	        See org.apache.commons.logging.Log interface for more information."/>	
+	    					<!-- <property name="docTypeIndicEnv" value="TEST"
+	    							description = "Specify TEST to use test DocTypeIndic codes. 
+	    							Specify PRODUCTION to use production codes.
+	    							Test codes should ONLY be used to create FATCA XML files to be sent to IRS 
+	    							during system testing periods, and not for PRODUCTION files to be sent to IRS"/>-->
+
+	                	   <!-- 	<context name="mainframe">
+									<property name="host" value="dchftp.isvcs.net"/>
+									<property name="userid" value="FXITU@FT"/>
+									<property name="password" value="3DSsw44tMQBManS7xsq/Aw=="/>
+								</context>	-->					
+								</context>
+							</context>
+						</context>
+				</context>
+			</context>
+		</context>
+	</domain>
+ 	<domain name="u-domain04" description="EBCI UT Domain">
+		<context name="ca">
+			<context name="gc">
+				<context name="cra">
+					<context name="fxit">
+						<context name="xmlt">
+							<context name="env">
+								<!-- <property name="basedir" value="/disk/data/weblogic/domains/wls-domain/applications/data/fxit/xmlt/"
+									description="data directory; sub-directories under the base data directory will store input and output"/>-->
+								<property name="validateOutboundSignature" value="NO" description="Validate Signature on signed payload" />						
+								<property name="log_level" value="DEBUG"
+		                	        description="log level for the fxit.ca2us application for development test environment
+		                	        Valid Values: TRACE  DEBUG  INFO  WARN  ERROR  FATAL
+		                	        See org.apache.commons.logging.Log interface for more information."/>	
+
+	    						<!-- <property name="docTypeIndicEnv" value="TEST"
+	    							description = "Specify TEST to use test DocTypeIndic codes. 
+	    							Specify PRODUCTION to use production codes.
+	    							Test codes should ONLY be used to create FATCA XML files to be sent to IRS 
+	    							during system testing periods, and not for PRODUCTION files to be sent to IRS"/>-->
+	    					  
+
+	                	    	<!-- 	<context name="mainframe">
+									<property name="host" value="dchftp.isvcs.net"/>
+									<property name="userid" value="FXITU@FT"/>
+									<property name="password" value="3DSsw44tMQBManS7xsq/Aw=="/>
+								</context>		-->					
+							</context>
+						</context>
+					</context>
+				</context>
+			</context>
+		</context>
+	</domain>
+	<domain name="a-domain04" description="EBCI UA Domain">
+		<context name="ca">
+			<context name="gc">
+				<context name="cra">
+					<context name="fxit">
+						<context name="xmlt">
+							<context name="env">
+								<!-- <property name="basedir" value="/disk/data/weblogic/domains/wls-domain/applications/data/fxit/xmlt/"
+									description="data directory; sub-directories under the base data directory will store input and output"/>-->
+
+								<property name="validateOutboundSignature" value="NO" description="Validate Signature on signed payload" />
+								
+								<property name="log_level" value="INFO"
+		                	        description="log level for the fxit.ca2us application for development test environment
+		                	        Valid Values: TRACE  DEBUG  INFO  WARN  ERROR  FATAL
+		                	        See org.apache.commons.logging.Log interface for more information."/>	
+
+	    						<!-- <property name="docTypeIndicEnv" value="TEST"
+	    							description = "Specify TEST to use test DocTypeIndic codes. 
+	    							Specify PRODUCTION to use production codes.
+	    							Test codes should ONLY be used to create FATCA XML files to be sent to IRS 
+	    							during system testing periods, and not for PRODUCTION files to be sent to IRS"/>-->
+	    				
+	                	   		<!-- <context name="mainframe">
+									<property name="host" value="dchftp.isvcs.net"/>
+									<property name="userid" value="FXITA@FT"/>
+									<property name="password" value="3DSsw44tMQBManS7xsq/Aw=="/>
+								</context>		-->					
+							</context>
+						</context>
+					</context>
+				</context>
+			</context>
+		</context>
+	</domain>
+	<domain name="o-domain04" description="EBCI OT Domain">
+		<context name="ca">
+			<context name="gc">
+				<context name="cra">
+					<context name="fxit">
+						<context name="xmlt">
+							<context name="env">
+								<!-- <property name="basedir" value="/disk/data/weblogic/domains/wls-domain/applications/data/fxit/ca2us/"
+									description="data directory; sub-directories under the base data directory will store input and output"/>-->
+
+								<property name="validateOutboundSignature" value="NO" description="Validate Signature on signed payload" />
+							
+								<property name="log_level" value="INFO"
+		                	        description="log level for the fxit.ca2us application for user acceptance environment
+		                	        Valid Values: TRACE  DEBUG  INFO  WARN  ERROR  FATAL
+		                	        See org.apache.commons.logging.Log interface for more information."/>								
+
+	    						<!-- <property name="docTypeIndicEnv" value="TEST"
+	    							description = "Specify TEST to use test DocTypeIndic codes. 
+	    							Specify PRODUCTION to use production codes.
+	    							Test codes should ONLY be used to create FATCA XML files to be sent to IRS 
+	    							during system testing periods, and not for PRODUCTION files to be sent to IRS"/>-->
+	    					
+	                	    	<!--	<context name="mainframe">
+									<property name="host" value="dchftp.isvcs.net"/>
+									<property name="userid" value="FXITO@FT"/>
+									<property name="password" value="3DSsw44tMQBManS7xsq/Aw=="/>
+								</context>							-->
+							</context>
+						</context>
+					</context>
+				</context>
+			</context>
+		</context>
+	</domain>
+	<domain name="p-domain04" description="EBCI PR Domain">
+		<context name="ca">
+			<context name="gc">
+				<context name="cra">
+					<context name="fxit">
+						<context name="xmlt">
+							<context name="env">
+								<!-- <property name="basedir" value="/disk/data/weblogic/domains/wls-domain/applications/data/fxit/ca2us/"
+									description="data directory; sub-directories under the base data directory will store input and output"/>-->
+
+								<property name="validateOutboundSignature" value="NO" description="Validate Signature on signed payload" />
+						
+								<property name="log_level" value="INFO"
+		                	        description="log level for the fxit.ca2us application for production environment 
+		                	        should be set to INFO"/>								
+
+	    						<!-- <property name="docTypeIndicEnv" value="PRODUCTION"
+	    							description = "Specify TEST to use test DocTypeIndic codes. 
+	    							Specify PRODUCTION to use production codes.
+	    							Test codes should ONLY be used to create FATCA XML files to be sent to IRS 
+	    							during system testing periods, and not for PRODUCTION files to be sent to IRS"/>-->
+	    			
+	                	   		<!-- 	<context name="mainframe">
+									<property name="host" value="dchftp.isvcs.net"/>
+									<property name="userid" value="FXITP@FT"/>
+									<property name="password" value="3DSsw44tMQBManS7xsq/Aw=="/>
+								</context>		-->					
+							</context>
+						</context>
+					</context>
+				</context>
+			</context>
+		</context>
+	</domain>
+	<domain name="f-domain04" description="EBCI EF Domain">
+		<context name="ca">
+			<context name="gc">
+				<context name="cra">
+					<context name="fxit">
+						<context name="xmlt">
+							<context name="env">
+								<!-- <property name="basedir" value="/disk/data/weblogic/domains/wls-domain/applications/data/fxit/ca2us/"
+									description="data directory; sub-directories under the base data directory will store input and output"/>-->
+
+								<property name="validateOutboundSignature" value="NO" description="Validate Signature on signed payload" />
+							
+								<property name="log_level" value="DEBUG"
+		                	        description="log level for the fxit.ca2us application for development test environment
+		                	        Valid Values: TRACE  DEBUG  INFO  WARN  ERROR  FATAL
+		                	        See org.apache.commons.logging.Log interface for more information."/>	
+
+	    						<!-- 	<property name="docTypeIndicEnv" value="TEST"
+	    							description = "Specify TEST to use test DocTypeIndic codes. 
+	    							Specify PRODUCTION to use production codes.
+	    							Test codes should ONLY be used to create FATCA XML files to be sent to IRS 
+	    							during system testing periods, and not for PRODUCTION files to be sent to IRS"/>-->
+	    				                              
+                        		<!--      <context name="cics">
+                                    <property name="crhName" value="ca.gc.ccra.rccr.cics.integration.CTGCICSRequestHandlerHome" />
+                                    <property name="user" value="XXSAMP"/>
+                                    <property name="password" value="AIByIfgHfXhManS7xsq/Aw=="/>
+                                    <property name="tranid" value="XXA3"/>
+                                </context>
+
+	                	   		<context name="mainframe">
+									<property name="host" value="dchftp.isvcs.net"/>
+									<property name="userid" value="FXITU@FT"/>
+									<property name="password" value="3DSsw44tMQBManS7xsq/Aw=="/>
+								</context>				-->			
+							</context>
+						</context>
+					</context>
+				</context>
+			</context>
+		</context>
+	</domain>
+
+</domain-properties>

@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- edited with XMLSpy v2012 rel. 2 sp1 (http://www.altova.com) by OECD OECD (OECD) -->
-<xsd:schema xmlns:crs="urn:oecd:ties:crs:v1" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ftc="urn:oecd:ties:fatca:v1" xmlns:cfc="urn:oecd:ties:commontypesfatcacrs:v1" xmlns:stf="urn:oecd:ties:stf:v4" xmlns:iso="urn:oecd:ties:isocrstypes:v1" targetNamespace="urn:oecd:ties:crs:v1" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.0">
+<xsd:schema xmlns:crs="urn:oecd:ties:crs:v1" 
+			xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+			xmlns:ftc="urn:oecd:ties:fatca:v1" 
+			xmlns:cfc="urn:oecd:ties:commontypesfatcacrs:v1" 
+			xmlns:stf="urn:oecd:ties:stf:v4" 
+			xmlns:iso="urn:oecd:ties:isocrstypes:v1" 
+			targetNamespace="urn:oecd:ties:crs:v1" 
+			elementFormDefault="qualified" 
+			attributeFormDefault="unqualified" 
+			version="1.0">
 	<xsd:import namespace="urn:oecd:ties:isocrstypes:v1" schemaLocation="isocrstypes_v1.0.xsd"/>
 	<xsd:import namespace="urn:oecd:ties:stf:v4" schemaLocation="oecdtypes_v4.1.xsd"/>
 	<xsd:import namespace="urn:oecd:ties:commontypesfatcacrs:v1" schemaLocation="CommonTypesFatcaCrs_v1.1.xsd"/>

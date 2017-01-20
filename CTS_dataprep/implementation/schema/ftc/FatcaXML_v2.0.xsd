@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- edited with XMLSpy v2013 (http://www.altova.com) by Marina Kulakov (Internal Revenue Service) -->
-<xsd:schema xmlns:ftc="urn:oecd:ties:fatca:v2" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:sfa="urn:oecd:ties:stffatcatypes:v2" xmlns:iso="urn:oecd:ties:isofatcatypes:v1" xmlns:stf="urn:oecd:ties:stf:v4" targetNamespace="urn:oecd:ties:fatca:v2" elementFormDefault="qualified" attributeFormDefault="unqualified" version="2.0">
+<xsd:schema xmlns:ftc="urn:oecd:ties:fatca:v2" 
+			xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+			xmlns:sfa="urn:oecd:ties:stffatcatypes:v2" 
+			xmlns:iso="urn:oecd:ties:isofatcatypes:v1" 
+			xmlns:stf="urn:oecd:ties:stf:v4" 
+			targetNamespace="urn:oecd:ties:fatca:v2" 
+			elementFormDefault="qualified" 
+			attributeFormDefault="unqualified" 
+			version="2.0">
 	<xsd:import namespace="urn:oecd:ties:isofatcatypes:v1" schemaLocation="isofatcatypes_v1.1.xsd"/>
 	<xsd:import namespace="urn:oecd:ties:stffatcatypes:v2" schemaLocation="stffatcatypes_v2.0.xsd"/>
 	<xsd:import namespace="urn:oecd:ties:stf:v4" schemaLocation="oecdtypes_v4.2.xsd"/>

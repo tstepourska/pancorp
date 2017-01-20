@@ -1,0 +1,88 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<crs:CRS_OECD version="1.1" xmlns:crs="urn:oecd:ties:crs:v1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:sfa="urn:oecd:ties:stffatcatypes:v1" xmlns:ftc="urn:oecd:ties:fatca:v1" xmlns:cfc="urn:oecd:ties:commontypesfatcacrs:v1" xmlns:stf="urn:oecd:ties:stf:v4" xmlns:iso="urn:oecd:ties:isocrstypes:v1">
+<crs:MessageSpec><crs:SendingCompanyIN></crs:SendingCompanyIN><crs:TransmittingCountry>CA</crs:TransmittingCountry><crs:ReceivingCountry>FR</crs:ReceivingCountry><crs:MessageType>CRS</crs:MessageType><crs:Warning></crs:Warning><crs:Contact></crs:Contact><crs:MessageRefId></crs:MessageRefId><crs:CorrMessageRefId></crs:CorrMessageRefId><crs:Timestamp>-6636-05-06T04:51:43.232</crs:Timestamp></crs:MessageSpec>
+<crs:crsBody>
+<crs:ReportingFI><crs:ResCountryCode>FR</crs:ResCountryCode><crs:Name>.124 Tammy Lynn Jones</crs:Name><crs:Address><cfc:CountryCode>FR</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>CA k1a1b</cfc:PostCode><cfc:City>Ottawa</cfc:City><cfc:CountrySubentity>ON</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>100 bank street box 111</cfc:AddressFree></crs:Address><crs:DocSpec/></crs:ReportingFI>
+<crs:ReportingGroup>
+<crs:AccountReport/>
+<crs:AccountReport/>
+<crs:AccountReport/>
+</crs:ReportingGroup>
+</crs:crsBody>
+<crs:crsBody>
+<crs:ReportingFI><crs:ResCountryCode>FR</crs:ResCountryCode><crs:Name>.124 Tammy Lynn Jones</crs:Name><crs:Address><cfc:CountryCode>FR</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>CA k1a1b</cfc:PostCode><cfc:City>Ottawa</cfc:City><cfc:CountrySubentity>ON</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>100 bank street box 111</cfc:AddressFree></crs:Address><crs:DocSpec/></crs:ReportingFI>
+<crs:ReportingGroup>
+<crs:AccountReport><crs:DocSpec/><crs:AccountNumber>1245445454545454545454adad</crs:AccountNumber><crs:AccountHolder><crs:Individual><crs:ResCountryCode>CA</crs:ResCountryCode><crs:TIN issuedBy="CA">123456789</crs:TIN><crs:Name><crs:FirstName>TOM</crs:FirstName><crs:MiddleName>Larry</crs:MiddleName><crs:LastName>SMITH</crs:LastName></crs:Name><crs:Address><cfc:CountryCode>CA</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>K1A1B1</cfc:PostCode><cfc:City>Ottawa</cfc:City><cfc:CountrySubentity>ON</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>123 Heron Road Box 123</cfc:AddressFree></crs:Address><crs:BirthInfo><crs:BirthDate>1950-01-01</crs:BirthDate></crs:BirthInfo></crs:Individual></crs:AccountHolder></crs:AccountReport>
+</crs:ReportingGroup>
+</crs:crsBody>
+<crs:crsBody>
+<crs:ReportingFI><crs:ResCountryCode>FR</crs:ResCountryCode><crs:Name>.124 Tammy Lynn Jones</crs:Name><crs:Address><cfc:CountryCode>FR</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>CA k1a1b</cfc:PostCode><cfc:City>Ottawa</cfc:City><cfc:CountrySubentity>ON</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>100 bank street box 111</cfc:AddressFree></crs:Address><crs:DocSpec/></crs:ReportingFI>
+<crs:ReportingGroup>
+<crs:AccountReport><crs:DocSpec/><crs:AccountNumber>1245445454545454545454adad</crs:AccountNumber><crs:AccountHolder><crs:Individual><crs:ResCountryCode>CA</crs:ResCountryCode><crs:TIN issuedBy="CA">123456789</crs:TIN><crs:Name><crs:FirstName>TOM</crs:FirstName><crs:MiddleName>Larry</crs:MiddleName><crs:LastName>SMITH</crs:LastName></crs:Name><crs:Address><cfc:CountryCode>CA</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>K1A1B1</cfc:PostCode><cfc:City>Ottawa</cfc:City><cfc:CountrySubentity>ON</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>123 Heron Road Box 123</cfc:AddressFree></crs:Address><crs:BirthInfo><crs:BirthDate>1950-01-01</crs:BirthDate></crs:BirthInfo></crs:Individual></crs:AccountHolder></crs:AccountReport>
+</crs:ReportingGroup>
+</crs:crsBody>
+<crs:crsBody>
+<crs:ReportingFI><crs:ResCountryCode>FR</crs:ResCountryCode><crs:Name>.124 Tammy Lynn Jones</crs:Name><crs:Address><cfc:CountryCode>FR</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>CA k1a1b</cfc:PostCode><cfc:City>Ottawa</cfc:City><cfc:CountrySubentity>ON</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>100 bank street box 111</cfc:AddressFree></crs:Address><crs:DocSpec/></crs:ReportingFI>
+<crs:ReportingGroup>
+<crs:AccountReport><crs:DocSpec/><crs:AccountNumber>1245445454545454545454adad</crs:AccountNumber><crs:AccountHolder><crs:Individual><crs:ResCountryCode>CA</crs:ResCountryCode><crs:TIN issuedBy="CA">123456789</crs:TIN><crs:Name><crs:FirstName>TOM</crs:FirstName><crs:MiddleName>Larry</crs:MiddleName><crs:LastName>SMITH</crs:LastName></crs:Name><crs:Address><cfc:CountryCode>CA</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>K1A1B1</cfc:PostCode><cfc:City>Ottawa</cfc:City><cfc:CountrySubentity>ON</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>123 Heron Road Box 123</cfc:AddressFree></crs:Address><crs:BirthInfo><crs:BirthDate>1950-01-01</crs:BirthDate></crs:BirthInfo></crs:Individual></crs:AccountHolder></crs:AccountReport>
+</crs:ReportingGroup>
+</crs:crsBody>
+<crs:crsBody>
+<crs:ReportingFI><crs:ResCountryCode>FR</crs:ResCountryCode><crs:Name>.124 Tammy Lynn Jones</crs:Name><crs:Address><cfc:CountryCode>FR</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>CA k1a1b</cfc:PostCode><cfc:City>Ottawa</cfc:City><cfc:CountrySubentity>ON</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>100 bank street box 111</cfc:AddressFree></crs:Address><crs:DocSpec/></crs:ReportingFI>
+<crs:ReportingGroup>
+</crs:ReportingGroup>
+</crs:crsBody>
+<crs:crsBody>
+<crs:ReportingFI><crs:ResCountryCode>FR</crs:ResCountryCode><crs:Name>.777 Caitlin Stewart</crs:Name><crs:Address><cfc:CountryCode>FR</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>CA K1Y0B</cfc:PostCode><cfc:City>ottawa</cfc:City><cfc:CountrySubentity>on</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>707 street</cfc:AddressFree></crs:Address><crs:DocSpec/></crs:ReportingFI>
+<crs:ReportingGroup>
+<crs:AccountReport><crs:DocSpec/><crs:AccountNumber>client13244555</crs:AccountNumber><crs:AccountHolder><crs:Individual><crs:ResCountryCode>BD</crs:ResCountryCode><crs:Name><crs:FirstName></crs:FirstName><crs:LastName></crs:LastName></crs:Name><crs:Address><cfc:CountryCode>CA</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>K1A1B1</cfc:PostCode><cfc:City>Ottawa</cfc:City><cfc:CountrySubentity>ON</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>123 Heron Road Box 123</cfc:AddressFree></crs:Address></crs:Individual></crs:AccountHolder></crs:AccountReport>
+</crs:ReportingGroup>
+</crs:crsBody>
+<crs:crsBody>
+<crs:ReportingFI><crs:ResCountryCode>FR</crs:ResCountryCode><crs:Name>.124 Don t Make me Resubmit This</crs:Name><crs:Address><cfc:CountryCode>FR</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>CA k1a1b</cfc:PostCode><cfc:City>Ottawa</cfc:City><cfc:CountrySubentity>ON</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>100 bank street box 111</cfc:AddressFree></crs:Address><crs:DocSpec/></crs:ReportingFI>
+<crs:ReportingGroup>
+<crs:AccountReport><crs:DocSpec/><crs:AccountNumber></crs:AccountNumber><crs:AccountHolder><crs:Individual><crs:ResCountryCode>CA</crs:ResCountryCode><crs:TIN issuedBy="US">110749777</crs:TIN><crs:Name><crs:FirstName>CATHY</crs:FirstName><crs:LastName>BAKER</crs:LastName></crs:Name><crs:Address><cfc:CountryCode>KE</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>32132</cfc:PostCode><cfc:City>Vienna</cfc:City><cfc:CountrySubentity>on</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>785 Paris ave</cfc:AddressFree></crs:Address><crs:BirthInfo><crs:BirthDate>1984-04-19</crs:BirthDate></crs:BirthInfo></crs:Individual></crs:AccountHolder></crs:AccountReport>
+</crs:ReportingGroup>
+</crs:crsBody>
+<crs:crsBody>
+<crs:ReportingFI><crs:ResCountryCode>FR</crs:ResCountryCode><crs:Name>.124 Kit Harrington</crs:Name><crs:Address><cfc:CountryCode>FR</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>CA k1a1b</cfc:PostCode><cfc:City>Ottawa</cfc:City><cfc:CountrySubentity>OBN</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>100 bank street box 111</cfc:AddressFree></crs:Address><crs:DocSpec/></crs:ReportingFI>
+<crs:ReportingGroup>
+<crs:AccountReport><crs:DocSpec/><crs:AccountNumber></crs:AccountNumber><crs:AccountHolder><crs:Individual><crs:ResCountryCode>CA</crs:ResCountryCode><crs:Name><crs:FirstName></crs:FirstName><crs:LastName></crs:LastName></crs:Name><crs:Address><cfc:CountryCode>CA</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>a1n3c9</cfc:PostCode><cfc:City>St John s</cfc:City><cfc:CountrySubentity>NL</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>16 topaz Place Box 123</cfc:AddressFree></crs:Address></crs:Individual></crs:AccountHolder></crs:AccountReport>
+</crs:ReportingGroup>
+</crs:crsBody>
+<crs:crsBody>
+<crs:ReportingFI><crs:ResCountryCode>FR</crs:ResCountryCode><crs:Name>.124 Indiana Jones</crs:Name><crs:Address><cfc:CountryCode>FR</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>CA k1a1b</cfc:PostCode><cfc:City>Ottawa</cfc:City><cfc:CountrySubentity>OBN</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>100 bank street box 111</cfc:AddressFree></crs:Address><crs:DocSpec/></crs:ReportingFI>
+<crs:ReportingGroup>
+<crs:AccountReport><crs:DocSpec/><crs:AccountNumber>1245445454545454545454adad</crs:AccountNumber><crs:AccountHolder><crs:Individual><crs:ResCountryCode>CA</crs:ResCountryCode><crs:Name><crs:FirstName></crs:FirstName><crs:LastName></crs:LastName></crs:Name><crs:Address><cfc:CountryCode>CA</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>K1A1B1</cfc:PostCode><cfc:City>Ottawa</cfc:City><cfc:CountrySubentity>ON</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>123 Heron Road Box 123</cfc:AddressFree></crs:Address></crs:Individual></crs:AccountHolder></crs:AccountReport>
+</crs:ReportingGroup>
+</crs:crsBody>
+<crs:crsBody>
+<crs:ReportingFI><crs:ResCountryCode>FR</crs:ResCountryCode><crs:Name>.124 Layla TAYLOR</crs:Name><crs:Address><cfc:CountryCode>FR</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>US K1V6P</cfc:PostCode><cfc:City>Ottawa</cfc:City><cfc:CountrySubentity>ON</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>1412 no street Box 255</cfc:AddressFree></crs:Address><crs:DocSpec/></crs:ReportingFI>
+<crs:ReportingGroup>
+<crs:AccountReport><crs:DocSpec/><crs:AccountNumber>EndtoEnd123456789</crs:AccountNumber><crs:AccountHolder><crs:Individual><crs:ResCountryCode>AL</crs:ResCountryCode><crs:ResCountryCode>NR</crs:ResCountryCode><crs:ResCountryCode>NP</crs:ResCountryCode><crs:ResCountryCode>NL</crs:ResCountryCode><crs:ResCountryCode>NC</crs:ResCountryCode><crs:Name><crs:FirstName></crs:FirstName><crs:LastName></crs:LastName></crs:Name><crs:Address><cfc:CountryCode>CA</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>K1A1B1</cfc:PostCode><cfc:City>Ottawa</cfc:City><cfc:CountrySubentity>ON</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>123 Heron Road Box 123</cfc:AddressFree></crs:Address></crs:Individual></crs:AccountHolder></crs:AccountReport>
+<crs:AccountReport><crs:DocSpec/><crs:AccountNumber>EndtoEnd123456789</crs:AccountNumber><crs:AccountHolder><crs:Individual><crs:ResCountryCode>AL</crs:ResCountryCode><crs:ResCountryCode>NR</crs:ResCountryCode><crs:ResCountryCode>NP</crs:ResCountryCode><crs:ResCountryCode>NL</crs:ResCountryCode><crs:ResCountryCode>NC</crs:ResCountryCode><crs:Name><crs:FirstName></crs:FirstName><crs:LastName></crs:LastName></crs:Name><crs:Address><cfc:CountryCode>CA</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>K1A1B1</cfc:PostCode><cfc:City>Ottawa</cfc:City><cfc:CountrySubentity>ON</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>123 Heron Road Box 123</cfc:AddressFree></crs:Address></crs:Individual></crs:AccountHolder></crs:AccountReport>
+</crs:ReportingGroup>
+</crs:crsBody>
+<crs:crsBody>
+<crs:ReportingFI><crs:ResCountryCode>FR</crs:ResCountryCode><crs:Name>.124 Shelly Jones</crs:Name><crs:Address><cfc:CountryCode>FR</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>CA K7S1g</cfc:PostCode><cfc:City>Ottawa</cfc:City><cfc:CountrySubentity>OBN</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>100 bank street box 111</cfc:AddressFree></crs:Address><crs:DocSpec/></crs:ReportingFI>
+<crs:ReportingGroup>
+<crs:AccountReport><crs:DocSpec/><crs:AccountNumber>777888444</crs:AccountNumber><crs:AccountHolder><crs:Individual><crs:ResCountryCode>CA</crs:ResCountryCode><crs:TIN issuedBy="US">852741235</crs:TIN><crs:Name><crs:FirstName>CHRIS</crs:FirstName><crs:MiddleName>p</crs:MiddleName><crs:LastName>VANT</crs:LastName></crs:Name><crs:Address><cfc:CountryCode>AI</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>K1A1B1</cfc:PostCode><cfc:City>Midland</cfc:City><cfc:CountrySubentity>ON</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>123 Heron Road Box 123</cfc:AddressFree></crs:Address><crs:BirthInfo><crs:BirthDate>1997-05-06</crs:BirthDate></crs:BirthInfo></crs:Individual></crs:AccountHolder></crs:AccountReport>
+</crs:ReportingGroup>
+</crs:crsBody>
+<crs:crsBody>
+<crs:ReportingFI><crs:ResCountryCode>FR</crs:ResCountryCode><crs:Name>.123 Melissa Vader</crs:Name><crs:Address><cfc:CountryCode>FR</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>US K1B3K</cfc:PostCode><cfc:City>Ottawa</cfc:City><cfc:CountrySubentity>ON</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>1720 Roman St</cfc:AddressFree></crs:Address><crs:DocSpec/></crs:ReportingFI>
+<crs:ReportingGroup>
+<crs:AccountReport><crs:DocSpec/><crs:AccountNumber>End to End WF all codes1</crs:AccountNumber><crs:AccountHolder><crs:Individual><crs:ResCountryCode>AD</crs:ResCountryCode><crs:ResCountryCode>AO</crs:ResCountryCode><crs:ResCountryCode>AI</crs:ResCountryCode><crs:ResCountryCode>AQ</crs:ResCountryCode><crs:ResCountryCode>AG</crs:ResCountryCode><crs:Name><crs:FirstName></crs:FirstName><crs:LastName></crs:LastName></crs:Name><crs:Address><cfc:CountryCode>CA</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>C1E1Z3</cfc:PostCode><cfc:City>Berlin</cfc:City><cfc:CountrySubentity>QC</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>RR 23 Box 123</cfc:AddressFree></crs:Address></crs:Individual></crs:AccountHolder></crs:AccountReport>
+</crs:ReportingGroup>
+</crs:crsBody>
+<crs:crsBody>
+<crs:ReportingFI><crs:ResCountryCode>FR</crs:ResCountryCode><crs:Name>.124 Don t Make me Resubmit This</crs:Name><crs:Address><cfc:CountryCode>FR</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>CA k1a1b</cfc:PostCode><cfc:City>Ottawa</cfc:City><cfc:CountrySubentity>ON</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>100 bank street box 111</cfc:AddressFree></crs:Address><crs:DocSpec/></crs:ReportingFI>
+<crs:ReportingGroup>
+<crs:AccountReport><crs:DocSpec/><crs:AccountNumber>777888444</crs:AccountNumber><crs:AccountHolder><crs:Individual><crs:ResCountryCode>CA</crs:ResCountryCode><crs:TIN issuedBy="US">000000000</crs:TIN><crs:Name><crs:FirstName>CATHY</crs:FirstName><crs:LastName>BAKER</crs:LastName></crs:Name><crs:Address><cfc:CountryCode>AM</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>K81231</cfc:PostCode><cfc:City>Copperfield</cfc:City><cfc:CountrySubentity>Ariz</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>777 Greater Madawaska lane box 1233</cfc:AddressFree></crs:Address></crs:Individual></crs:AccountHolder></crs:AccountReport>
+</crs:ReportingGroup>
+</crs:crsBody>
+<crs:crsBody>
+<crs:ReportingFI><crs:ResCountryCode>FR</crs:ResCountryCode><crs:Name>.124 Tammy Lynn Jones</crs:Name><crs:Address><cfc:CountryCode>FR</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>CA k1a1b</cfc:PostCode><cfc:City>Ottawa</cfc:City><cfc:CountrySubentity>OBN</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>100 bank street box 111</cfc:AddressFree></crs:Address><crs:DocSpec/></crs:ReportingFI>
+<crs:ReportingGroup>
+<crs:AccountReport><crs:DocSpec/><crs:AccountNumber>dfdf4554cfdf</crs:AccountNumber><crs:AccountHolder><crs:Individual><crs:ResCountryCode>CA</crs:ResCountryCode><crs:TIN issuedBy="US">110749777</crs:TIN><crs:Name><crs:FirstName>ARDENE</crs:FirstName><crs:MiddleName>L</crs:MiddleName><crs:LastName>TORRADI</crs:LastName></crs:Name><crs:Address><cfc:CountryCode>CA</cfc:CountryCode><cfc:AddressFix><cfc:PostCode>a1n3c9</cfc:PostCode><cfc:City>St John s</cfc:City><cfc:CountrySubentity>NL</cfc:CountrySubentity></cfc:AddressFix><cfc:AddressFree>16 topaz Place Box 123</cfc:AddressFree></crs:Address><crs:BirthInfo><crs:BirthDate>1964-11-21</crs:BirthDate></crs:BirthInfo></crs:Individual></crs:AccountHolder></crs:AccountReport>
+</crs:ReportingGroup></crs:crsBody></crs:CRS_OECD>

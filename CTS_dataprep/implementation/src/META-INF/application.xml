@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <application xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/application_5.xsd" version="5">
 
-    <display-name>fxit.ctsagent</display-name>
+    <display-name>fxit.xmlt</display-name>
     <module>
-        <ejb>fxit.ctsagent.jar</ejb>
+        <ejb>fxit.xmlt.jar</ejb>
     </module>
-    <module>
+   <!--  <module>
         <web>
-            <web-uri>fxit.ctsagent.war</web-uri>
-            <context-root>ebci/fxit/ctsagent</context-root>
+            <web-uri>fxit.xmlt.war</web-uri>
+            <context-root>ebci/fxit/xmlt</context-root>
         </web>
-    </module>
+    </module>-->
 </application>

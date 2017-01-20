@@ -8,8 +8,8 @@
 			</stateless-clustering>
 			
         	<business-interface-jndi-name-map>
-            	<business-remote>ca.gc.cra.fxit.ctsagent.batch.SampleInterface</business-remote>
-            	<jndi-name>ca.gc.cra.fxit.ctsagent.batch.SampleInterface</jndi-name>
+            	<business-remote>ca.gc.cra.fxit.xmlt.batch.SampleInterface</business-remote>
+            	<jndi-name>ca.gc.cra.fxit.xmlt.batch.SampleInterface</jndi-name>
         	</business-interface-jndi-name-map>
         </stateless-session-descriptor>
         <enable-call-by-reference>True</enable-call-by-reference>

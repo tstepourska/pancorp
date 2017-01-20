@@ -6,19 +6,6 @@
 
     <display-name>CTS Agent Web</display-name>
     
-    <context-param>
-        <description>
-            Struts2 has changed the way that the plugin loads tiles configurations.
-            This context-param was added to insulate the application from future variability in this configuration assignment.
-        </description>
-        <param-name>
-          org.apache.tiles.definition.DefinitionsFactory.DEFINITIONS_CONFIG
-        </param-name>
-        <param-value>
-          /WEB-INF/tiles.xml,/WEB-INF/tiles_fr.xml
-        </param-value>
-    </context-param>
-    
     <listener>
         <listener-class>
             ca.gc.cra.fxit.ctsagent.web.listeners.WebAppMonitor

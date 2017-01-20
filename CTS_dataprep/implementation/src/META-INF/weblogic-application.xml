@@ -5,16 +5,16 @@
     <!-- top level modules -->
    	<module-ref> 
    		<!-- EJB -->
-      	<module-uri>fxit.ctsagent.jar</module-uri> 
+      	<module-uri>fxit.xmlt.jar</module-uri> 
    	</module-ref>
-   	<module-ref> 
+  <!--  	<module-ref> -->
    		<!-- Web -->
-      	<module-uri>fxit.ctsagent.war</module-uri> 
-   	</module-ref>
+ <!--      	<module-uri>fxit.xmlt.war</module-uri> 
+   	</module-ref>-->
 	</classloader-structure>
 
     <prefer-application-packages>
-        <package-name>org.apache.commons.logging.*</package-name>
+       <!--  <package-name>org.apache.commons.logging.*</package-name>-->
     	<package-name>org.apache.log4j.*</package-name>
     </prefer-application-packages>  
     
