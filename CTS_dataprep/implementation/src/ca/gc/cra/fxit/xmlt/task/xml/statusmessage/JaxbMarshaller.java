@@ -10,11 +10,12 @@ import org.apache.log4j.Logger;
 
 import org.xml.sax.SAXException;
 
-import ca.gc.cra.fxit.xmlt.task.xml.CustomXMLStreamWriter;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.statusmessage.MessageSpecType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.statusmessage.OriginalMessageType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.statusmessage.ValidationErrorsType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.statusmessage.ValidationResultType;
+import ca.gc.cra.fxit.xmlt.task.xml.CommonXMLStreamWriter;
+import ca.gc.cra.fxit.xmlt.generated.jaxb.statusmessage.CrsMessageStatusType;
+import ca.gc.cra.fxit.xmlt.generated.jaxb.statusmessage.MessageSpecType;
+import ca.gc.cra.fxit.xmlt.generated.jaxb.statusmessage.OriginalMessageType;
+import ca.gc.cra.fxit.xmlt.generated.jaxb.statusmessage.ValidationErrorsType;
+import ca.gc.cra.fxit.xmlt.generated.jaxb.statusmessage.ValidationResultType;
 
 
 /**
@@ -30,9 +31,11 @@ public class JaxbMarshaller {
 	
 	//ROOT:  CRSStatusMessage_OECD  attributes  version="1.0"
     private final static QName MESSAGE_SPEC_QNAME 		= new QName("urn:oecd:ties:csm:v1", "MessageSpec", 			"csm");	//1
-    private final static QName ORIGINAL_MSG_QNAME 		= new QName("urn:oecd:ties:csm:v1", "OriginalMessageType", 	"csm");	//   
-    private final static QName VALIDATION_ERRORS_QNAME 	= new QName("urn:oecd:ties:csm:v1", "ValidationErrorsType", "csm");	//   
-    private final static QName VALIDATION_RESULT_QNAME 	= new QName("urn:oecd:ties:csm:v1", "ValidationResultType", "csm");	// 
+    // private final static QName CRS_MSG_STATUS_QNAME 	= new QName("urn:oecd:ties:csm:v1", "CrsStatusMessage", "csm");	// 
+    private final static QName ORIGINAL_MSG_QNAME 		= new QName("urn:oecd:ties:csm:v1", "OriginalMessage", 	"csm");	//   
+    private final static QName VALIDATION_ERRORS_QNAME 	= new QName("urn:oecd:ties:csm:v1", "ValidationErrors", "csm");	//   
+    private final static QName VALIDATION_RESULT_QNAME 	= new QName("urn:oecd:ties:csm:v1", "ValidationResult", "csm");	// 
+    
     
     /**
      * Single JAXBContext instance for JaxbMarshaller
@@ -46,6 +49,7 @@ public class JaxbMarshaller {
             if (context == null) {
             	context = JAXBContext.newInstance(
             			MessageSpecType.class,
+            			CrsMessageStatusType.class,
             			OriginalMessageType.class,
             			ValidationErrorsType.class,
             			ValidationResultType.class
@@ -77,11 +81,11 @@ public class JaxbMarshaller {
 	    return fragmentMarshaller;
     }
     
-    public void startDocument(CustomXMLStreamWriter writer) throws Exception {
+    public void startDocument(CommonXMLStreamWriter writer) throws Exception {
     	writer.writeStartDocument	("UTF-8","1.0");
     	writer.writeCharacters		("\n");
 		writer.writeStartElement	("csm", "CRSStatusMessage_OECD", "urn:oecd:ties:csm:v1");	
-		writer.writeAttribute		("version", "1.1");
+		writer.writeAttribute		("version", "1.0");
 
 		/*
 		 * xmlns:csm="urn:oecd:ties:csm:v1" 
@@ -89,6 +93,7 @@ public class JaxbMarshaller {
 		 * xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
 		 */
 
+		writer.writeDefaultNamespace("urn:oecd:ties:csm:v1");
 		writer.writeCustomNamespace		("csm", "urn:oecd:ties:csm:v1");
 		writer.writeCustomNamespace		("xsi", "http://www.w3.org/2001/XMLSchema-instance");
 		writer.writeCustomNamespace		("iso", "urn:oecd:ties:isocsmtypes:v1");
@@ -97,7 +102,7 @@ public class JaxbMarshaller {
     }
         
 	/**
-	 * This method will perform the transformation of the input parameters into one XML MessageSpec.  
+	 * Transforms input parameters into one XML MessageSpec.  
 	 *
 	 * @param reportingFIRec
 	 * @param warning
@@ -109,26 +114,31 @@ public class JaxbMarshaller {
 	 * 
 	 * @throws Exception
 	 */
-	public void transformMessageSpec(
-			MessageSpecType messageSpec,
-            CustomXMLStreamWriter writer
+	public void transformMessageSpec(MessageSpecType messageSpec, CommonXMLStreamWriter writer) throws Exception {
+		//Marshaller marshaller = getFragmentMarshaller();
+		JAXBElement<MessageSpecType> el = new JAXBElement<MessageSpecType>(MESSAGE_SPEC_QNAME,MessageSpecType.class, messageSpec);		
+		getFragmentMarshaller().marshal(el, writer);
+	}
+	/*
+	public void transformCrsMessageStatusType(
+			CrsMessageStatusType crsMessageStatusType,
+            CommonXMLStreamWriter writer
 	) throws Exception {
-			String fp = "transformMessageSpec: ";
+			String fp = "transformCrsMessageStatusType: ";
 			if(lg.isDebugEnabled()){
-		lg.debug(fp + "transforming messageSpec: " + messageSpec);
+		lg.debug(fp + "transforming CrsMessageStatusType: " + crsMessageStatusType);
 		lg.debug(fp + "using writer: " + writer);
 			}
 		Marshaller marshaller = getFragmentMarshaller();
-		JAXBElement<MessageSpecType> el = new JAXBElement<MessageSpecType>(MESSAGE_SPEC_QNAME,MessageSpecType.class, messageSpec);		
+		JAXBElement<CrsMessageStatusType> el = new JAXBElement<CrsMessageStatusType>(CRS_MSG_STATUS_QNAME ,CrsMessageStatusType.class, crsMessageStatusType);		
 		if(lg.isDebugEnabled())
-			lg.debug(fp + "created JAXBElement MessageSpecType: " + el);
+			lg.debug(fp + "created JAXBElement CrsMessageStatusType: " + el);
 
 	    marshaller.marshal(el, writer);
-	}
+	}*/
 		
 	/**
-	 * Transforms an AccountReport record - one SLIP, one ACCOUNT HOLDER, and zero or more 
-	 * CONTROLLING PERSON records - into one XML AccountReport
+	 * Transforms an OriginalMessageType 
 	 * 
 	 * @param slipRec
 	 * @param accountHolderRec
@@ -137,57 +147,56 @@ public class JaxbMarshaller {
 	 * 
 	 * @throws Exception
 	 */
-	public void transformOriginalMessageType(
-			OriginalMessageType omt, 
-		CustomXMLStreamWriter writer) throws Exception {
-		
-		
+	public void transformOriginalMessageType(OriginalMessageType omt, CommonXMLStreamWriter writer) throws Exception {
 		writer.writeCharacters("\n");
 		writer.flush();
 		
-		writer.writeStartElement("csm", "crsStatusMessage", null);//namespace uri "urn:oecd:ties:crs:v1"
+		writer.writeStartElement("csm", "CrsStatusMessage", "urn:oecd:ties:crs:v1");
 		writer.writeCharacters		("\n");
 		writer.flush();		
 		
-		Marshaller marshaller = getFragmentMarshaller();
-	    marshaller.marshal(new JAXBElement<OriginalMessageType>(
+		//Marshaller marshaller = getFragmentMarshaller();
+		getFragmentMarshaller().marshal(new JAXBElement<OriginalMessageType>(
 	        						ORIGINAL_MSG_QNAME,
 	        						OriginalMessageType.class, omt),  writer);
 	}
 	
 	/**
-	 * This method will perform the transformation of one SUMMARY record into one XML ReportingFI.
+	 * Transforms ValidationErrorsType element
 	 * 
-	 * @param reportingFIRec	input is read from this record
-	 * @param writer			the output is written to this writer
-	 * @throws BridgeException
+	 * @param validationErrors		input is read from this record
+	 * @param writer				the output is written to this writer
+	 * @throws Exception
 	 */
-	public void transformValidationErrorsType(ValidationErrorsType vet,
-			CustomXMLStreamWriter writer) throws Exception {
-
+	public void transformValidationErrorsType(ValidationErrorsType validationErrors,	CommonXMLStreamWriter writer) throws Exception {
 		writer.writeCharacters("\n");	
 		writer.flush();
 	    
-		Marshaller marshaller = getFragmentMarshaller();
-        marshaller.marshal(new JAXBElement<ValidationErrorsType>(
+		//Marshaller marshaller = getFragmentMarshaller();
+		getFragmentMarshaller().marshal(new JAXBElement<ValidationErrorsType>(
         		VALIDATION_ERRORS_QNAME,
-        		ValidationErrorsType.class, vet), writer);
+        		ValidationErrorsType.class, validationErrors), writer);
 	}
 	
-	public void transformValidationResultType(ValidationResultType vrt, 
-			CustomXMLStreamWriter writer) throws Exception {
+	/**
+	 * Transforms ValidationResultType
+	 * 
+	 * @param vrt
+	 * @param writer
+	 * @throws Exception
+	 */
+	public void transformValidationResultType(ValidationResultType validationResult, CommonXMLStreamWriter writer) throws Exception {
 		writer.writeCharacters("\n");	
 		writer.flush();
 	    
-		Marshaller marshaller = getFragmentMarshaller();
-        marshaller.marshal(new JAXBElement<ValidationResultType>(
+		//Marshaller marshaller = getFragmentMarshaller();
+		getFragmentMarshaller().marshal(new JAXBElement<ValidationResultType>(
         		VALIDATION_RESULT_QNAME,
-        		ValidationResultType.class, vrt), writer);
+        		ValidationResultType.class, validationResult), writer);
         
         writer.writeCharacters("\n");
 		writer.writeEndElement(); //end of CrsStatusMessage
 		writer.writeCharacters("\n");
-		writer.flush();
-		
+		writer.flush();	
 	}
 }

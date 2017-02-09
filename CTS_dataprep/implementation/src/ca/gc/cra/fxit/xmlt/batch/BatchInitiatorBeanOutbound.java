@@ -4,8 +4,8 @@ import ca.gc.ccra.rccr.batch.BatchConfigParser;
 
 /*
 import ca.gc.cra.fxit.ca2us.batch.TransformationParameters;
-import ca.gc.cra.fxit.xmlt.transformation.cob2java.ftc.IP6MSGSM;*/
-/*import ca.gc.cra.fxit.xmlt.transformation.cob2java.ftc.IP6PRTSM;
+import ca.gc.cra.fxit.xmlt.generated.cob2java.ftc.IP6MSGSM;*/
+/*import ca.gc.cra.fxit.xmlt.generated.cob2java.ftc.IP6PRTSM;
 */
 
 import java.io.BufferedReader;
@@ -24,6 +24,7 @@ import javax.annotation.Resource;
 import javax.ejb.*;
 import javax.naming.Context;
 import javax.naming.InitialContext;
+import javax.rmi.PortableRemoteObject;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -35,12 +36,11 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+//import ca.gc.cra.fxit.ca2us.batch.JNDINames;
+//import ca.gc.cra.fxit.ca2us.data.RetrieveFxmtDataHome;
 import ca.gc.cra.fxit.xmlt.model.PackageInfo;
-import ca.gc.cra.fxit.xmlt.task.ITask;
+import ca.gc.cra.fxit.xmlt.model.PackageInfoFactory;
 import ca.gc.cra.fxit.xmlt.job.TaskManager;
-import ca.gc.cra.fxit.xmlt.transformation.cob2java.ftc.IP6PRTHD;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.metadata.CTSCommunicationTypeCdType;
-import ca.gc.cra.fxit.xmlt.transformation.wrapper.crs.MessageHeaderWrapper;
 import ca.gc.cra.fxit.xmlt.util.*;
 
 /**
@@ -74,12 +74,14 @@ public class BatchInitiatorBeanOutbound implements SessionBean {
 		
 		String fp = "execute: ";
 		log.info(fp + "args:  " + args);	
-		AppProperties.loadBatchProperties(args);
+		// 1. load configuration
+		Globals.loadBatchProperties(args);
                 
 		//create task manager
 		TaskManager taskman = new TaskManager();		
 		PackageInfo p = null;
-		final File sendingRepository 	= new File(Constants.OUTBOUND_UNPROCESSED_TOSEND_DIR);
+		String sendingRepPath = Globals.baseFileDir + Globals.OUTBOUND_UNPROCESSED_TOSEND_DIR;
+		final File sendingRepository 	= new File(sendingRepPath);
 		
 		try {		
 			//////////////////////////////////////////////////
@@ -92,14 +94,26 @@ public class BatchInitiatorBeanOutbound implements SessionBean {
 			
 				String filename = file.getName().trim();
 				log.info(fp + "found file to send: " + filename);
+				
+				String srcFilepath = sendingRepPath + filename; 
+				String targetFilepath = Globals.FILE_WORKING_DIR+ filename;
+				
+				//move file from local unprocessed dir to the local temporary working directory
+				boolean moved = Utils.moveFile(srcFilepath, targetFilepath);
+				if(!moved){
+					log.error("can't move the file " + filename + " into temporary location");
+					continue;
+				}
 			
-				p = initPackage(Constants.OUTBOUND_UNPROCESSED_TOSEND_DIR, filename, Constants.JOB_OUTBOUND);
+				p = PackageInfoFactory.createPackageInfo(//sendingRepPath, 
+														Globals.FILE_WORKING_DIR,
+														filename, 
+														Constants.JOB_OUTBOUND);
 				status = taskman.invoke(p);
 
 				try {
 					Thread.sleep(1000);
-				} catch( InterruptedException ex ) {}
-			
+				} catch( InterruptedException ex ) {}			
 			}
 			
 			log.info(fp + "Done file list");
@@ -120,127 +134,6 @@ public class BatchInitiatorBeanOutbound implements SessionBean {
 	 */
 	public int getStatus() {
 		return status;
-	}
-
-	/**
-	 * Initializes new package info object and sets variables 
-	 * necessary to find a job appropriate for processing this package: 
-	 * job direction, package type (data or status message), sending and receiving country, data owner prefix - crs, cbc, etr, ftc
-	 * 
-	 */
-	private PackageInfo initPackage(String unprocessedPath, String filename, String jobDirection) throws Exception{	
-		String fp = "initPackage: ";
-		PackageInfo p = new PackageInfo();			
-		String dataProvider = null;
-		
-		//TODO assuming here that the header contains info required to determine:
-		// sender country
-		// data or status message content
-		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(unprocessedPath + filename), Constants.DEFAULT_ENCODING));){
-			String line;
-			int transCD = -1;
-			String[] arr = filename.split("\\.");
-			int len = arr.length;
-			log.debug(fp + "len: " + len);
-			String cc = arr[2];
-			
-			dataProvider = getDataProvider(filename);
-			if( dataProvider==null)
-				throw new Exception("Unsupported data provider!");
-			p.setDataProvider( dataProvider);
-	
-			String sendingCountry = cc.substring(0,2);
-			String receivingCountry = cc.substring(2);
-			log.debug(fp + "sending from " + sendingCountry + " to " + receivingCountry);
-			p.setSendingCountry(sendingCountry);
-			p.setReceivingCountry(receivingCountry);
-			
-			p.setOrigFilename(filename);
-			p.setInputPathName(unprocessedPath);
-			p.setJobDirection(jobDirection);
-			// !!! TODO - determine type of package
-			//p.setPackageType(Constants.PKG_TYPE_STATUS);
-		//}
-		//else{
-			p.setPackageType(Constants.PKG_TYPE_DATA); // or Status message?
-			
-			//!!! TODO: determine dataProviderPrefix: cbc, crs, etr, ftc
-			//p.setDataProvider("crs");
-			//set based on data provider and message/package type
-			p.setCtsCommunicationType(CTSCommunicationTypeCdType.CRS);
-			/*p.setCtsCommunicationType(CTSCommunicationTypeCdType.CRS_STATUS);
-			p.setCtsCommunicationType(CTSCommunicationTypeCdType.CBC);
-			p.setCtsCommunicationType(CTSCommunicationTypeCdType.CBC_STATUS);
-			p.setCtsCommunicationType(CTSCommunicationTypeCdType.ETR);
-			p.setCtsCommunicationType(CTSCommunicationTypeCdType.ETR_STATUS);
-			*/
-
-			// figure out suffix:
-			if(jobDirection.equalsIgnoreCase(Constants.JOB_OUTBOUND)){
-				p.setJobSuffix(Constants.SUFFIX_PAYLOAD);
-			}			
-
-	//outer:
-			while( (line=reader.readLine()) != null) {		
-				//reset
-				transCD = -1;
-				//log.debug(fp + "line: " + line);
-				
-				try {
-					transCD = Integer.parseInt(line.substring(0,4));
-				//log.debug(fp + "transCD: " + transCD);
-			
-				
-				switch(transCD){
-				case Constants.HDR_PKG_REF_REC_TRANS_CD: //1001:
-					log.debug(fp + "case 1001: header");
-					//log.debug(fp + "line: " + line);
-					MessageHeaderWrapper header = new MessageHeaderWrapper(line);
-
-					//initialize reporting period field, month and day are null
-					XMLGregorianCalendar cal = Utils.generateReportingPeriod(header.getRtnTxYr(),null,null);
-					log.debug(fp + "tax year calendar from header: " + cal);				
-					//initialize tax year
-					p.setReportingPeriod(cal);
-					
-					break;
-				default:
-					log.debug(fp + "case default: " + transCD);
-				}
-				}
-				catch(Exception e){
-					//no transCd therefore status message:
-					if(line.toLowerCase().indexOf("status")>-1){
-						p.setPackageType(Constants.PKG_TYPE_STATUS_MESSAGE);
-					}
-					else{
-						p.setPackageType(Constants.PKG_TYPE_DATA);
-					}
-					//Utils.logError(log, e);
-				}
-					
-				break;
-			}
-		}
-		catch(Exception e){
-			Utils.logError(log, e);
-			throw e;
-		}
-		
-		return p;
-	}
-	
-	private String getDataProvider(String filename) throws Exception {
-		String dp = null;
-		
-		for(int i=0;i<AppProperties.DATA_PROVIDERS.length;i++){
-			if(filename.indexOf(AppProperties.DATA_PROVIDERS[i])>-1){
-				dp = AppProperties.DATA_PROVIDERS[i];
-				break;
-			}
-		}
-			
-		return dp;
 	}
 	
 	@PostConstruct
@@ -277,6 +170,20 @@ public class BatchInitiatorBeanOutbound implements SessionBean {
     
 	public void ejbCreate() {
 		log.debug("ejbCreate(), instance");	
+		// Get a reference to the RetrieveFxmtDataBean bean.
+		try
+		{
+			log.debug("ejbCreate: called");
+		  InitialContext context = new InitialContext();
+		 // Object objRef = context.lookup(JNDINames.JNDI_FXMT_DATA_HOME);
+		  //RetrieveFxmtDataHome home = (RetrieveFxmtDataHome) PortableRemoteObject.narrow(objRef, Class.forName(RetrieveFxmtDataHome.jndiName));
+		  //fxmtDataBean = home.create();
+		  log.debug("ejbCreate: done: context, objRef, home and fxmtDataBean created");
+		}
+		catch(Exception ex)
+		{
+           	log.fatal("Failed to create FXMT data bean", ex);
+		}
 	}
 
 	@Override
@@ -301,9 +208,13 @@ public class BatchInitiatorBeanOutbound implements SessionBean {
 		log.debug("ejbPassivate()");		
 	}
 
+	/**
+	 * For testing only TODO to move to JUnit
+	 * @param args
+	 */
 	public static void main(String[] args){
 		BatchInitiatorBeanOutbound b = new BatchInitiatorBeanOutbound();
-		String filename = "fxit.ctsagent.batch.xml";
+		String filename = "fxit.xmlt.batch.xml";
 		
 		String path = "C:/git/repository/CTS_dataprep/implementation/cfg/";
 		
@@ -311,7 +222,7 @@ public class BatchInitiatorBeanOutbound implements SessionBean {
 		log.info(xml);
 		try {
 			b.execute(filename);
-			//AppProperties.loadBatchProperties(path + filename);
+			//Globals.loadBatchProperties(path + filename);
 			//b.loadBatchProperties(xml);
 		}
 		catch(Exception e){

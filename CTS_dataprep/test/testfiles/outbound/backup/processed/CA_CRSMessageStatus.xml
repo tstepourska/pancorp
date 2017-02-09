@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<csm:CRSStatusMessage_OECD version="1.0" xmlns:csm="urn:oecd:ties:csm:v1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:iso="urn:oecd:ties:isocsmtypes:v1">
+<csm:MessageSpec><csm:TransmittingCountry>CA</csm:TransmittingCountry><csm:ReceivingCountry>FR</csm:ReceivingCountry><csm:MessageType>CRSMessageStatus</csm:MessageType><csm:Contact>casd@cra.gc.ca</csm:Contact><csm:MessageRefId>CA2016FR123456789</csm:MessageRefId><csm:Timestamp>2017-01-30T12:44:56</csm:Timestamp></csm:MessageSpec>
+<csm:CrsStatusMessage>
+<csm:OriginalMessage><csm:OriginalMessageRefID>CA2016FR2345678</csm:OriginalMessageRefID><csm:FileMetaData><csm:CTSTransmissionID>asdf89asdfgdfiua0</csm:CTSTransmissionID><csm:CTSSendingTimeStamp>2017-01-30T12:44:56</csm:CTSSendingTimeStamp><csm:UncompressedFileSizeKBQty>26542374</csm:UncompressedFileSizeKBQty></csm:FileMetaData></csm:OriginalMessage>
+<csm:ValidationErrors/>
+<csm:ValidationResult><csm:Status>Accepted</csm:Status><csm:ValidatedBy>javax.xml.validation.Validator Java 1.7</csm:ValidatedBy></csm:ValidationResult>
+</csm:CrsStatusMessage>
+</csm:CRSStatusMessage_OECD>

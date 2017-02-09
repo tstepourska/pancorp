@@ -1,7 +1,7 @@
 package ca.gc.cra.fxit.xmlt.job;
 
 import java.io.Serializable;
-import java.util.Iterator;
+//import java.util.Iterator;
 import java.util.LinkedList;
 //import java.util.Properties;
 
@@ -9,7 +9,7 @@ import org.apache.log4j.Logger;
 
 import ca.gc.cra.fxit.xmlt.model.PackageInfo;
 import ca.gc.cra.fxit.xmlt.task.ITask;
-import ca.gc.cra.fxit.xmlt.util.AppProperties;
+import ca.gc.cra.fxit.xmlt.util.Globals;
 import ca.gc.cra.fxit.xmlt.util.Constants;
 import ca.gc.cra.fxit.xmlt.util.Utils;
 
@@ -44,7 +44,8 @@ public class TaskManager implements Serializable {
 			//do the job
 			status = executeJob(job, pInfo);
 					
-			if(status==Constants.STATUS_CODE_CREATE_JOB_LOOP){
+			switch(status){
+			case Constants.STATUS_CODE_CREATE_JOB_LOOP:
 				//configure remaining tasks as a loop for more than one file
 				//at this point splitted file pieces must be generated on a disc and 
 				//named with <xml file name>.xml_<file count> 
@@ -65,10 +66,15 @@ public class TaskManager implements Serializable {
 					//the knowledge of original (unsplitted) file 
 					// name, split count etc
 				}
+			break;
+			case Constants.STATUS_CODE_FILE_REJECTED_TOO_BIG:
+				//TODO handle rejected file
+				break;
+				default:
 			}
 	
 			//all onJobEnd routines here
-			onJobEnd(status);
+			onJobEnd(status,pInfo);
 		}
 		catch(Exception e){
 			Utils.logError(log, e);
@@ -78,7 +84,7 @@ public class TaskManager implements Serializable {
 	}
 	
 	/**
-	 * Iterates through the list of steps to complete the job
+	 * Goes through the list of tasks to complete the job,
 	 * 
 	 * @param list
 	 * @param p
@@ -92,7 +98,7 @@ public class TaskManager implements Serializable {
 		__job:
 		while(!list.isEmpty()){
 			status = Constants.STATUS_CODE_INCOMPLETE;
-			task = list.removeFirst();// it.next();
+			task = list.removeFirst();
 			//log.debug(fp + task.toString());
 			status = task.execute(p);
 			//log.debug(fp + "status: " + status);
@@ -184,11 +190,11 @@ public class TaskManager implements Serializable {
 		//log.debug(fp + "Job specific key: " + specificKey);
 		
 		//look for the job specific to data provider first
-		LinkedList<ITask> job = AppProperties.getJob(specificKey);
+		LinkedList<ITask> job = Globals.getJob(specificKey);
 		//log.debug(fp + "Got a job for specific key: " + job);
 		//if specific job not found, use default
 		if(job==null){
-			job =  AppProperties.getJob(defaultKey);
+			job =  Globals.getJob(defaultKey);
 			//log.debug(fp + "Got a job for default key: " + job);
 		}
 		
@@ -212,17 +218,16 @@ public class TaskManager implements Serializable {
 	/**
 	 * Takes care of all on job end routines 
 	 */
-	private void onJobEnd(int st){
+	private void onJobEnd(int st, PackageInfo p){
 		String fp = "onJobEnd: ";
 		log.info(fp);
 		//TODO handle success and any error cases here or pass it back to the calling class?
+		OnJobEnd oje = new OnJobEnd();
+		oje.invoke(p);
 		switch(st){
 		case Constants.STATUS_CODE_SUCCESS:
 			break;
 		default:
-			
-		///////////////
-		//update database with stats
-	}
+		}
 	}
 }

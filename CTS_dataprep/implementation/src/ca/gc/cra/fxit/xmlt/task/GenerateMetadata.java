@@ -5,6 +5,7 @@ import org.apache.log4j.Logger;
 import ca.gc.cra.fxit.xmlt.model.PackageInfo;
 import ca.gc.cra.fxit.xmlt.task.xml.metadata.Helper;
 import ca.gc.cra.fxit.xmlt.util.Constants;
+
 public class GenerateMetadata extends AbstractTask {
 	private static Logger logger = Logger.getLogger(GenerateMetadata.class);
 	

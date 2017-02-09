@@ -1,63 +1,61 @@
+/**
+ * NOTICE: This source code belongs solely to the copyright holder.
+ * Dissemination of this information or reproduction of this material is
+ * strictly forbidden unless prior written permission is obtained from
+ * CRA, Government of Canada.
+ */
 package ca.gc.cra.fxit.xmlt.task.xml.statusmessage;
 
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.util.ArrayList;
+
 import java.util.List;
 
-import javax.xml.datatype.DatatypeFactory;
+//import javax.xml.datatype.DatatypeConstants;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamWriter;
 
 import org.apache.log4j.Logger;
 
-
 import ca.gc.cra.fxit.xmlt.model.PackageInfo;
 import ca.gc.cra.fxit.xmlt.task.xml.AbstractXmlHelper;
-import ca.gc.cra.fxit.xmlt.task.xml.CustomXMLStreamWriter;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.statusmessage.CountryCodeType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.statusmessage.FileAcceptanceStatusEnumType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.statusmessage.FileErrorType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.statusmessage.FileMetaDataType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.statusmessage.MessageSpecType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.statusmessage.MessageTypeEnumType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.statusmessage.NoErrorFoundEnumType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.statusmessage.ObjectFactory;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.statusmessage.OriginalMessageType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.statusmessage.RecordErrorType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.statusmessage.ValidationErrorsType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.statusmessage.ValidationResultType;
+import ca.gc.cra.fxit.xmlt.task.xml.CommonXMLStreamWriter;
+import ca.gc.cra.fxit.xmlt.generated.jaxb.statusmessage.CountryCodeType;
+//import ca.gc.cra.fxit.xmlt.generated.jaxb.statusmessage.CrsMessageStatusType;
+import ca.gc.cra.fxit.xmlt.generated.jaxb.statusmessage.ErrorDetailType;
+import ca.gc.cra.fxit.xmlt.generated.jaxb.statusmessage.FileErrorType;
+import ca.gc.cra.fxit.xmlt.generated.jaxb.statusmessage.FileMetaDataType;
+import ca.gc.cra.fxit.xmlt.generated.jaxb.statusmessage.LanguageCodeType;
+import ca.gc.cra.fxit.xmlt.generated.jaxb.statusmessage.MessageSpecType;
+import ca.gc.cra.fxit.xmlt.generated.jaxb.statusmessage.MessageTypeEnumType;
+import ca.gc.cra.fxit.xmlt.generated.jaxb.statusmessage.ObjectFactory;
+import ca.gc.cra.fxit.xmlt.generated.jaxb.statusmessage.OriginalMessageType;
+import ca.gc.cra.fxit.xmlt.generated.jaxb.statusmessage.RecordErrorType;
+import ca.gc.cra.fxit.xmlt.generated.jaxb.statusmessage.ValidationErrorsType;
+import ca.gc.cra.fxit.xmlt.generated.jaxb.statusmessage.ValidationResultType;
+import ca.gc.cra.fxit.xmlt.generated.jaxb.statusmessage.RecordErrorType.FieldsInError;
 import ca.gc.cra.fxit.xmlt.util.*;
 
 public class Helper extends AbstractXmlHelper {
 	private static Logger lg = Logger.getLogger(Helper.class);
 
-	private CustomXMLStreamWriter writer 			= null;
+	private CommonXMLStreamWriter writer 			= null;
 	private JaxbMarshaller marshaller 				= null;
 	ObjectFactory objFactory = null;
 
 	//////////////////////////////////////////////////////////////////////////////
 	 /////////////////////     PUBLIC METHODS      ////////////////////////////////
 	 /////////////////////////////////////////////////////////////////////////////
+	
 	@Override
-	public int invoke(PackageInfo p){
-		lg.info("SM XmlHelper started");
-		int status = Constants.STATUS_CODE_INCOMPLETE;
-
-		//generate XML
-		status = transform(p);
-		lg.info("Transformation completed with status " + status);
-
-		//if transformation successful, validate XML
-		String outputFile = AppProperties.baseFileDir + AppProperties.outboundProcessed + p.getXmlFilename();
-				
-		if(status==Constants.STATUS_CODE_SUCCESS)
-			status = this.validate(p, AppProperties.schemaLocationBaseDir +"statusmessage/" + Constants.MAIN_SCHEMA_NAME, outputFile);
-		lg.info("Validation completed with status " + status);
+	public String[] getSchemas(){
+		String[] xsdpaths = new String[] {
+				  Globals.schemaLocationBaseDir +"statusmessage/isocsmtypes_v1.0.xsd",
+				 Globals.schemaLocationBaseDir +"statusmessage/" + Constants.MAIN_SCHEMA_NAME};
 		
-		return status;
+		return xsdpaths;
 	}
 	
 	/**
@@ -72,15 +70,23 @@ public class Helper extends AbstractXmlHelper {
 	public int transform(PackageInfo p){
 		String fp = "transform: ";
 		int status = Constants.STATUS_CODE_INCOMPLETE;
-		//String inputFile  = AppProperties.baseFileDir + AppProperties.outboundUnprocessed + p.getOrigFilename();
-		String outputFile = AppProperties.baseFileDir + AppProperties.outboundProcessed + p.getDataProvider().toUpperCase() + "StatusMessage.xml";
+		//String inputFile  = Globals.baseFileDir + Globals.outboundUnprocessed + p.getOrigFilename();
+		long timestamp = System.currentTimeMillis();
+		String outputFile = Globals.FILE_WORKING_DIR + p.getXmlFilename();
+				
+			/*	
+				p.getSendingCountry() + "_" + p.getDataProvider().toUpperCase() + 
+				"MessageStatus"+ 
+				//"_"+Constants.sdfFileName.format(new Date(timestamp))+
+				".xml";*/
 		if(lg.isDebugEnabled())
 			lg.debug(fp + "output file name: " + outputFile);		
 		
-		boolean isTest = true;
+		
 		marshaller 		= new JaxbMarshaller();
 		//TODO
-		//marshaller.setUseTestDocTypeIndicCodes (isTest);
+		String testIndicator = p.getTestIndicator();
+		//marshaller.setUseTestDocTypeIndicCodes (testIndicator);
 
 		try {
 			objFactory = new ObjectFactory();
@@ -88,14 +94,18 @@ public class Helper extends AbstractXmlHelper {
 			OutputStream outputStream = new FileOutputStream(outputFile);
 			XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();
 			XMLStreamWriter xmlWriter = outputFactory.createXMLStreamWriter(outputStream,"UTF-8");
-			writer = new CustomXMLStreamWriter(xmlWriter);
+			writer = new CommonXMLStreamWriter(xmlWriter);
 
 			String warning = null;
 			
 			marshaller.startDocument(writer);
 			
-			MessageSpecType messageSpec = createMessageSpec(p, warning);		
+			MessageSpecType messageSpec = createMessageSpec(p, warning,timestamp);		
 			marshaller.transformMessageSpec(messageSpec, writer);
+			/*
+			CrsMessageStatusType mst = createCrsMessageStatusType(p);
+			marshaller.transformCrsMessageStatusType(mst, writer);
+*/
 			
 			OriginalMessageType mt = createOriginalMessageType(p);
 			marshaller.transformOriginalMessageType(mt, writer);
@@ -156,35 +166,49 @@ public class Helper extends AbstractXmlHelper {
      */
     private MessageSpecType createMessageSpec(  
     		PackageInfo p,
-            String warning
+            String warning,
+            long timestamp
             ) throws Exception {
 
 		String fp = "createMessageSpec: ";
-		String sendingCompanyIN = ""; // FATCA_ENTITY_SENDER_ID_CANADA;
+		
+		//this field is NOT used in international data exchange (only for domestic exchanges)
+		String sendingCompanyIN = null; 
+
+		/*
+		 * This data element identifies the jurisdiction of the Competent Authority transmitting the message, 
+		 * which is the Competent Authority that has received the initial CRS message 
+		 * to which the Status Message relates. It uses the 2-character alphabetic country code 
+		 * and country name list1 based on the ISO 3166-1 Alpha 2 standard.
+		 * 
+		 * Validation
+		 */
 		//for the purpose of this data transformation application sending country is always Canada (CA)
-    	CountryCodeType transmittingCountry = CountryCodeType.fromValue(Constants.TRANSMITTING_COUNTRY_CODE);
+    	CountryCodeType transmittingCountry = CountryCodeType.fromValue(Constants.CANADA);
     	if(lg.isDebugEnabled())
     		lg.debug(fp + "transmittingCountry: " + transmittingCountry);
+    	
+    	/*
+    	 * This data element identifies the jurisdiction of the Competent Authority receiving the message, 
+    	 * which is the Competent Authority that has sent the initial CRS message to which 
+    	 * the Status Message relates. This data element identifies the jurisdiction(s) of the 
+    	 * Competent Authority or Authorities that are the intended recipient(s) of the message. 
+    	 * It uses the 2-character alphabetic country code based on the ISO 3166-1 Alpha 2 standard.
+    	 * 
+    	 * Validation
+    	 */
     	CountryCodeType receivingCountry = CountryCodeType.fromValue(p.getReceivingCountry());
     	if(lg.isDebugEnabled())
     		lg.debug(fp + "receivingCountry: " + receivingCountry);
+    	
     	//CountryCodeType receivingCountryCode = CountryCodeType.fromValue(receivingCountry);
-    	//For CRS the only allowable value is "CRS"
-    	MessageTypeEnumType messageType = MessageTypeEnumType.fromValue(p.getDataProvider().toUpperCase() + Constants.MESSAGE_TYPE_SM);
+    	/*
+    	 * This data element specifies the type of message being sent. The only allowable entry in this field is “CRSStatusMessage”.
+    	 * Attention: as per schema, it is "CRSMessageStatus"
+    	 */
+    	MessageTypeEnumType messageType = MessageTypeEnumType.fromValue(p.getDataProvider().toUpperCase() + Constants.MSG_TYPE_MESSAGE_STATUS);
     	if(lg.isDebugEnabled())
     		lg.debug(fp + "messageType: " + messageType);
-    	//String reportingPeriod = Utils.createReportingPeriodFromStr(""+p.getTaxYear());
-    	//if(lg.isDebugEnabled())
-    	//	lg.debug(fp + "reportingPeriod: " + reportingPeriod);
-    	
-    	//TODO where  timestamp is coming from?
-    	long timestamp = System.currentTimeMillis();
-    	if(lg.isDebugEnabled())
-    		lg.debug(fp + "timestamp: " + timestamp);
-    	XMLGregorianCalendar reportingPeriodXML = p.getReportingPeriod();// DatatypeFactory.newInstance().newXMLGregorianCalendar(reportingPeriod); 
-        XMLGregorianCalendar xmlCreationTimestamp = Utils.generateXMLTimestamp(timestamp);// DatatypeFactory.newInstance().newXMLGregorianCalendar(""+timestamp);
-        if(lg.isDebugEnabled())
-    		lg.debug(fp + "XML calelndars created");
     	
     	// create an empty MessageSpecType object                                             
     	MessageSpecType messageSpec = new MessageSpecType();
@@ -192,7 +216,9 @@ public class Helper extends AbstractXmlHelper {
     		lg.debug(fp + "Empty messageSpec created");
 		
 		// set properties on it
-    	messageSpec.setSendingCompanyIN		(sendingCompanyIN);
+    	if(sendingCompanyIN!=null)
+    		messageSpec.setSendingCompanyIN		(sendingCompanyIN);
+    	
     	if(lg.isDebugEnabled())
     		lg.debug(fp + "sendingCompanyIN set: " + sendingCompanyIN);
     	messageSpec.setTransmittingCountry	(transmittingCountry);
@@ -201,46 +227,96 @@ public class Helper extends AbstractXmlHelper {
     	messageSpec.setReceivingCountry		(receivingCountry);
     	if(lg.isDebugEnabled())
     		lg.debug(fp + "receivingCountry set: " + receivingCountry);
+    	
+    	/* Validation */
     	messageSpec.setMessageType			(messageType);
     	if(lg.isDebugEnabled())
     		lg.debug(fp + "messageType set: " + messageType);
+    	
+    	/*
+    	 * This data element is a free text field allowing input of specific cautionary 
+    	 * instructions about use of the CRS Status Message.
+    	 * 
+    	 * Optional
+    	 */
     	messageSpec.setWarning				(warning);
     	if(lg.isDebugEnabled())
     		lg.debug(fp + "warning set: " + warning);
-    	messageSpec.setContact				(AppProperties.mailSenderAddressList);
+    	
+    	/*
+    	 * This data element is a free text field allowing input of specific contact information 
+    	 * for the sender of the message (i.e. the Competent Authority sending the CRS Status Message).
+    	 * 
+    	 * Optional.
+    	 */
+    	messageSpec.setContact				(Globals.mailSenderAddressList);
     	if(lg.isDebugEnabled())
     		lg.debug(fp + "contact set: " + messageSpec.getContact());
+    	
+    	/* This data element is a free text field capturing the sender’s unique identifying number 
+    	 * (created by the sender) that identifies the particular CRS Status Message being sent. 
+    	 * The identifier allows both the sender and receiver to identify the specific message later 
+    	 * if questions or corrections arise. The first part should be the country code of the jurisdiction 
+    	 * of the sending Competent Authority, and the second part a unique identifying number 
+    	 * created by the sending jurisdiction.
+    	 * It should be noted that the unique identifier for the CRS Status Message to be entered here 
+    	 * is not to be confused with OriginalMessageRefID which indicates the MessageRefID of the 
+    	 * original CRS message, in relation to which the CRS Status Message is provided.
+    	 * The MessageRefID identifier can contain whatever information the sender of the 
+    	 * CRS Status Message uses to allow identification of the particular CRS Status Message 
+    	 * but should start with the word “Status”, followed by the sender country code (i.e. 
+    	 * the Competent Authority receiving the original CRS message) as the first element for 
+    	 * Competent Authority to Competent Authority transmission, then the year to which the data relates, 
+    	 * then the receiver country code (i.e. the sender of the original CRS message) before a unique identifier.
+    	 * 
+    	 * Example: StatusFR2013CA123456789
+    	 * 
+    	 * 200 chars, validation 
+    	 */
     	messageSpec.setMessageRefId			(p.getMessageRefId());
     	if(lg.isDebugEnabled())
     		lg.debug(fp + "messageRefId set: " + messageSpec.getMessageRefId());
-    	
-    	String strOrigMessRefId = p.getOrigMessageRefId();
-    	if(strOrigMessRefId==null)
-    		messageSpec.getCorrMessageRefId().add("");
-    	else{
-    	String[] arr = p.getOrigMessageRefId().split(",");
-    	List<String> corrMessageRefId = new ArrayList<>();
-    	for(int i=0;i<arr.length;i++)
-    		corrMessageRefId.add(arr[i]);
-    		
-    	messageSpec.getCorrMessageRefId().addAll(corrMessageRefId);
-    	if(lg.isDebugEnabled())
-    		lg.debug(fp + "corrMessageRefId set: " + corrMessageRefId);
-    	}
-    	
-    	messageSpec.setReportingPeriod		(reportingPeriodXML);
-    	if(lg.isDebugEnabled())
-    		lg.debug(fp + "reportingPeriodXML set: " + reportingPeriodXML);
-    	messageSpec.setTimestamp			(xmlCreationTimestamp);
+
+    	/*
+    	 * This data element identifies the date and time when the message was compiled. 
+    	 * It is anticipated this element will be automatically populated by the host system. 
+    	 * The format for use is YYYY-MM-DD’T’hh:mm:ss. Fractions of seconds may be used. 
+    	 * Example: 2018-02-15T14:37:40
+    	 */
+    	XMLGregorianCalendar xmlCreationTimestamp =p.getOrigCTSSendingTimeStamp(); // Utils.generateMetadataXMLTimestamp(timestamp);// DatatypeFactory.newInstance().newXMLGregorianCalendar(""+timestamp);
     	if(lg.isDebugEnabled())
     		lg.debug(fp + "xmlCreationTimestamp set: " + xmlCreationTimestamp);
+    	
+    	messageSpec.setTimestamp(xmlCreationTimestamp);
     	if(lg.isDebugEnabled())
     		lg.debug(fp + " messageSpec params set");
     	
 		// return it
 		return messageSpec;
     }
+
+    /*
+
+    private CrsMessageStatusType createCrsMessageStatusType(PackageInfo p) throws Exception {
+    	CrsMessageStatusType ms = objFactory.createCrsMessageStatusType();
+    	ms.setOriginalMessage(createOriginalMessageType(p));
+    	ms.setValidationErrors(createValidationErrorsType(p));
+    	ms.setValidationResult(createValidationResultType(p));
+    	
+    	return ms;
+    }*/
     
+    /**
+     * Creates OriginalMessageType. The Original Message element indicates the original 
+     * CRS message (i.e. which CRS XML file) for which a CRS Status Message is provided. 
+     * It specifies the MessageRefID of the original CRS message and the File Meta Data 
+     * information.
+     * 
+     * @param p
+     * @return
+     * @throws Exception
+     */
+
     private OriginalMessageType createOriginalMessageType(PackageInfo p) throws Exception {
     	OriginalMessageType omt = new OriginalMessageType();
     	omt.setOriginalMessageRefID(p.getOrigMessageRefId());
@@ -250,12 +326,12 @@ public class Helper extends AbstractXmlHelper {
     	 * The File Meta Data element contains information about the original 
     	 * transmission of the CRS message through the CTS. 
     	 * This data includes:  	 */
-    	//the date and time the transmission was sent through the CTS
+    	//the date and time the transmission was sent through the CTS - YYYY-MM-DD’T’hh:mm:ss.
     	fmd.setCTSSendingTimeStamp(p.getOrigCTSSendingTimeStamp());
     	// the CTS Transmission ID for the original transmission as sent by the sending Competent Authority
     	fmd.setCTSTransmissionID(p.getOrigCTSTransmissionId());
     	//the sender of the original transmission
-    	fmd.setSenderFileID(p.getOrigSenderFileId());
+    	//fmd.setSenderFileID(p.getOrigSenderFileId());
     	// the size of the decrypted, uncompressed CRS message
     	fmd.setUncompressedFileSizeKBQty(p.getOrigUncompressFileSizeKBQty());
     	
@@ -264,48 +340,152 @@ public class Helper extends AbstractXmlHelper {
     	return omt;
     }
 	
+    /**
+     * The Validation Errors element indicates if the Competent Authority that has received 
+     * the initial CRS message has found errors with respect to that original CRS message,
+     *  with the result being either file errors found, record errors found or no error found.
+     * @param p
+     * @return
+     */
     private ValidationErrorsType createValidationErrorsType(PackageInfo p){
     	ValidationErrorsType vet = objFactory.createValidationErrorsType();
-    	vet.getFileError()  .addAll(createFileErrorList());
-    	vet.getRecordError().addAll(createRecordErrorList());
+    	//ValidationErrorsWrapper vew = new ValidationErrorsWrapper();
     	
-    	if(vet.getFileError().isEmpty() && vet.getRecordError().isEmpty())
-    		vet.setNoErrorFound(NoErrorFoundEnumType.NO_ERROR);
+    	//TODO create lists - pass parameters
+    	List<FileErrorType> fe = createFileErrorTypeList(); 
+    	List<RecordErrorType> re = createRecordErrorTypeList();
+    	/*if(fe==null  && re==null)  {
+    		//vet.
+    		//vet.setNoErrorFound(NoErrorFoundEnumType.NO_ERROR);
+    	}
+    	else{*/
+    		if(fe!=null&&fe.size()>0)
+    			vet.getFileError().addAll(fe);
+
+    		if(re!=null&&re.size()>0)
+    			vet.getRecordError().addAll(re);    	
+    //	}
     	
     	return vet;
     }
     
-    private ArrayList<FileErrorType> createFileErrorList(){
-    	ArrayList<FileErrorType> list = new ArrayList<>();
-    	
-    	//TODO
-    	
-    	
-    	return list;
-    }
-    
-    
-    private ArrayList<RecordErrorType> createRecordErrorList(){
-    	ArrayList<RecordErrorType> list = new ArrayList<>();
-    	
-    	//TODO
-    	
-    	
-    	return list;
-    }
+	private List<FileErrorType> createFileErrorTypeList(){
+		List<FileErrorType> list = new ArrayList<>();
+		String code = null;
+		String detail = null;
+		//TODO extract codes and details
+		
+		LanguageCodeType lg = LanguageCodeType.EN;
+		FileErrorType err = createFileErrorType(code,detail, lg);
+		if(err!=null)
+			list.add(err);
+		
+		if(list.isEmpty())
+			return null;
+		
+		return list;
+	}
+	
+	public List<RecordErrorType> createRecordErrorTypeList(){
+		List<RecordErrorType> list = new ArrayList<>();
+		String code = null;
+		String detail = null;
+		//TODO extract codes and details
+		
+		LanguageCodeType lg = LanguageCodeType.EN;
+		RecordErrorType err = createRecordErrorType(code,detail, lg);
+		if(err!=null)
+			list.add(err);
+		
+		if(list.isEmpty())
+			return null;
+		
+		return list;
+	}
+	
+	private FileErrorType createFileErrorType(String c, String d, LanguageCodeType lang){
+		if(c==null)
+			return null;
+		
+		FileErrorType err = objFactory.createFileErrorType();
+		err.setCode(c);
+		ErrorDetailType detail = objFactory.createErrorDetailType();
+		if(d!=null)
+			detail.setValue(d);
+		detail.setLanguage(lang);
+		
+		err.setDetails(detail);
+		
+		return err;
+	}
+	
+	public RecordErrorType createRecordErrorType(String c, String d, LanguageCodeType lang){
+		if(c==null)
+			return null;
+		
+		RecordErrorType err = objFactory.createRecordErrorType();
+		err.setCode(c);
+		ErrorDetailType detail = objFactory.createErrorDetailType();
+		detail.setValue(d);
+		detail.setLanguage(lang);
+	
+		err.setDetails(detail);
+		
+		//TODO
+		List<String> docRefIDInErrList = createDocRefIDInErrorList();
+		if(docRefIDInErrList!=null)
+		err.getDocRefIDInError().addAll(docRefIDInErrList);
+		
+		List<FieldsInError> fieldsInErrList = createFieldsInErrorList();
+		
+		if(fieldsInErrList!=null)
+		err.getFieldsInError().addAll(fieldsInErrList);
+		
+		return err;
+	}
+	
+	public List<String> createDocRefIDInErrorList(){
+		List<String> list = new ArrayList<>();
+		//TODO extract docRefIds
+		
+		if(list.isEmpty())
+			return null;
+		
+		return list;
+	}
+	
+	public List<FieldsInError> createFieldsInErrorList(){
+		List<FieldsInError> list = new ArrayList<>();
+		//TODO extract fields in error
+		
+		if(list.isEmpty())
+			return null;
+		
+		return list;
+	}
     
     private ValidationResultType createValidationResultType(PackageInfo p){
     	ValidationResultType vrt = objFactory.createValidationResultType();
-    	vrt.setStatus(FileAcceptanceStatusEnumType.fromValue(p.getOrigFileAcceptanceStatus()));
-    	vrt.getValidatedBy().addAll(createValidatedBy());
+    	vrt.setStatus(p.getOrigFileAcceptanceStatus());
     	
+    	ArrayList<String> vb = createValidatedBy();
+    	
+    	if(vb==null){
+    		vb = new ArrayList<String>();
+    		vb.add(" ");		
+    	}
+    	
+    	vrt.getValidatedBy().addAll(vb);
+    		
     	return vrt;
     }
     
     private ArrayList<String> createValidatedBy(){
     	ArrayList<String> vb = new ArrayList<>();
-    	
+    	vb.add("javax.xml.validation.Validator Java 1.7");
     	//TODO
+    	if(vb.isEmpty())
+    		vb = null;
     	
     	return vb;
     }
@@ -314,32 +494,33 @@ public class Helper extends AbstractXmlHelper {
 	 ////////////////////////////////////////////////////////////////////////////// 
 
 	/**
-	 * For unit test only. TODO to move to the JUnit
+	 * See JUnit ca.gc.cra.fxit.xmlt.test.XmlStatusMessageHelperTest
 	 * @param args
 	 */
-
-	public static void main(String[] args){
+/*	public static void main(String[] args){
 		//String filename = "C:/git/repository/CTS_dataprep/test/testfiles/outbound/unprocessed/IP.AIP5S182.CAUS.A14.S0000001";
-		String filename = "IP.AIP5S182.CAUS.A14.S0000001";
-		/*
-		 * <CountryCd Sender>_<CountryCd Receiver>_<Communication_type>_MessageRefID
-		 */
+		String filename = null;// "IP.AIP5S182.CAUS.A14.S0000001";
+		// <CountryCd Sender>_<CountryCd Receiver>_<Communication_type>_MessageRefID
 		//String outputDir = "C:/git/repository/CTS_dataprep/test/testfiles/outbound/";
 		
 		PackageInfo p = new PackageInfo();
 		p.setDataProvider("crs");
 		p.setJobDirection(Constants.JOB_OUTBOUND);
+		filename = "CRSStatusMessage.xml";
 		p.setOrigFilename(filename);
+		p.setXmlFilename(filename);
 		p.setReceivingCountry("FR");
+		p.setSendingCountry(Constants.CANADA);
 		p.setMessageRefId("CA2016FR123456789");
+		
 		
 		try {
 		p.setReportingPeriod(Utils.generateReportingPeriod("2016", null, null));
-		p.setOrigFileAcceptanceStatus("Accepted");
-		p.setOrigMessageRefId("CA2016FR2345678,CA2016FR123467895");
-		
+		p.setOrigFileAcceptanceStatus(FileAcceptanceStatusEnumType.ACCEPTED);
+		p.setOrigMessageRefId("CA2016FR2345678");
 		//XMLGregorianCalendar cal = new XMLGregorianCalendar("2017-01-15");
 		p.setOrigCTSSendingTimeStamp(Utils.generateXMLTimestamp(System.currentTimeMillis()));
+		p.setOrigUncompressFileSizeKBQty(BigInteger.valueOf(12345678));
 		}
 		catch(Exception e) {
 			Utils.logError(lg, e);
@@ -354,5 +535,5 @@ public class Helper extends AbstractXmlHelper {
 		Helper h = new Helper();
 		int status = h.invoke(p);
 		lg.info("Helper completed with status " + status);
-	}
+	}*/
 }

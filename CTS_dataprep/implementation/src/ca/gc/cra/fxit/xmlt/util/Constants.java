@@ -2,19 +2,32 @@ package ca.gc.cra.fxit.xmlt.util;
 
 import java.text.SimpleDateFormat;
 
-import ca.gc.cra.fxit.xmlt.transformation.cob2java.ftc.*;
+import ca.gc.cra.fxit.xmlt.generated.cob2java.ftc.*;
 
 public class Constants {
 	public static final String JOB_OUTBOUND 							= "OUT";
 	public static final String JOB_INBOUND 								= "IN";
 	
 	public static final String PKG_TYPE_DATA					 		= "DT";
-	public static final String PKG_TYPE_STATUS_MESSAGE			 		= "SM";
+	public static final String PKG_TYPE_STATUS					 		= "SM";
+	
+	/////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////
+	/*
+	 * Careful with the two fields below!
+	 * Used in the status message file name
+	 */
+	public static final String MSG_TYPE_MESSAGE_STATUS							= "MessageStatus";
+	//used in the MessageSpec of the CRSStatusMessage as MessageTypeEnumType,
+	//as per CRS Status Message User Guide - might be a typo!
+	public static final String STATUS_MESSAGE							= "StatusMessage";
+	//////////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////////////
 	
 	public static final String SUFFIX_PAYLOAD							= "PL"; //used for outbound, starts from building XML/validating  and ends after its validation and saving it, before CASD
-	public static final String SUFFIX_PACKAGE							= "PK"; //used for outbound starts from digital signature and ends sending it off to CTS
-	public static final String SUFFIX_PRELIM							= "PRE"; // used for inbound, saves, uncompresses and validates metadata - before CASD
-	public static final String SUFFIX_UNPAK								= "UPK"; // used for inbound, decrypts, uncompreses payload, validates dig signature etc
+	//public static final String SUFFIX_PACKAGE							= "PK"; //used for outbound starts from digital signature and ends sending it off to CTS
+	//public static final String SUFFIX_PRELIM							= "PRE"; // used for inbound, saves, uncompresses and validates metadata - before CASD
+	//public static final String SUFFIX_UNPAK								= "UPK"; // used for inbound, decrypts, uncompreses payload, validates dig signature etc
 	
 	public static final String JAVA_PKG_TASK							= "ca.gc.cra.fxit.xmlt.task.";
 	
@@ -65,22 +78,20 @@ public class Constants {
 	public static final String STATUS_MESSAGE_SUCCESS 				= "success";
 	public static final String STATUS_MESSAGE_ERROR					= "error";
 	
-	public static final String AUDIT								= "AUDIT: ";
-	
-	public static final String OUTBOUND_UNPROCESSED_TOSEND_DIR = "outbound/unprocessed/";
-	public static final String OUTBOUND_PROCESSED_TOSEND_DIR = "outbound/processed/";
-	public static final String unprocessedInputToReceiveDir = "inbound/unprocessed/";
+	//public static final String AUDIT								= "AUDIT: ";
 	
 	public static final String DEFAULT_ENCODING = "ISO-8859-1";  
 	
 	public static final String FILE_EXT_XML							= ".xml";
-	
+	public static final String METADATA								= "Metadata";
+	public static final String MSG_REF_ID_PLACEHOLDER				= "MESSAGEREFID";
+	public static final int MIX_TAX_YEAR							= 1970;
 	////////////////////////////////////////////
 	// out bound create package constants
 	
 	///////////////////////////
 	/** Outbound FATCA payload xml file name */
-	public static final String CANADA_FATCA_PAYLOAD_FILE = "000000.00000.TA.124_0_Payload.xml";
+	//public static final String CANADA_FATCA_PAYLOAD_FILE = "000000.00000.TA.124_0_Payload.xml";
 
 	/** AES cryptographic Cipher transformation algorithm */
 	// public static final String AES_TRANSFORMATION = "AES/ECB/PKCS5Padding";
@@ -99,11 +110,25 @@ public class Constants {
 	public static final int maxAttempts = 5;
 
 	public static int bufSize = 8 * 1024;
+	
+	public static final String UNDERSCORE		 = "_";
+	public static final String ENV_TEST			 = "T";
+	public static final String ENV_PROD			 = "P";
 
 	//public Long fileId = 0L;
 	//private ObjectFactory objFMetadata;
-	public static SimpleDateFormat sdfFileName = new SimpleDateFormat("yyyyMMdd'T'HHmmssSSS'Z'");
-	public static SimpleDateFormat sdfFileCreateTs = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+	public static SimpleDateFormat sdfFileName = new SimpleDateFormat("yyyyMMdd'T'HHmmssSSSz"); //'Z'
+	public static SimpleDateFormat sdfFileCreateTs = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss_z");
+	public static SimpleDateFormat sdfStatusMessageTs = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+	public static SimpleDateFormat sdfMetadataTimestamp = new SimpleDateFormat("YYYY-MM-DD'T'hh:mm:ss.SSZ");
+	public static SimpleDateFormat sdfMetadataYear = new SimpleDateFormat("YYYY");
+	public static SimpleDateFormat sdfSweepTimeTs = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
+	public static SimpleDateFormat sdfReportTs = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+	
+	//public static final SimpleDateFormat runDateFormatter = new SimpleDateFormat("yyyyMMdd");
+	//public final static SimpleDateFormat runTimeFormatter = new SimpleDateFormat("HHmmssSSS");
+	
+	//public static final SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
 //////////////////////////////////////////////////////////////////////////////
 	// endo f outbound create package constants
 	///////////////////////////////
@@ -133,12 +158,8 @@ public class Constants {
      */
 	public static final String PACKAGE_WARNING_TEXT = "THIS INFORMATION IS FURNISHED UNDER THE PROVISIONS OF AN INCOME TAX TREATY WITH A FOREIGN GOVERNMENT. ITS USE AND DISCLOSURE MUST BE GOVERNED BY THE PROVISIONS OF THAT TREATY.";
 
-	
-	
-	
-	
-	
-	// end of b atch pr ocessing
+
+	// end of batch processing
 	//////////////////////////////////////
 	
 	/////////////////////////////////////
@@ -147,7 +168,7 @@ public class Constants {
      * namespace, and the name and location of schema. Note that there is a custom implementation
      * of the EntityResolver to resolve the location. 
      */
-	public static String FATCA_SCHEMA_LOCATION = "urn:oecd:ties:fatca:v1 FatcaXML_v1.1.xsd";
+	//public static String FATCA_SCHEMA_LOCATION = "urn:oecd:ties:fatca:v1 FatcaXML_v1.1.xsd";
 
     /**
      * Value of TRANS-CD for PART XVIII Master header record: IP6PRTHD. Value {@value}.
@@ -266,10 +287,7 @@ public class Constants {
      */
 	public static final long TXT2XML_FACTOR = 3L;
 	
-	public static final SimpleDateFormat runDateFormatter = new SimpleDateFormat("yyyyMMdd");
-	public final static SimpleDateFormat runTimeFormatter = new SimpleDateFormat("HHmmssSSS");
-	
-	public static final SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
+
 	
     /**
      * Maximum number of occurrences of Residence Country Code. Value {@value}.
@@ -298,23 +316,22 @@ public class Constants {
 	/**
      * FATCA Entity Sender ID for Canada. Value {@value}.
      */
-	public static final String FATCA_ENTITY_SENDER_ID_CANADA = "000000.00000.TA.124";
+	//public static final String FATCA_ENTITY_SENDER_ID_CANADA = "000000.00000.TA.124";
 	/**
      * Transmitting country code. Use 2-character country code for Canada. Value {@value}.
      */
-	public static final String TRANSMITTING_COUNTRY_CODE = "CA";
+	//public static final String TRANSMITTING_COUNTRY_CODE = "CA";
 	/**
      * Receiving country code. Use 2-character country code for United States. Value {@value}.
      */
-	public static final String RECEIVING_COUNTRY_CODE = "US";
+	//public static final String RECEIVING_COUNTRY_CODE = "US";
 	
 	/**
      * FATCA form type in InfoDec. Value {@value}.
      */
-	public static final String FATCA_FORM_TYPE = "31";
+	//public static final String FATCA_FORM_TYPE = "31";
 	
 	//public static final String MESSAGE_TYPE_CRS_DATA	= "CRS";
-	public static final String MESSAGE_TYPE_SM		= "MessageStatus";
 		
 
 	// end of bridge

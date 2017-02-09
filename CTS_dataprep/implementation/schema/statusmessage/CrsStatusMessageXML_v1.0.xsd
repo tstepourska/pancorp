@@ -24,16 +24,6 @@
 		</xsd:restriction>
 	</xsd:simpleType>
 	<!--  -->
-	<!-- No Error Found type -->
-	<xsd:simpleType name="NoErrorFound_EnumType">
-		<xsd:annotation>
-			<xsd:documentation xml:lang="en">No Error has been found</xsd:documentation>
-		</xsd:annotation>
-		<xsd:restriction base="xsd:string">
-			<xsd:enumeration value="NoError"/>
-		</xsd:restriction>
-	</xsd:simpleType>
-	<!--  -->
 	<!-- FileAcceptanceStatus -->
 	<xsd:simpleType name="FileAcceptanceStatus_EnumType">
 		<xsd:annotation>
@@ -50,6 +40,17 @@
 					<xsd:documentation>The file was rejected by the receiver</xsd:documentation>
 				</xsd:annotation>
 			</xsd:enumeration>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!--  -->
+	<!-- Type for string with maximum length of 10 -->
+	<xsd:simpleType name="StringMax10Type">
+		<xsd:annotation>
+			<xsd:documentation xml:lang="en">Type for string with maximum length of 10</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:minLength value="0"/>
+			<xsd:maxLength value="10"/>
 		</xsd:restriction>
 	</xsd:simpleType>
 	<!--  -->
@@ -138,7 +139,7 @@ intended for automatic processing. </xsd:documentation>
 	<!-- Record Error type   -->
 	<xsd:complexType name="RecordError_Type">
 		<xsd:sequence>
-			<xsd:element name="Code" type="csm:StringMax200Type">
+			<xsd:element name="Code" type="csm:StringMax10Type">
 				<xsd:annotation>
 					<xsd:documentation xml:lang="en">Error Code</xsd:documentation>
 				</xsd:annotation>
@@ -169,7 +170,7 @@ intended for automatic processing. </xsd:documentation>
 	<!-- File Error type   -->
 	<xsd:complexType name="FileError_Type">
 		<xsd:sequence>
-			<xsd:element name="Code" type="csm:StringMax200Type">
+			<xsd:element name="Code" type="csm:StringMax10Type">
 				<xsd:annotation>
 					<xsd:documentation xml:lang="en">Error Code</xsd:documentation>
 				</xsd:annotation>
@@ -207,11 +208,6 @@ intended for automatic processing. </xsd:documentation>
 					<xsd:documentation xml:lang="en">The date and time the original transmission was initially delivered to the Receiver by CTS</xsd:documentation>
 				</xsd:annotation>
 			</xsd:element>
-			<xsd:element name="SenderFileID" type="csm:StringMax200Type">
-				<xsd:annotation>
-					<xsd:documentation xml:lang="en">Sender specified file name</xsd:documentation>
-				</xsd:annotation>
-			</xsd:element>
 			<xsd:element name="UncompressedFileSizeKBQty" type="xsd:integer" minOccurs="0">
 				<xsd:annotation>
 					<xsd:documentation xml:lang="en">Uncompressed File size (KB)</xsd:documentation>
@@ -223,7 +219,7 @@ intended for automatic processing. </xsd:documentation>
 	<!-- Original Message Type -->
 	<xsd:complexType name="OriginalMessage_Type">
 		<xsd:sequence>
-			<xsd:element name="OriginalMessageRefID" type="csm:StringMax200Type">
+			<xsd:element name="OriginalMessageRefID" type="csm:StringMax200Type" minOccurs="0">
 				<xsd:annotation>
 					<xsd:documentation xml:lang="en">The MessageRefID of the original CRS message for which the Status Message is provided</xsd:documentation>
 				</xsd:annotation>
@@ -235,11 +231,8 @@ intended for automatic processing. </xsd:documentation>
 	<!-- Validation Errors Type -->
 	<xsd:complexType name="ValidationErrors_Type">
 		<xsd:sequence>
-			<xsd:choice>
-				<xsd:element name="FileError" type="csm:FileError_Type" maxOccurs="unbounded"/>
-				<xsd:element name="RecordError" type="csm:RecordError_Type" maxOccurs="unbounded"/>
-				<xsd:element name="NoErrorFound" type="csm:NoErrorFound_EnumType"/>
-			</xsd:choice>
+			<xsd:element name="FileError" type="csm:FileError_Type" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:element name="RecordError" type="csm:RecordError_Type" minOccurs="0" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<!-- -->

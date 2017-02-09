@@ -10,9 +10,9 @@ import org.apache.log4j.Logger;
 
 import org.xml.sax.SAXException;
 
-import ca.gc.cra.fxit.xmlt.task.xml.CustomXMLStreamWriter;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.crs.*;
-import ca.gc.cra.fxit.xmlt.transformation.wrapper.crs.FIWrapper;
+import ca.gc.cra.fxit.xmlt.task.xml.CommonXMLStreamWriter;
+import ca.gc.cra.fxit.xmlt.generated.jaxb.crs.*;
+import ca.gc.cra.fxit.xmlt.model.wrapper.crs.FIWrapper;
 
 /**
  * JaxbMarshaller class is used to transform large flat files into International CRS XML format.
@@ -78,7 +78,7 @@ public class JaxbMarshaller {
 	    return fragmentMarshaller;
     }
     
-    public void startDocument(MessageSpecType messageSpec, CustomXMLStreamWriter writer) throws Exception {
+    public void startDocument(MessageSpecType messageSpec, CommonXMLStreamWriter writer) throws Exception {
     	writer.writeStartDocument	("UTF-8","1.0");
     	writer.writeCharacters		("\n");
 		writer.writeStartElement	("crs", "CRS_OECD", "urn:oecd:ties:crs:v1");	
@@ -107,8 +107,6 @@ public class JaxbMarshaller {
 		writer.writeCustomNamespace		("iso","urn:oecd:ties:isocrstypes:v1");
 		
 		writer.writeCharacters		("\n");
-		
-		//transformMessageSpec(messageSpec, writer);
     }
         
 	/**
@@ -126,7 +124,7 @@ public class JaxbMarshaller {
 	 */
 	public void transformMessageSpec(
 			MessageSpecType messageSpec,
-            CustomXMLStreamWriter writer
+            CommonXMLStreamWriter writer
 	) throws Exception {
 			String fp = "transformMessageSpec: ";
 			if(lg.isDebugEnabled()){
@@ -157,7 +155,7 @@ public class JaxbMarshaller {
 	 */
 	public void transformAccountReport(
 		CorrectableAccountReportType report, boolean isFirst,
-		CustomXMLStreamWriter writer) throws Exception {
+		CommonXMLStreamWriter writer) throws Exception {
 		
 			Marshaller marshaller = getFragmentMarshaller();
 	        marshaller.marshal(new JAXBElement<CorrectableAccountReportType>(
@@ -177,7 +175,7 @@ public class JaxbMarshaller {
 	 */
 	public void transformReportingFI(
 			CorrectableOrganisationPartyType party, boolean isFirst,
-			CustomXMLStreamWriter writer) throws Exception {
+			CommonXMLStreamWriter writer) throws Exception {
 
 		if(!isFirst){
 			writer.writeEndElement(); //end of crs:ReportingGroup after last crs:AccountReport in crs:ReportingFI
@@ -204,7 +202,7 @@ public class JaxbMarshaller {
 		writer.flush();
 	}
 	
-/*	public void transformTrailer(CustomXMLStreamWriter writer) throws Exception {
+/*	public void transformTrailer(CommonXMLStreamWriter writer) throws Exception {
 		writer.writeEndElement();
 	}*/
 }

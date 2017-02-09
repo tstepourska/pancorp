@@ -4,7 +4,8 @@ import java.io.BufferedReader;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.OutputStream;
-import java.util.ArrayList;
+import java.sql.Timestamp;
+//import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.stream.XMLOutputFactory;
@@ -15,14 +16,14 @@ import org.apache.log4j.Logger;
 
 import ca.gc.cra.fxit.xmlt.model.PackageInfo;
 import ca.gc.cra.fxit.xmlt.task.xml.AbstractXmlHelper;
-import ca.gc.cra.fxit.xmlt.task.xml.CustomXMLStreamWriter;
+import ca.gc.cra.fxit.xmlt.task.xml.CommonXMLStreamWriter;
 import ca.gc.cra.fxit.xmlt.task.xml.ftc.JAXBTransformer;
-import ca.gc.cra.fxit.xmlt.transformation.cob2java.ftc.IP6PRTAC;
-import ca.gc.cra.fxit.xmlt.transformation.cob2java.ftc.IP6PRTCP;
-import ca.gc.cra.fxit.xmlt.transformation.cob2java.ftc.IP6PRTHD;
-import ca.gc.cra.fxit.xmlt.transformation.cob2java.ftc.IP6PRTSL;
-import ca.gc.cra.fxit.xmlt.transformation.cob2java.ftc.IP6PRTSM;
-import ca.gc.cra.fxit.xmlt.transformation.cob2java.ftc.IP6PRTSP;
+import ca.gc.cra.fxit.xmlt.generated.cob2java.ftc.IP6PRTAC;
+import ca.gc.cra.fxit.xmlt.generated.cob2java.ftc.IP6PRTCP;
+import ca.gc.cra.fxit.xmlt.generated.cob2java.ftc.IP6PRTHD;
+import ca.gc.cra.fxit.xmlt.generated.cob2java.ftc.IP6PRTSL;
+import ca.gc.cra.fxit.xmlt.generated.cob2java.ftc.IP6PRTSM;
+import ca.gc.cra.fxit.xmlt.generated.cob2java.ftc.IP6PRTSP;
 import ca.gc.cra.fxit.xmlt.util.*;
 
 public class Helper extends AbstractXmlHelper {
@@ -37,7 +38,7 @@ public class Helper extends AbstractXmlHelper {
 	//private long prt18RtnSize = 0L;
 	private List<IP6PRTCP> personRecList 		= null;
 	
-	private CustomXMLStreamWriter writer = null;
+	private CommonXMLStreamWriter writer = null;
 	private JAXBTransformer transformer = null;
 	private int nRecordsProcessed = 0;
 	private int lineNum = 0;
@@ -49,44 +50,7 @@ public class Helper extends AbstractXmlHelper {
 	//IP6PRTSP sponsorRec = null;
 	IP6PRTSL slipRec = null;
 	IP6PRTAC accountHolderRec = null;
-	
-	@Override
-	public int invoke(PackageInfo p){
-		lg.info("FTC XmlHelper started");
-		int status = Constants.STATUS_CODE_SUCCESS;
-		
-		boolean isTest = true;
-		
-		//initialize all members here, as we only have default constructor
-		//initialize cob2java objects
-		//reportingFIRec = new IP6PRTSM();
-/*		//sponsorRec = new IP6PRTSP();
-		slipRec = new IP6PRTSL();
-		accountHolderRec = new IP6PRTAC();
-		headerRecList = new ArrayList<>();
-		fiRecList = new ArrayList<>();
-		
-	//	slipRecList = new ArrayList<>();
-	//	accountHolderRecList = new ArrayList<>();
-		
-		//prt18RtnSizeList = new ArrayList<>();
-		personRecList = new ArrayList<IP6PRTCP>(JAXBTransformer.MAX_CONTROLLING_PERSONS);
-		transformer = new JAXBTransformer();
-		transformer.setUseTestDocTypeIndicCodes (isTest);
-		
-		
-		
-		if(lg.isDebugEnabled())
-			lg.debug("Calling transform method");
-		status = transform(p);
-		lg.info("Transformation completed with status " + status + ". " + nRecordsProcessed + " records have been processed");
-		
-		//if transformation successful, validate
-		if(status==Constants.STATUS_CODE_SUCCESS)
-			status = this.validate(p);
-		*/
-		return status;
-	}
+
 	
 	/**
 	 * Reads text from the inputStream and transforms it to the international XML format 
@@ -100,11 +64,12 @@ public class Helper extends AbstractXmlHelper {
 	public int transform(PackageInfo p){
 		String fp = "transform: ";
 		int status = Constants.STATUS_CODE_INCOMPLETE;
-		String inputFile  = AppProperties.baseFileDir + AppProperties.outboundUnprocessed + p.getOrigFilename();
-		String outputFile = AppProperties.baseFileDir + AppProperties.outboundProcessed + p.getOrigFilename() + ".tmp.xml";
+		String inputFile  = Globals.FILE_WORKING_DIR + p.getOrigFilename();
+		String outputFile = Globals.FILE_WORKING_DIR + new Timestamp(System.currentTimeMillis()) + p.getOrigFilename() + ".xml";
 		if(lg.isDebugEnabled())
 			lg.debug(fp + "original file name: " + inputFile);
 		
+		String testIndicator = p.getTestIndicator();
 		BufferedReader reader = null;
 		
 		try {
@@ -115,7 +80,7 @@ public class Helper extends AbstractXmlHelper {
 			OutputStream outputStream = new FileOutputStream(outputFile);
 			XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();
 			XMLStreamWriter xmlWriter = outputFactory.createXMLStreamWriter(outputStream,"UTF-8");
-			writer = new CustomXMLStreamWriter(xmlWriter);
+			writer = new CommonXMLStreamWriter(xmlWriter);
 	
 			//read text file; each line starts with the code specifying record type
 			//process each line according to the code
@@ -397,5 +362,15 @@ public class Helper extends AbstractXmlHelper {
 		Helper h = new Helper();
 		int status = h.invoke(p);
 		lg.info("Helper completed with status " + status);
+	}
+
+	@Override
+	public String[] getSchemas() {
+		String[] xsdpaths = new String[] {
+				  Globals.schemaLocationBaseDir +"ftc/isofatcatypes_v1.1.xsd",
+				  Globals.schemaLocationBaseDir +"ftc/oecdtypes_v4.2.xsd",
+				  Globals.schemaLocationBaseDir +"ftc/stffatcatypes_v2.0.xsd",
+				  Globals.schemaLocationBaseDir + "crs/" + Constants.MAIN_SCHEMA_NAME};
+		return xsdpaths;
 	}
 }

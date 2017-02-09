@@ -16,13 +16,17 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.DatatypeConstants;
 
+import java.text.DateFormat;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
+import ca.gc.cra.fxit.xmlt.generated.jaxb.crs.CountryCodeType;
 import ca.gc.cra.fxit.xmlt.model.*;
 
 public class Utils {
@@ -42,6 +46,19 @@ public class Utils {
 	
 	public static void logError(Logger lg, String s){
 		lg.error("Error: " + s);
+	}
+	
+	public static String getDataProvider(String filename) throws Exception {
+		String dp = null;
+		
+		for(int i=0;i<Globals.DATA_PROVIDERS.length;i++){
+			if(filename.indexOf(Globals.DATA_PROVIDERS[i])>-1){
+				dp = Globals.DATA_PROVIDERS[i];
+				break;
+			}
+		}
+			
+		return dp;
 	}
 	
 	/**
@@ -85,6 +102,7 @@ public class Utils {
 			taxyear.setTime(DatatypeConstants.FIELD_UNDEFINED,
 							DatatypeConstants.FIELD_UNDEFINED,
 							DatatypeConstants.FIELD_UNDEFINED);
+			taxyear.setTimezone(DatatypeConstants.FIELD_UNDEFINED);
 			
 			taxyear.setDay  (iDay);
 			taxyear.setMonth(iMon);
@@ -93,14 +111,181 @@ public class Utils {
 		return taxyear;
 	}
 	
-	public static XMLGregorianCalendar generateXMLTimestamp(long ts) throws Exception {
-		String fp  = "generateXMLTimestamp: ";
-		//TODO - to correct timestamp string
-		XMLGregorianCalendar cal =  DatatypeFactory.newInstance().newXMLGregorianCalendar(""+ts);
-		if(log.isDebugEnabled())
-		    log.debug(fp + "XML calelndar created: " + cal);
+	public static XMLGregorianCalendar generateMetadataTaxYear(String year) throws Exception {
+		//year must be valid
+		int iYear = Integer.parseInt(year);
+		
+		XMLGregorianCalendar taxyear = null;
+			taxyear = DatatypeFactory.newInstance().newXMLGregorianCalendar(new GregorianCalendar());
+			
+			taxyear.setTime(DatatypeConstants.FIELD_UNDEFINED,
+							DatatypeConstants.FIELD_UNDEFINED,
+							DatatypeConstants.FIELD_UNDEFINED);
+			taxyear.setTimezone(DatatypeConstants.FIELD_UNDEFINED);
+			
+			taxyear.setDay  (DatatypeConstants.FIELD_UNDEFINED);
+			taxyear.setMonth(DatatypeConstants.FIELD_UNDEFINED);
+			taxyear.setYear (iYear);
 
+		return taxyear;
+	}
+	
+	/**
+	 * Creates XMLGregorianCalendar object which produces timestamp in a format 
+	 * YYYY-MM-DD'T'hh:mm:ss.SSZ
+	 * 
+	 * @param ts
+	 * @return
+	 * @throws Exception
+	 */
+	public static XMLGregorianCalendar generateMetadataXMLTimestamp(long ts) throws Exception {
+		Date dt = new Date(ts);
+		log.debug("generateMetadataXMLTimestamp: date: " + dt);
+		String strdate = Constants.sdfMetadataTimestamp.format(dt);
+		log.debug("generateMetadataXMLTimestamp: stringdate: " + strdate);
+		 XMLGregorianCalendar cal =  DatatypeFactory.newInstance().newXMLGregorianCalendar(strdate);
+		 log.debug("generateMetadataXMLTimestamp: cal: " + cal);
+		 
 		return cal;
+	}
+	
+	/**
+	 * Creates XMLGregorianCalendar object which produces timestamp in a format 
+	 * YYYY-MM-DD'T'hh:mm:ss
+	 * 
+	 * @param ts
+	 * @return
+	 * @throws Exception
+	 */
+	public static XMLGregorianCalendar generateStatusMessageXMLTimestamp(long ts) throws Exception {
+		Date dt = new Date(ts);
+		log.debug("generateStatusMessageXMLTimestamp: date: " + dt);
+		String strdate = Constants.sdfStatusMessageTs.format(dt);
+		log.debug("generateStatusMessageXMLTimestamp: stringdate: " + strdate);
+		XMLGregorianCalendar cal = DatatypeFactory.newInstance().newXMLGregorianCalendar(strdate);
+		log.debug("generateStatusMessageXMLTimestamp: cal: " + cal);
+		return cal;
+	}
+	
+	/**
+	 * Creates XMLGregorianCalendar object which produces timestamp in a format 
+	 * YYYY-MM-DD'T'hh:mm:ss
+	 * 
+	 * @param ts
+	 * @return
+	 * @throws Exception
+	 */
+	public static XMLGregorianCalendar generateReportXMLTimestamp(long ts) throws Exception {
+		Date dt = new Date(ts);
+		log.debug("generateReportXMLTimestamp: date: " + dt);
+		String strdate = Constants.sdfStatusMessageTs.format(dt);
+		log.debug("generateReportXMLTimestamp: stringdate: " + strdate);
+		XMLGregorianCalendar cal = DatatypeFactory.newInstance().newXMLGregorianCalendar(strdate);
+		log.debug("generateReportXMLTimestamp: cal: " + cal);
+		return cal;
+	}
+	
+	/**
+	 * Creates XMLGregorianCalendar object which produces timestamp in a format 
+	 * YYYYMMDD'T'hhmmss
+	 * 
+	 * @param ts
+	 * @return
+	 * @throws Exception
+	 */
+	public static String generateSweepTimestamp(long ts) throws Exception {
+		Date dt = new Date(ts);
+		log.debug("generateSweepTimestamp: date: " + dt);
+		String strdate = Constants.sdfSweepTimeTs.format(dt);
+		log.debug("generateSweepTimestamp: stringdate: " + strdate);
+
+		return strdate;
+	}
+		
+	public static String generateXMLFileName(PackageInfo p) throws Exception {
+		StringBuilder sb = new StringBuilder();
+		//senderFileId format
+		//CountryCdSender_CountryCdReceiver_CommunicationType_MessageRefID
+		
+		//messageRefId format (CRS):
+		//<senderCountryCOde><TaxYear><receiverCountryCode><uniqueIdendifier>
+		
+		//CountryCodeType c = CountryCodeType.fromValue(p.getSendingCountry());
+		//sb.append(c.value()).append(Constants.UNDERSCORE);
+		
+		//c = CountryCodeType.fromValue(p.getReceivingCountry());
+		//sb.append(c.value()).append(Constants.UNDERSCORE);
+
+		if(p.getOECDMessageType()!=null)
+		sb.append(p.getOECDMessageType()).append(Constants.UNDERSCORE);
+		else
+			throw new Exception("Message type is not set!");
+		
+		//sb.append(p.getReportingPeriod().getYear()).append(Constants.UNDERSCORE);
+		//placeholder for messageRefID
+		sb.append(Constants.MSG_REF_ID_PLACEHOLDER).append(Constants.UNDERSCORE);
+	
+		if(p.getSweepTime()!=null)
+			sb.append(p.getSweepTime()).append(Constants.UNDERSCORE);
+		else
+			throw new Exception("sweep time is not set!");
+		
+		if(p.getTestIndicator().equals(Constants.ENV_PROD))
+			sb.append(p.getTestIndicator());
+		else
+			sb.append(Constants.ENV_TEST);
+		sb.append(Constants.FILE_EXT_XML);
+	
+		return sb.toString();
+	}
+	
+	public static String generateMetadataFilename(PackageInfo p){
+		return Constants.METADATA + Constants.UNDERSCORE+p.getXmlFilename();
+	}
+	
+	
+/*	public static String formatTimestamp(java.util.Date ts, SimpleDateFormat sdf){
+		return sdf.format(ts);
+	}*/
+	
+	public static String toUTC(java.util.Date ts){
+		// that's for desktop application
+	    // for web application one needs to detect Locale
+	    Locale locale = Locale.CANADA; //getDefault();
+	    // again, this one works for desktop application
+	    // for web application it is more complicated
+	    TimeZone currentTimeZone = TimeZone.getTimeZone("EST");//.getDefault();
+	    // in fact I could skip this line and get just DateTime instance,
+	    // but I wanted to show how to do that correctly for
+	    // any time zone and locale
+	    DateFormat formatter = DateFormat.getDateTimeInstance(
+	            DateFormat.DEFAULT,
+	            DateFormat.DEFAULT,
+	            locale);
+	    formatter.setTimeZone(currentTimeZone);
+	    
+	//    formatter.f
+
+	    // Dates "conversion"
+	  //  Date currentDate = new Date();
+	   // long sixMonths = 180L * 24 * 3600 * 1000;
+	  //  Date inSixMonths = new Date(currentDate.getTime() + sixMonths);
+
+	    System.out.println(formatter.format(ts));
+	   // System.out.println(formatter.format(inSixMonths));
+	    // for me it prints
+	    // 2011-05-14 16:11:29
+	    // 2011-11-10 15:11:29
+
+	    // now for "UTC"
+	    formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+	    String utcTimestamp = formatter.format(ts);
+	    System.out.println(formatter.format(ts));
+	   // System.out.println(formatter.format(inSixMonths));
+	    // 2011-05-14 14:13:50
+	    // 2011-11-10 14:13:50
+	    
+	    return utcTimestamp;
 	}
 	
 	/*
@@ -176,18 +361,23 @@ public class Utils {
 		}
 	}
 
-	
 	/**
-	 * 
-	 * @param metadataFile
-	 * @param payloadXML
+	 * @param srcFile
+	 * @param destFile
 	 * @throws Exception
 	 */
-
-	public static void renameFile(PackageInfo parameters,
-			String metadataFile, String payloadXML) throws Exception {
-
-
+	public static boolean renameFile(String srcFile, String destFile) throws Exception {
+		File source = new File(srcFile);
+		File target = new File(destFile);
+		FileUtils.copyFile(new File(srcFile),target);
+		if(target.exists()){
+			source.delete();
+			if(source.exists())
+				FileUtils.deleteQuietly(source);		
+			return true;
+		}
+		
+		return false;
 	}
 	
 	/**
@@ -203,56 +393,6 @@ public class Utils {
 	
 
 	/**
-	 *
-	 */
-	public static String getFileName()
-			throws Exception {
-		String xmlfilename = null;
-		
-
-			return xmlfilename;
-		//}
-	}
-
-	
-
-	/**
-	 * @param fileDir
-	 * @param senderGiin
-	 * @return possible object is {@link String }
-	 * @throws Exception
-	 */
-
-	public static String getIDESFileName(String fileDir, String senderGiin)
-			throws Exception {
-		String outfile = null;
-		
-		/*
-		synchronized (fileId) {
-			logger.debug("--> getIDESFileName(): senderGiin=" + senderGiin);
-			Date date = Calendar.getInstance().getTime();
-			// set the time zone to UTC
-			sdfFileName.setTimeZone(TimeZone.getTimeZone("UTC"));
-			String outfile = sdfFileName.format(date) + "_" + senderGiin
-					+ ".zip";
-			File file = new File(fileDir + outfile);
-			int attempts = maxAttempts;
-			while (!file.createNewFile() && attempts-- > 0) {
-				outfile = sdfFileName.format(new Date()) + "_" + senderGiin
-						+ ".zip";
-				file = new File(fileDir + outfile);
-			}
-			if (attempts <= 0)
-				throw new Exception("Unable to getFileName() - file="
-						+ file.getAbsolutePath());
-			logger.debug("<-- getIDESFileName()");
-			*/
-			return outfile;
-		//}
-	}
-
-
-	/**
 	 * Create a copy of the source file in the target location.
 	 * 
 	 * @param path
@@ -265,6 +405,7 @@ public class Utils {
 			File source = new File(sourcePathName);
 			File target = new File(targetPathName);
 			FileUtils.copyFile(source, target);
+
 			log.info("File copied. Source: " + sourcePathName + ", Target: " + targetPathName);
 		}
 		catch (IOException ex) {
@@ -272,6 +413,39 @@ public class Utils {
 		}
 		
 		return isCopied;
+	}
+	
+
+	/**
+	 * Move the source file into the target location.
+	 * 
+	 * @param path
+	 * @return
+	 */
+	public static boolean moveFile(String sourcePathName, String targetPathName) {
+	 
+		boolean isMoved = false;
+		try {
+			File source = new File(sourcePathName);
+			File target = new File(targetPathName);
+			FileUtils.moveFile(source, target);
+
+			if(target.exists()){
+				if(log.isDebugEnabled())
+				log.debug("File moved. Source: " + sourcePathName + ", Target: " + targetPathName);
+				isMoved = true;
+			}
+			else
+				throw new Exception("moveFile: file not found in the target location"); 
+		}
+		catch (IOException ex) {
+			log.error("moveFile: File not copied. An IOException occurred: " + ex.toString());
+		}
+		catch (Exception ex) {
+			log.error("moveFile: File not copied. An exception occurred: " + ex.toString());
+		}	
+		
+		return isMoved;
 	}
 	
 	
@@ -410,6 +584,7 @@ public class Utils {
 	public static void main(String[] args){
 		String filename = "fxit.ctsagent.batch.xml";	
 		String path = "C:/git/repository/CTS_dataprep/implementation/cfg/";
-		Utils.cleanXmlFile(path, filename);
+		//Utils.cleanXmlFile(path, filename);
+		String ts = Utils.toUTC(new Date(System.currentTimeMillis()));
 	}
 }

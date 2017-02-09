@@ -4,7 +4,7 @@
     xsi:schemaLocation="http://www.cra-arc.gc.ca batch-config.xsd">
     <!-- jndi-name to be used to lookup the batch application component  -->
     <jndi-name>ca.gc.cra.fxit.xmlt.batch.BatchInitiatorHome</jndi-name>
-    <ctsagent>
+    <xmlt>
 	    <!-- Specify true to enforce maximum xml file sizes, and transform each flat file into 1 or more XML files. -->
 	    <!-- Specify false to transform each flat file into exactly 1 XML files. -->
 	 <!--    <MaxXmlFileSizeIsEnabled>false</MaxXmlFileSizeIsEnabled>	    -->
@@ -50,16 +50,24 @@
       	<step id="generateMessageRefId"     item-count="3" class="ca.gc.cra.fxit.xmlt.task.GenerateMessageRefId"/>
       	<step id="generateMetadata"         item-count="4" class="ca.gc.cra.fxit.xmlt.task.GenerateMetadata"/>
       	<step id="savePreparedOutboundData" item-count="5" class="ca.gc.cra.fxit.xmlt.task.SavePreparedOutboundData"/>  
-      	<step id="archiveData" 				item-count="6" class="ca.gc.cra.fxit.xmlt.task.ArchiveData"/> 
+      	<!-- <step id="archiveData" 				item-count="6" class="ca.gc.cra.fxit.xmlt.task.ArchiveData"/> -->
     </job>
 
-    <!--  
+      
     <job id="OUT_PL_CBC">
-	  <step id="validateXML"              item-count="1" class="ca.gc.cra.fxit.xmlt.task.ValidateXML"/>
+      <step id="checkFileSize"            item-count="1" class="ca.gc.cra.fxit.xmlt.task.CheckFileSize"/>
+	  <step id="validateXML"              item-count="2" class="ca.gc.cra.fxit.xmlt.task.ValidateXML"/>
       <step id="generateMetadata"         item-count="3" class="ca.gc.cra.fxit.xmlt.task.GenerateMetadata"/>
       <step id="savePreparedOutboundData" item-count="4" class="ca.gc.cra.fxit.xmlt.task.SavePreparedOutboundData"/>  
     </job>
-    -->
+    
+    <job id="OUT_PL_SM">
+	  <step id="generateXML"              item-count="1" class="ca.gc.cra.fxit.xmlt.task.GenerateXML"/>
+	  <step id="generateMessageRefId"     item-count="2" class="ca.gc.cra.fxit.xmlt.task.GenerateMessageRefId"/>
+      <step id="generateMetadata"         item-count="3" class="ca.gc.cra.fxit.xmlt.task.GenerateMetadata"/>
+      <step id="savePreparedOutboundData" item-count="4" class="ca.gc.cra.fxit.xmlt.task.SavePreparedOutboundData"/>  
+    </job>
+    
     <!-- 
     <job id="OUT_PK">
       <step id="applyDigitalSignature" item-count="3" class="ca.gc.cra.fxit.xmlt.task.ApplyDigitalSignature"/>
@@ -70,6 +78,6 @@
     <!--   <step id="pushData"              item-count="3" class="ca.gc.cra.fxit.xmlt.task.PushData"/>   -->
 	<!-- </job>-->
 	
-	 </ctsagent>
+	 </xmlt>
 	
 </batch-config>

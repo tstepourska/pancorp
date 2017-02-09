@@ -45,7 +45,7 @@ public class GenerateXML extends AbstractTask {
 			if(messageType.equalsIgnoreCase(Constants.PKG_TYPE_DATA)){
 				myObjectClass 	= classLoader.loadClass(Constants.JAVA_PKG_TASK + "xml." + dataProvider+ ".Helper");
 			}
-			else if(messageType.equalsIgnoreCase(Constants.PKG_TYPE_STATUS_MESSAGE)){
+			else if(messageType.equalsIgnoreCase(Constants.PKG_TYPE_STATUS)){
 				myObjectClass 	= classLoader.loadClass(Constants.JAVA_PKG_TASK + "xml.sm.Helper");
 			}
 			IHelper helper 			= (IHelper) myObjectClass.newInstance();

@@ -20,11 +20,11 @@ import junit.framework.TestCase;
 import ca.gc.cra.fxit.xmlt.model.PackageInfo;
 import ca.gc.cra.fxit.xmlt.task.ITask;
 import ca.gc.cra.fxit.xmlt.job.TaskManager;
-import ca.gc.cra.fxit.xmlt.util.AppProperties;
+import ca.gc.cra.fxit.xmlt.util.Globals;
 import ca.gc.cra.fxit.xmlt.util.Constants;
 
 public class TaskManagerTest extends TestCase{
-	private static Logger log = Logger.getLogger(TaskManagerTest.class);
+	private static Logger lg = Logger.getLogger(TaskManagerTest.class);
 	
 	private TaskManager taskman;
 	private PackageInfo p;
@@ -36,7 +36,7 @@ public class TaskManagerTest extends TestCase{
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		//AppProperties.resetBatchProperties();
+		//Globals.resetBatchProperties();
 	}
 	
 	/**
@@ -45,8 +45,8 @@ public class TaskManagerTest extends TestCase{
 	@Override
 	@Before
     protected void setUp() throws Exception { 		
-    	AppProperties.loadBatchProperties(AppProperties.configDir + "fxit.ctsagent.batch.xml");
-    	//log.debug(AppProperties.getJobs());
+    	Globals.loadBatchProperties(Globals.configDir + "fxit.ctsagent.batch.xml");
+    	//log.debug(Globals.getJobs());
     	
     	taskman = new TaskManager();
     	initPackage();
@@ -62,7 +62,7 @@ public class TaskManagerTest extends TestCase{
 	@Ignore
 	public void testLoadJobs(){
     	try {    		
-    		Map<String, LinkedList<ITask>> jobs = AppProperties.getJobs();
+    		Map<String, LinkedList<ITask>> jobs = Globals.getJobs();
     		//log.debug(jobs);
     		if(jobs==null || jobs.isEmpty())
     			throw new Exception("No jobs configured!");
@@ -120,7 +120,7 @@ public class TaskManagerTest extends TestCase{
 		//for outbound data package prep job
 		p.setPackageType(Constants.PKG_TYPE_DATA);
 		p.setJobDirection(Constants.JOB_OUTBOUND);
-		p.setJobSuffix(Constants.SUFFIX_PACKAGE);
+	//	p.setJobSuffix(Constants.SUFFIX_PACKAGE);
 		
 		
 		/*

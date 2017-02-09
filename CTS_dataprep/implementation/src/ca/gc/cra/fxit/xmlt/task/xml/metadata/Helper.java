@@ -1,11 +1,15 @@
+/**
+ * NOTICE: This source code belongs solely to the copyright holder.
+ * Dissemination of this information or reproduction of this material is
+ * strictly forbidden unless prior written permission is obtained from
+ * CRA, Government of Canada.
+ */
 package ca.gc.cra.fxit.xmlt.task.xml.metadata;
 
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.sql.Timestamp;
+import java.util.Date;
 
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamWriter;
 
@@ -13,37 +17,26 @@ import org.apache.log4j.Logger;
 
 import ca.gc.cra.fxit.xmlt.model.PackageInfo;
 import ca.gc.cra.fxit.xmlt.task.xml.AbstractXmlHelper;
-import ca.gc.cra.fxit.xmlt.task.xml.CustomXMLStreamWriter;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.metadata.*;
+import ca.gc.cra.fxit.xmlt.generated.jaxb.metadata.*;
 import ca.gc.cra.fxit.xmlt.util.*;
 
+/**
+ * @author Txs285
+ */
 public class Helper extends AbstractXmlHelper {
 	private static Logger lg = Logger.getLogger(Helper.class);
 
-	private CustomXMLStreamWriter writer 			= null;
+	private MetadataWriter writer 			= null;
 	private JaxbMarshaller marshaller 				= null;
 	
 	//////////////////////////////////////////////////////////////////////////////
 	 /////////////////////     PUBLIC METHODS      ////////////////////////////////
 	 /////////////////////////////////////////////////////////////////////////////
-	@Override
-	public int invoke(PackageInfo p){
-		lg.info("SM XmlHelper started");
-		int status = Constants.STATUS_CODE_INCOMPLETE;
-
-		//generate XML
-		status = transform(p);
-		lg.info("Transformation completed with status " + status);
-		
-		//if transformation successful, validate XML
-		String outputFile = AppProperties.baseFileDir + AppProperties.outboundProcessed + p.getSendingCountry() + "_"+p.getDataProvider().toUpperCase()+"_Metadata.xml";
-		
-		if(status==Constants.STATUS_CODE_SUCCESS)
-			status = this.validate(p, AppProperties.schemaLocationBaseDir +"metadata/" + Constants.MAIN_SCHEMA_NAME, outputFile);
-		lg.info("Validation completed with status " + status);
-		
-		return status;
-	}
+	 
+	 @Override
+	public String generateXMLFilename(PackageInfo p) throws Exception {
+		 return Utils.generateMetadataFilename(p);
+	 }
 	
 	/**
 	 * Generates metadata XML file
@@ -53,19 +46,22 @@ public class Helper extends AbstractXmlHelper {
 	@SuppressWarnings("resource")
 	@Override
 	public int transform(PackageInfo p){
-		String fp = "transform: ";
+		//String fp = "transform: ";
 		int status = Constants.STATUS_CODE_INCOMPLETE;
 	
 		marshaller 		= new JaxbMarshaller();
 
-		String outputFile = AppProperties.baseFileDir + AppProperties.outboundProcessed + p.getSendingCountry() + "_"+p.getDataProvider().toUpperCase()+"_Metadata.xml";
+		String outputFile = Globals.FILE_WORKING_DIR + p.getMetadataFilename(); 
 		try {
 			OutputStream outputStream = new FileOutputStream(outputFile);
 			XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();
 			XMLStreamWriter xmlWriter = outputFactory.createXMLStreamWriter(outputStream,"UTF-8");
-			writer = new CustomXMLStreamWriter(xmlWriter);
-
+			//writer = new CommonXMLStreamWriter(xmlWriter);
+			writer = new MetadataWriter(xmlWriter);
+			
+			//createContent(p);
 			createMetadata(p);
+			//generateMetadataFileFromSchema(p,writer);
 			status = Constants.STATUS_CODE_SUCCESS;
 		}
 		catch(Exception e){
@@ -99,54 +95,101 @@ public class Helper extends AbstractXmlHelper {
 	 * @throws Exception
 	 */
 	private void createMetadata(PackageInfo p) throws Exception {
-		String fp = "createMetadata: ";
+		//String fp = "createMetadata: ";
 		String senderCon = p.getSendingCountry();
 		String receiverCon = p.getReceivingCountry();
 		String comType = p.getCtsCommunicationType().toString();
 		
 		CTSSenderFileMetadataType mdt = new CTSSenderFileMetadataType();
+
 		mdt.setCTSSenderCountryCd(CountryCodeType.fromValue(senderCon));
 		mdt.setCTSReceiverCountryCd(CountryCodeType.fromValue(receiverCon));
 		mdt.setCTSCommunicationTypeCd(p.getCtsCommunicationType());
 		mdt.setSenderFileId(senderCon + "_" + receiverCon + "_" + comType + "_" + p.getMessageRefId());//("UTC_"+p.getCtsCommunicationType()+ p.getSendingCountry() + ".zip");
 		mdt.setFileFormatCd(FileFormatCdType.XML);
 		mdt.setBinaryEncodingSchemeCd(BinaryEncodingSchemeCdType.NONE);
-		mdt.setFileCreateTs((new Timestamp(System.currentTimeMillis())).toString());
+		mdt.setFileCreateTs(Constants.sdfMetadataTimestamp.format(new Date(System.currentTimeMillis())));
 		//XMLGregorianCalendar taxYear =  DatatypeFactory.newInstance().newXMLGregorianCalendar(""+p.getTaxYear()+"-12-31");
-		mdt.setTaxYear(p.getReportingPeriod());
+		mdt.setTaxYear(Utils.generateMetadataTaxYear(p.getTaxYear())); //p.getReportingPeriod());
 		mdt.setFileRevisionInd(false); //true if this is a revised data
 		
 		//TODO get to database and get value for original CTS transmission ID
-		mdt.setOriginalCTSTransmissionId("value?");
-		mdt.setSenderContactEmailAddressTxt(AppProperties.mailSenderAddressList);
+		mdt.setOriginalCTSTransmissionId(p.getOrigCTSTransmissionId());
+		mdt.setSenderContactEmailAddressTxt(Globals.mailSenderAddressList);
 
 		marshaller.startDocument(writer);
 		marshaller.transformMetadata(mdt, writer);		
 	}
-	
-	/*
-	private void generateMetadataFileFromSchema(){
-		ObjectFactory factory = new ObjectFactory(); 
-        UserT user = factory.createUserT(); 
-        user.setUserName("Sanaulla"); 
-        ItemT item = factory.createItemT(); 
-        item.setItemName("Seagate External HDD"); 
-        item.setPurchasedOn("August 24, 2010"); 
-        item.setAmount(new BigDecimal("6776.5")); 
-        ItemListT itemList = factory.createItemListT(); 
-        itemList.getItem().add(item); 
-        ExpenseT expense = factory.createExpenseT(); 
-        expense.setUser(user); 
-        expense.setItems(itemList); 
-*/
-   /*     JAXBContext context = JAXBContext.newInstance("generated"); 
-        JAXBElement<ExpenseT> element = factory.createExpenseReport(expense); 
-        Marshaller marshaller = context.createMarshaller(); 
-        marshaller.setProperty("jaxb.formatted.output",Boolean.TRUE); 
-        marshaller.marshal(element,System.out);
-        */ 
-//}
 
+	@Override
+	public String[] getSchemas() {
+		String[] xsdpaths = new String[] {
+				  Globals.schemaLocationBaseDir +"metadata/isoctstypes_v1.0.xsd",
+				 Globals.schemaLocationBaseDir +"metadata/" + Constants.MAIN_SCHEMA_NAME};
+		
+		return xsdpaths;
+	}
+	
+/*	private void createContent(PackageInfo p) throws Exception {
+		marshaller.startDocument(writer);
+		
+		String senderCon = p.getSendingCountry();
+		String receiverCon = p.getReceivingCountry();
+		String comType = p.getCtsCommunicationType().toString();
+
+		marshaller.transformSenderCountry(CountryCodeType.fromValue(senderCon),writer);
+		marshaller.transformReceiverCountry(CountryCodeType.fromValue(receiverCon),writer);
+		marshaller.transformCommunicationType(p.getCtsCommunicationType(),writer);
+		
+		String messageRefId = p.getMessageRefId();
+		
+		if(p.getMessageRefId()!=null){
+		String senderFileId = senderCon + "_" + receiverCon + "_" + comType + "_" + messageRefId;
+		marshaller.transformSenderFileId(senderFileId,writer);
+		}
+		marshaller.transformFileFormatCd(FileFormatCdType.XML,writer);
+		marshaller.transformBinaryEncodingSchemeCd(BinaryEncodingSchemeCdType.NONE,writer);
+		marshaller.transformFileCreateTs(Constants.sdfMetadataTimestamp.format(new Date(System.currentTimeMillis())),writer);
+		marshaller.transformTaxYear(p.getReportingPeriod(),writer);
+		marshaller.transformFileRevisionInd(Boolean.toString(p.isFileRevisionInd()),writer); //true if this is a revised data
+		
+		//should be null for outbound, get from file name for inbound
+		String tid = p.getOrigCTSTransmissionId();
+		if(tid!=null)
+		marshaller.transformOriginalCTSTransmissionId(tid,writer);
+		if(Globals.mailSenderAddressList!=null)
+			marshaller.transformSenderContactEmailAddressTxt(Globals.mailSenderAddressList,writer);	
+	}*/
+	
+/*	private void generateMetadataFileFromSchema(PackageInfo p, CommonXMLStreamWriter writer){
+		 
+		try {
+        ObjectFactory factory = new ObjectFactory();
+ 
+        CTSSenderFileMetadataType mdt = factory.createCTSSenderFileMetadataType();
+        mdt.setCTSSenderCountryCd(CountryCodeType.fromValue(p.getSendingCountry()));
+        mdt.setCTSReceiverCountryCd(CountryCodeType.fromValue(p.getReceivingCountry()));
+        mdt.setCTSCommunicationTypeCd(p.getCtsCommunicationType());
+        mdt.setSenderFileId(p.getOrigSenderFileId());
+        mdt.setFileFormatCd(FileFormatCdType.XML);
+        mdt.setBinaryEncodingSchemeCd(BinaryEncodingSchemeCdType.NONE);
+        mdt.setFileCreateTs(Utils.toUTC(new Date(System.currentTimeMillis())));      
+        mdt.setTaxYear(Utils.generateReportingPeriod("2016", null, null));      
+        mdt.setFileRevisionInd(p.isFileRevisionIndic());
+        mdt.setOriginalCTSTransmissionId("");
+        mdt.setSenderContactEmailAddressTxt(Globals.mailSenderAddressList);
+
+        JAXBContext  context = JAXBContext.newInstance(CTSSenderFileMetadataType.class);
+        JAXBElement <CTSSenderFileMetadataType> element = factory.createCTSSenderFileMetadata(mdt);
+        Marshaller marshaller = context.createMarshaller();
+        marshaller.setProperty("jaxb.formatted.output",Boolean.TRUE);
+        marshaller.marshal(element,writer);//System.out);
+		}
+		catch(Exception e){
+			Utils.logError(lg, e);
+		}
+	}
+*/
 
     
 	//////////////////////////////////////////////////////////////////////////////
@@ -154,15 +197,13 @@ public class Helper extends AbstractXmlHelper {
 	 ////////////////////////////////////////////////////////////////////////////// 
 
 	/**
-	 * For unit test only. TODO to move to the JUnit
+	 * For unit test only.  moved to the JUnit
 	 * @param args
 	 */
-	public static void main(String[] args){
+/*	public static void main(String[] args){
 		//String filename = "C:/git/repository/CTS_dataprep/test/testfiles/outbound/unprocessed/IP.AIP5S182.CAUS.A14.S0000001";
 		String filename = "IP.AIP5S182.CAUS.A14.S0000001";
-		/*
-		 * <CountryCd Sender>_<CountryCd Receiver>_<Communication_type>_MessageRefID
-		 */
+		//<CountryCd Sender>_<CountryCd Receiver>_<Communication_type>_MessageRefID
 		//String outputDir = "C:/git/repository/CTS_dataprep/test/testfiles/outbound/";
 		
 		PackageInfo p = new PackageInfo();
@@ -180,5 +221,5 @@ public class Helper extends AbstractXmlHelper {
 		Helper h = new Helper();
 		int status = h.invoke(p);
 		lg.info("Helper completed with status " + status);
-	}
+	}*/
 }

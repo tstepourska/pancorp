@@ -5,13 +5,14 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.math.BigInteger;
 import java.util.LinkedList;
 
 import org.apache.log4j.Logger;
 
-import ca.gc.cra.fxit.xmlt.exception.EndOfChunkEvent;
+//import ca.gc.cra.fxit.xmlt.exception.EndOfChunkEvent;
 import ca.gc.cra.fxit.xmlt.model.PackageInfo;
-import ca.gc.cra.fxit.xmlt.util.AppProperties;
+import ca.gc.cra.fxit.xmlt.util.Globals;
 import ca.gc.cra.fxit.xmlt.util.Constants;
 import ca.gc.cra.fxit.xmlt.util.Utils;
 
@@ -25,24 +26,29 @@ public class CheckFileSize extends AbstractTask{
 		int status = Constants.STATUS_CODE_INCOMPLETE;
 		
 		try {
-			String filename = p.getInputPathName();
+			String filename = Globals.FILE_WORKING_DIR+ p.getOrigFilename();
+			
 			String country = p.getReceivingCountry();
 			lg.info(fp+"Checking size of file " + filename + " for " + country);
 			File file = new File(filename);
 			long filesize = file.length();
 			lg.info(fp + "file size: " + filesize);
 
-			AppProperties.FileSize fs =AppProperties.specificFileSizes.get(country);
+			//get allowed maximum file size from configuration
+			Globals.FileSize fs =Globals.specificFileSizes.get(country);
 
+			//estimate final file size and set split file count to package
 			int splitFileCount = estimateSize(filesize,p,  fs);
 			p.setSplitFileCount(splitFileCount);
 			
 			if(splitFileCount>Constants.NO_SPLIT){
+				//no splitting of XML files, reject
 				if(filename.endsWith(Constants.FILE_EXT_XML)){
 					status = Constants.STATUS_CODE_FILE_REJECTED_TOO_BIG;
 					return status;
 				}
 				
+				//split flat file
 				splitFile(filename, p);			
 			}
 			
@@ -85,7 +91,7 @@ public class CheckFileSize extends AbstractTask{
 	 * @param p
 	 * @return
 	 */
-	private int estimateSize(long filesize, PackageInfo p, AppProperties.FileSize fs){
+	private int estimateSize(long filesize, PackageInfo p, Globals.FileSize fs){
 		int splitCount = Constants.NO_SPLIT;
 		boolean compressed = true;
 		long maxSize = -1;
@@ -95,8 +101,8 @@ public class CheckFileSize extends AbstractTask{
 		//int xmlChunkSize = 0;
 		
 		if(fs==null){
-			maxSize = AppProperties.defaultMaxPkgSize;
-			compressed = AppProperties.defaultPkgCompressed;
+			maxSize = Globals.defaultMaxPkgSize;
+			compressed = Globals.defaultPkgCompressed;
 		}
 		else {
 			maxSize = fs.getSize();
@@ -123,17 +129,17 @@ public class CheckFileSize extends AbstractTask{
 		
 		if(compressed){
 			//final size of the package
-			estimatedSize = (filesize*AppProperties.TxtToXmlFactor+AppProperties.FileSignatureSizeConstant)*AppProperties.PayloadCompressionRatio + AppProperties.FileSizeConstant;
+			estimatedSize = (filesize*Globals.TxtToXmlFactor+Globals.FileSignatureSizeConstant)*Globals.PayloadCompressionRatio + Globals.FileSizeConstant;
 			//size of XML payload non-compressed with digital signature
-			//estimatedSizeUncompressed = filesize*AppProperties.TxtToXmlFactor+AppProperties.FileSignatureSizeConstant;
-			//estimatedSizeUncompressedNoSignature = estimatedSizeUncompressed-AppProperties.FileSignatureSizeConstant;
+			//estimatedSizeUncompressed = filesize*Globals.TxtToXmlFactor+Globals.FileSignatureSizeConstant;
+			//estimatedSizeUncompressedNoSignature = estimatedSizeUncompressed-Globals.FileSignatureSizeConstant;
 		}
 		else{
 			//final total size of XML payload non-compressed with digital signature
-			estimatedSize = filesize*AppProperties.TxtToXmlFactor + AppProperties.FileSignatureSizeConstant;
+			estimatedSize = filesize*Globals.TxtToXmlFactor + Globals.FileSignatureSizeConstant;
 			//size of XML payload non-compressed with digital signature
 			//estimatedSizeUncompressed = estimatedSize;
-			//estimatedSizeUncompressedNoSignature = estimatedSizeUncompressed-AppProperties.FileSignatureSizeConstant;
+			//estimatedSizeUncompressedNoSignature = estimatedSizeUncompressed-Globals.FileSignatureSizeConstant;
 		}
 		
 		double splitFactor = estimatedSize/maxSize;
@@ -218,7 +224,8 @@ public class CheckFileSize extends AbstractTask{
 			BufferedWriter writer,
 			int chunkNumLines,
 			LinkedList<String> firec
-			) throws EndOfChunkEvent, Exception {
+			) throws //EndOfChunkEvent, 
+			Exception {
 		String fp = "processChunk: ";
 		int lineNum = 0;
 		int code = 0;

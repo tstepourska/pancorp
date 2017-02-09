@@ -7,45 +7,17 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.datatype.DatatypeFactory;
+//import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamWriter;
 
 import org.apache.log4j.Logger;
-//import org.apache.openjpa.lib.log.Log;
-
-//import ca.gc.cra.fxit.xmlt.task.xml.ftc.JAXBTransformer;
 import ca.gc.cra.fxit.xmlt.model.PackageInfo;
 import ca.gc.cra.fxit.xmlt.task.xml.AbstractXmlHelper;
-import ca.gc.cra.fxit.xmlt.task.xml.CustomXMLStreamWriter;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.crs.AccountHolderType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.crs.AddressType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.crs.ControllingPersonType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.crs.CorrectableAccountReportType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.crs.CorrectableOrganisationPartyType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.crs.CountryCodeType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.crs.CrsAcctHolderTypeEnumType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.crs.CrsBodyType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.crs.CurrCodeType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.crs.DocSpecType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.crs.FIAccountNumberType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.crs.MessageSpecType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.crs.MessageTypeEnumType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.crs.MonAmntType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.crs.NameOrganisationType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.crs.NamePersonType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.crs.OrganisationINType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.crs.OrganisationPartyType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.crs.PaymentType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.crs.PersonPartyType;
-import ca.gc.cra.fxit.xmlt.transformation.jaxb.crs.TINType;
-import ca.gc.cra.fxit.xmlt.transformation.wrapper.crs.AccountHolderWrapper;
-import ca.gc.cra.fxit.xmlt.transformation.wrapper.crs.FIWrapper;
-import ca.gc.cra.fxit.xmlt.transformation.wrapper.crs.MessageHeaderWrapper;
-import ca.gc.cra.fxit.xmlt.transformation.wrapper.crs.PersonWrapper;
-import ca.gc.cra.fxit.xmlt.transformation.wrapper.crs.SlipWrapper;
-import ca.gc.cra.fxit.xmlt.transformation.wrapper.crs.WrapperUtils;
+import ca.gc.cra.fxit.xmlt.task.xml.CommonXMLStreamWriter;
+import ca.gc.cra.fxit.xmlt.generated.jaxb.crs.*;
+import ca.gc.cra.fxit.xmlt.model.wrapper.crs.*;
 import ca.gc.cra.fxit.xmlt.util.*;
 
 /**
@@ -63,18 +35,19 @@ public class Helper extends AbstractXmlHelper {
 	//private List<FIWrapper> fiRecList 				= null;	
 	private List<PersonWrapper> personRecList 		= null;	
 	//private List<PersonWrapper> controllingPersonRecList = null;
-	private CustomXMLStreamWriter writer 			= null;
+	private CommonXMLStreamWriter writer 			= null;
 	private JaxbMarshaller marshaller 				= null;
 	private int nRecordsProcessed 					= 0;
 	private int lineNum 							= 0;	
 	//boolean hasSlip 								= false;
 	//boolean hasAccountHolder 						= false;	
-	
+	private ObjectFactory factory = null;
 
 	boolean firstReportingFI						= true;
 	boolean isFirstAccountReport					= true;
-	SlipWrapper m_slipRec 							= null;
+	AccountReportSlipWrapper m_slipRec 							= null;
 	AccountHolderWrapper accountHolderRec 			= null;
+	ArrayList<String> docRefIdList					= null;
 
 	int numoffis = 0;
 	int numofaccreps = 0;
@@ -82,24 +55,17 @@ public class Helper extends AbstractXmlHelper {
 	//////////////////////////////////////////////////////////////////////////////
 	 /////////////////////     PUBLIC METHODS      ////////////////////////////////
 	 /////////////////////////////////////////////////////////////////////////////
+	
+	
 	@Override
-	public int invoke(PackageInfo pk){
-		lg.info("CRS XmlHelper started");
-		int status = Constants.STATUS_CODE_SUCCESS;
-		
-		this.p = pk;
-
-		//generate XML
-		status = transform(p);
-		lg.info("Transformation completed with status " + status + ". " + nRecordsProcessed + " records have been processed");
-		
-		//if transformation successful, validate XML
-		String outputFile = AppProperties.baseFileDir + AppProperties.outboundProcessed +p.getXmlFilename()+".xml";
-		if(status==Constants.STATUS_CODE_SUCCESS)
-			status = this.validate(p, AppProperties.schemaLocationBaseDir +"crs/" + Constants.MAIN_SCHEMA_NAME, outputFile);
-		lg.info("Validation completed with status " + status);
-		
-		return status;
+	public String[] getSchemas(){
+		String[] xsdpaths = new String[] {
+				  Globals.schemaLocationBaseDir +"crs/isocrstypes_v1.0.xsd",
+				  Globals.schemaLocationBaseDir +"crs/oecdtypes_v4.1.xsd",
+				  Globals.schemaLocationBaseDir +"crs/CommonTypesFatcaCrs_v1.1.xsd",
+				  Globals.schemaLocationBaseDir +"crs/FatcaTypes_v1.1.xsd",
+				  Globals.schemaLocationBaseDir + "crs/" + Constants.MAIN_SCHEMA_NAME};
+		return xsdpaths;
 	}
 	
 	/**
@@ -111,14 +77,16 @@ public class Helper extends AbstractXmlHelper {
 	 */
 	@SuppressWarnings("resource")
 	@Override
+
 	public int transform(PackageInfo __p){
 		String fp = "transform: ";
 		int status = Constants.STATUS_CODE_INCOMPLETE;
-		int splitCount = p.getSplitFileCount();
+		//int splitCount = p.getSplitFileCount();
+		this.p = __p;
+		docRefIdList = new ArrayList<String>();
 		
-		String inputFile  = AppProperties.baseFileDir + AppProperties.outboundUnprocessed + p.getOrigFilename();
-		
-		String outputFile = AppProperties.baseFileDir + AppProperties.outboundProcessed + p.getOrigFilename() + ".xml";
+		String inputFile  = Globals.FILE_WORKING_DIR + p.getOrigFilename();		
+		String outputFile = Globals.FILE_WORKING_DIR + p.getXmlFilename();
 		if(lg.isDebugEnabled())
 			lg.debug(fp + "original file name: " + inputFile);		
 		
@@ -134,6 +102,7 @@ public class Helper extends AbstractXmlHelper {
 		//groupList = new ArrayList<>();
 		
 		marshaller 		= new JaxbMarshaller();
+		factory = new ObjectFactory();
 		//TODO
 		//marshaller.setUseTestDocTypeIndicCodes (isTest);
 		BufferedReader reader = null;
@@ -146,7 +115,7 @@ public class Helper extends AbstractXmlHelper {
 			OutputStream outputStream = new FileOutputStream(outputFile);
 			XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();
 			XMLStreamWriter xmlWriter = outputFactory.createXMLStreamWriter(outputStream,"UTF-8");
-			writer = new CustomXMLStreamWriter(xmlWriter);
+			writer = new CommonXMLStreamWriter(xmlWriter);
 
 			//read text file; each line starts with the code specifying record type
 			//process each line according to the code
@@ -186,6 +155,8 @@ public class Helper extends AbstractXmlHelper {
 			}
 			if(lg.isDebugEnabled())
 			lg.debug(fp + lineNum + " lines read");
+			
+			status = Constants.STATUS_CODE_SUCCESS;
 		}
 		catch(Exception e){
 			status = Constants.STATUS_CODE_INVALID_INPUT_FILE;
@@ -201,9 +172,7 @@ public class Helper extends AbstractXmlHelper {
 				writer.close();
 			}catch(Exception ex){}
 		}
-		
-		lg.info("numoffis: " + numoffis);
-		lg.info("numofaccreps: " + numofaccreps);
+
 		return status;
 	}	//end of transform
 	
@@ -215,6 +184,7 @@ public class Helper extends AbstractXmlHelper {
 	 ///////////////////  PRIVATE METHODS      ///////////////////////////////////
 	 ////////////////////////////////////////////////////////////////////////////// 
 	
+/*
 	private int countReports(String inputFile){
 		String fp = "countReports: ";
 		int cr = 0;
@@ -235,7 +205,7 @@ public class Helper extends AbstractXmlHelper {
 		}
 
 		return cr;
-	}
+	}*/
 	
 	/**
 	 * Processes Header line of the flat file
@@ -268,6 +238,7 @@ public class Helper extends AbstractXmlHelper {
 		//reportingFIRec.getRtnRcpntCntryCd();
 		reportingFIRec.setRtnRcpntCntryCd("FR");
 		reportingFIRec.setFiInfoDtyCd("OECD_1");
+		//////////////////////////////////////////
 		
 		if(lg.isDebugEnabled())
 			lg.debug(fp + "reportingFIRec set: " + reportingFIRec.toString());
@@ -290,7 +261,7 @@ public class Helper extends AbstractXmlHelper {
 			marshaller.transformMessageSpec(messageSpec, writer);			
 		}
 
-		CorrectableOrganisationPartyType party = reportingFIRec.createCorrectableOrganisationParty();
+		CorrectableOrganisationPartyType party = reportingFIRec.createCorrectableOrganisationParty(factory, this.docRefIdList);
 		if(lg.isDebugEnabled())
 			lg.debug(fp + "party created, marshalling...");
 			
@@ -313,7 +284,7 @@ public class Helper extends AbstractXmlHelper {
 			;//hasSlip = true;
 		}
 		
-		m_slipRec = new SlipWrapper(line);
+		m_slipRec = new AccountReportSlipWrapper(line);
 		numofaccreps++;
 		if(lg.isDebugEnabled())
 			lg.debug(fp + "slipRecord set: " + m_slipRec);
@@ -389,9 +360,8 @@ public class Helper extends AbstractXmlHelper {
 	 */
 	private void processTrailer(String line) throws Exception {
 		String fp = "processTrailer: ";
-
+		lg.info(fp + "done");
 	}
-	
 	
 	/**
 	 * Creates CorrectableAccountReportType element 
@@ -402,40 +372,61 @@ public class Helper extends AbstractXmlHelper {
 	 * 
 	 * @return CorrectableAccountReportType
 	 */
-    private CorrectableAccountReportType createCorrectableAccountReport( //FromIP6PRTSL(
-			SlipWrapper slipRec, //IP6PRTSL slipRec,
-			AccountHolderWrapper accountHolderRec, //IP6PRTAC accountHolderRec,
-			List<PersonWrapper> personRecs) //List<IP6PRTCP> personRecs) 
+    private CorrectableAccountReportType createCorrectableAccountReport( 
+			AccountReportSlipWrapper slipRec,
+			AccountHolderWrapper accountHolderRec, 
+			List<PersonWrapper> personRecs) 
     throws Exception {
     	
     	// create an empty CorrectableAccountReportType object                                             
-    	CorrectableAccountReportType report 	= new CorrectableAccountReportType();	    
+    	CorrectableAccountReportType report 	= factory.createCorrectableAccountReportType(); // new CorrectableAccountReportType();	    
     	List<ControllingPersonType> controllingPerson 			= null;
     	//List<PersonPartyType> person 			= null;
     	try {
-    		DocSpecType docSpec 					= slipRec.createDocSpec(); // createDocSpecFromIP6PRTSL(slipRec);				
-    		FIAccountNumberType accountNumber 		= new FIAccountNumberType();
+    		// 1. doc spec
+    		DocSpecType docSpec 					= slipRec.createDocSpec(factory,this.docRefIdList); // createDocSpecFromIP6PRTSL(slipRec);	
+    		
+    		// 2. account number 
+    		FIAccountNumberType accountNumber 		= factory.createFIAccountNumberType(); // new FIAccountNumberType();
     		accountNumber.setValue(slipRec.getFiCltaNbr().trim());// createAccountNumber(slipRec);
-    		AccountHolderType accountHolder 		= createAccountHolder(slipRec, accountHolderRec);
-		
+    		//TODO
+    		//accountNumber.setAcctNumberType(slipRec.get
+    		
+    		// 3. account holder
+    		AccountHolderType accountHolder 		= createAccountHolder(slipRec, accountHolderRec);	
+    		
+    		// 4. controlling person(s)
     		if (accountHolder != null && accountHolder.getOrganisation() != null) {
     		    controllingPerson = createControllingPersonList(personRecs);
     		}
     		
-    		CurrCodeType currCode 			= CurrCodeType.fromValue(accountHolderRec.getFiAcctCrcyTcd());
+    		// 5. account balance
+    		CurrCodeType currCode 			= CurrCodeType.fromValue(accountHolderRec.getFiAcctCrcyTcd()); 		
     		MonAmntType accountBalance 		= WrapperUtils.createMonAmntFromStr(accountHolderRec.getFiAbamt(), currCode);
+    		
+    		// 6. payment(s)
     		List<PaymentType> payment 		= accountHolderRec.createPaymentList(currCode);
 
+    		// 1.
     		report.setDocSpec(docSpec);
+    		
+    		// 2. 
     		report.setAccountNumber(accountNumber);
+    		
+    		// 3.
     		report.setAccountHolder(accountHolder);
     		//TODO
+    		// 4. 
     		report.getControllingPerson().addAll(controllingPerson);
+    		
+    		// 5. 
     		report.setAccountBalance(accountBalance);
+    		
+    		// 6. 
     		report.getPayment().addAll(payment);
     	}
 		catch(Exception e){
-			Utils.logError(lg, e);
+			//Utils.logError(lg, e);
 		}
 
 		// return it
@@ -451,12 +442,12 @@ public class Helper extends AbstractXmlHelper {
      * 
      * @return AccountHolderType
      */
-    private AccountHolderType createAccountHolder( //FromIP6PRTSL(
-    		SlipWrapper slipRec, //IP6PRTSL slipRec,
-			AccountHolderWrapper accountHolderRec  //IP6PRTAC accountHolderRec
+    private AccountHolderType createAccountHolder(
+    		AccountReportSlipWrapper slipRec, 
+			AccountHolderWrapper accountHolderRec 
 			) throws Exception {
 		
-    	AccountHolderType holder 							= new AccountHolderType();
+    	AccountHolderType holder 							= factory.createAccountHolderType(); //new AccountHolderType();
 		PersonPartyType person 								= null;
 		OrganisationPartyType organisation 					= null;
 		CrsAcctHolderTypeEnumType orgAccountHolderTypeEnum 	= null;
@@ -495,18 +486,18 @@ public class Helper extends AbstractXmlHelper {
      * @return
      */
     private OrganisationPartyType createOrganisationParty( //FromIP6PRTSL (
-    		SlipWrapper slipRec, //IP6PRTSL slipRec,
+    		AccountReportSlipWrapper slipRec, //IP6PRTSL slipRec,
 			AccountHolderWrapper accountHolder //IP6PRTAC accountHolderRec
 			) throws Exception {
 		
-    	OrganisationPartyType organisation 		= new OrganisationPartyType();
+    	OrganisationPartyType organisation 		= factory.createOrganisationPartyType(); // new OrganisationPartyType();
     	
     	try {
     	List<CountryCodeType> resCountryCodes  = slipRec.createOrganisationResCountryCodeList();
 		
 		List<OrganisationINType> in = slipRec.createOrganisationINList();
 		List<NameOrganisationType> name = slipRec.createNameOrganisationList();
-		List<AddressType> address = accountHolderRec.createAddressList();
+		List<AddressType> address = accountHolderRec.createAddressList(factory);
 		
     	if (resCountryCodes != null) {
     		organisation.getResCountryCode().addAll(resCountryCodes);
@@ -524,7 +515,7 @@ public class Helper extends AbstractXmlHelper {
     	}		
     	}
 		catch(Exception e){
-			Utils.logError(lg, e);
+			//Utils.logError(lg, e);
 		}
     	
     	return organisation;
@@ -564,7 +555,7 @@ public class Helper extends AbstractXmlHelper {
 
     	if (personRecs != null) {
 	    	for (PersonWrapper personRec : personRecs) {
-	    		ControllingPersonType person = personRec.createControllingPersonParty();
+	    		ControllingPersonType person = personRec.createControllingPersonParty(factory);
 	    		if (person != null) {
 		    		if (personList == null) 
 		    			personList = new ArrayList<ControllingPersonType>();
@@ -578,17 +569,17 @@ public class Helper extends AbstractXmlHelper {
     } 
 
     private PersonPartyType createPersonParty( //FromIP6PRTSL(
-    		SlipWrapper slipRec, //IP6PRTSL slipRec,
+    		AccountReportSlipWrapper slipRec, //IP6PRTSL slipRec,
 			AccountHolderWrapper accountHolderRec) //IP6PRTAC accountHolderRec) 
     throws Exception {
 		
-    	PersonPartyType person = new PersonPartyType();
+    	PersonPartyType person = factory.createPersonPartyType(); // new PersonPartyType();
 
     	try {
     	List<CountryCodeType> resCountryCode =slipRec.createPersonResCountryCodeList();
 		List<TINType> tin = slipRec.createPersonTINList();
 		List<NamePersonType> name = slipRec.createNamePersonList();
-		List<AddressType> address = accountHolderRec.createAddressList();
+		List<AddressType> address = accountHolderRec.createAddressList(factory);
 		PersonPartyType.BirthInfo birthInfo = WrapperUtils.createBirthInfoFromStr(slipRec.getIndvAhBrthYr(), slipRec.getIndvAhBrthMo(), slipRec.getIndvAhBrthDy());
 
     	if (resCountryCode != null && !resCountryCode.isEmpty()) {
@@ -654,7 +645,7 @@ public class Helper extends AbstractXmlHelper {
 		String fp = "createMessageSpec: ";
 		String sendingCompanyIN = ""; // FATCA_ENTITY_SENDER_ID_CANADA;
 		//for the purpose of this data transformation application sending country is always Canada (CA)
-    	CountryCodeType transmittingCountry = CountryCodeType.fromValue(Constants.TRANSMITTING_COUNTRY_CODE);
+    	CountryCodeType transmittingCountry = CountryCodeType.fromValue(Constants.CANADA);
     	if(lg.isDebugEnabled())
     		lg.debug(fp + "transmittingCountry: " + transmittingCountry);
     	CountryCodeType receivingCountry = CountryCodeType.fromValue(reportingFIRec.getRtnRcpntCntryCd());
@@ -675,9 +666,9 @@ public class Helper extends AbstractXmlHelper {
     		lg.debug(fp + "timestamp: " + timestamp);
     	//XMLGregorianCalendar reportingPeriodXML = DatatypeFactory.newInstance().newXMLGregorianCalendar(reportingPeriod); 
     	XMLGregorianCalendar reportingPeriodXML = p.getReportingPeriod();
-        XMLGregorianCalendar xmlCreationTimestamp = Utils.generateXMLTimestamp(timestamp); // DatatypeFactory.newInstance().newXMLGregorianCalendar(""+timestamp);
+        XMLGregorianCalendar xmlCreationTimestamp = Utils.generateReportXMLTimestamp(timestamp); // Utils.generateMetadataXMLTimestamp(timestamp); // DatatypeFactory.newInstance().newXMLGregorianCalendar(""+timestamp);
         if(lg.isDebugEnabled())
-    		lg.debug(fp + "XML calelndars created");
+    		lg.debug(fp + "XML calendars created");
     	
     	// create an empty MessageSpecType object                                             
     	MessageSpecType messageSpec = new MessageSpecType();
@@ -735,12 +726,10 @@ public class Helper extends AbstractXmlHelper {
 	 * For unit test only. TODO to move to the JUnit
 	 * @param args
 	 */
-	public static void main(String[] args){
+/*	public static void main(String[] args){
 		//String filename = "C:/git/repository/CTS_dataprep/test/testfiles/outbound/unprocessed/IP.AIP5S182.CAUS.A14.S0000001";
 		String filename = "IP.AIP5S182.CAUS.A14.S0000001";
-		/*
-		 * <CountryCd Sender>_<CountryCd Receiver>_<Communication_type>_MessageRefID
-		 */
+		//<CountryCd Sender>_<CountryCd Receiver>_<Communication_type>_MessageRefID
 		//String outputDir = "C:/git/repository/CTS_dataprep/test/testfiles/outbound/";
 		
 		PackageInfo p = new PackageInfo();
@@ -752,4 +741,5 @@ public class Helper extends AbstractXmlHelper {
 		int status = h.invoke(p);
 		lg.info("Helper completed with status " + status);
 	}
+*/
 }
