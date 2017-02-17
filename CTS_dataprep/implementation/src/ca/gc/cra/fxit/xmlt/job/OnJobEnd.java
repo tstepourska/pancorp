@@ -20,6 +20,8 @@ public class OnJobEnd {
 		//update file processing status and save available statistics and mapping (or status message) 
 		int status = saveStats(p);
 		
+		//TODO tentative - to remove this method, as SSC script 
+		// should be put in place to do this
 		status = archiveFiles(p);
 		
 		status = cleanup(p);
@@ -28,15 +30,9 @@ public class OnJobEnd {
 	private int saveStats(PackageInfo p){
 		int status = Constants.STATUS_CODE_INCOMPLETE;
 		
-			String fp = "saveMetadata: ";
-			
-			//TODO
-			//int sqlStatus = DataFactory.saveTransformedData();
+			String fp = "saveStats: ";
 			String messageRefID = null;
 			try {
-
-		    	// TODO: Interim solution to hard-code value "US" until recipient country code is validated in InfoDec. 
-				// RtnRcpntCntryCd is currently not validated in InfoDec, and can be any 2 characters.
 				UpdateRecordDAOBean dao = new UpdateRecordDAOBean();
 				status = dao.invoke(p);
 				log.debug(fp + "messageRefID: " + messageRefID);
@@ -71,9 +67,11 @@ public class OnJobEnd {
 	 */
 	private int archiveFiles(PackageInfo p) 	{
 		
+		
 		long startTime = System.currentTimeMillis();
 		log.debug("Begin transferFilesToMainframe");
 
+		
 		int nFilesTransferred = 0; 
 		FileTransfer ft = new FileTransfer();
 		int status = Constants.STATUS_CODE_INCOMPLETE;

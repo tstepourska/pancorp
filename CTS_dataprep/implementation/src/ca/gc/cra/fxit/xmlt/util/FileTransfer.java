@@ -2,17 +2,8 @@ package ca.gc.cra.fxit.xmlt.util;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
-import javax.mail.Message;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-import javax.naming.InitialContext;
-//import org.apache.commons.logging.LogFactory;
-//import org.apache.commons.logging.Log;
 import org.apache.commons.net.ftp.*;
 import org.apache.commons.net.ftp.parser.*;
 import org.apache.log4j.Logger;
@@ -87,7 +78,7 @@ public class FileTransfer {
 	public int doTransferAll() throws FileTransferException {
 	
 		/// Globals.fileTransferLocalDirName);
-		String localDirStr = Globals.baseFileDir + Globals.OUTBOUND_PROCESSED_TOSEND_DIR;
+		String localDirStr = Globals.baseFileDir + Constants.OUTBOUND_PROCESSED_TOSEND_DIR;
 		log.debug("localDirname : " + localDirStr); 
 		File localDir = new File(localDirStr);
 		if (localDir == null || !localDir.exists()) {
@@ -141,7 +132,7 @@ public class FileTransfer {
 						}
 					}
 					
-					new SendEmail().sendConfirmationEmail(targetDataSets, targetArchives);
+					//new SendEmail().sendEmail(subject, content); //targetDataSets, targetArchives);
 				}
 				
 				
@@ -184,12 +175,10 @@ public class FileTransfer {
 	        		disconnectFTPServer(false);
 					throw new FileTransferException(FileTransferException.FTP_LOGIN_FAILED);	
 				}
-				else {
-					ftpClient.setFileType(FTPClient.ASCII_FILE_TYPE);
-					ftpClient.setDataTimeout(DATA_SERVER_TIMEOUT);
-					break;
-				}
-	      					
+				
+				ftpClient.setFileType(FTPClient.ASCII_FILE_TYPE);
+				ftpClient.setDataTimeout(DATA_SERVER_TIMEOUT);
+				break;	      					
 			} catch (IOException e ) {
 	      		disconnectFTPServer(false);
 	      		if (i == MAX_CONNECT_LOGIN_RETRIES - 1) {

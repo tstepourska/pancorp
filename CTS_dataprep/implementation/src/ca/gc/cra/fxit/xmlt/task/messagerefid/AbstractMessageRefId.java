@@ -3,8 +3,8 @@ package ca.gc.cra.fxit.xmlt.task.messagerefid;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
+//import javax.xml.datatype.DatatypeFactory;
+//import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.apache.log4j.Logger;
 
@@ -50,5 +50,23 @@ public abstract class AbstractMessageRefId extends AbstractTask {
 		catch(Exception e){
 			throw new InvalidMessageRefIdException(Constants.STATUS_CODE_INVALID_MESSAGE_REF_ID, "Tax year in MessageRefId is invalid!", this);
 		}
+	}
+	
+	/**
+	 * Sets properties dependent on MessageRefId
+	 * @param p
+	 * @param update
+	 */
+	public void setMessageRefIDDependants(PackageInfo p, boolean update) throws Exception {
+		//set messageRefID in the MessageSpec element, 
+		//include messageRefID in the file name 
+		// and rename the file
+		new SAXUpdateMessageRefID(p,update).invoke();
+		
+		//set metadata file name
+		String metadataFilename = Constants.METADATA + Constants.UNDERSCORE + p.getXmlFilename();
+		if(lg.isDebugEnabled())
+			lg.debug("metadata filename: " + metadataFilename);
+		p.setMetadataFilename(metadataFilename);
 	}
 }

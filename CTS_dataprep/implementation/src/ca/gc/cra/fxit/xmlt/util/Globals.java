@@ -3,7 +3,7 @@ package ca.gc.cra.fxit.xmlt.util;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Collections;
-import java.util.Enumeration;
+//import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -55,26 +55,25 @@ public class Globals {
 	public static String mailSenderAddressList = "casd@cra.gc.ca";
 	public static boolean sendMailFlag = false;
 	
-	public static String configDir = "C:/git/repository/CTS_dataprep/implementation/cfg/";
-	public static String schemaLocationBaseDir  = "C:/git/repository/CTS_dataprep/implementation/schema/";
-	public static String baseFileDir = "C:/git/repository/CTS_dataprep/test/testfiles/";
+	//public static String configDir = "C:/git/repository/CTS_dataprep/implementation/cfg/";
+	//public static String schemaLocationBaseDir  = "C:/git/repository/CTS_dataprep/implementation/schema/";
+	//public static String baseFileDir = "C:/git/repository/CTS_dataprep/test/testfiles/";
 	
-	public static final String OUTBOUND_UNPROCESSED_TOSEND_DIR = "outbound/unprocessed/";
-	public static final String OUTBOUND_PROCESSED_TOSEND_DIR = "outbound/processed/";
-	//public static final String INBOUND_UNPROCESSED_DIR = "inbound/unprocessed/";
-	//public static final String INBOUND_PROCESSED_DIR = "inbound/unprocessed/";
-	private static final String TEMP_DIR					 = "temp/";
+	public static String configDir 				= "C:/git/repository2/CTS_XMLT/CTS_dataprep/implementation/cfg/";
+	public static String schemaLocationBaseDir  = "C:/git/repository2/CTS_XMLT/CTS_dataprep/implementation/schema/";
+	public static String baseFileDir 			= "C:/git/repository2/CTS_XMLT/CTS_dataprep/test/testfiles/";
 	
-	public static final String FILE_WORKING_DIR			= baseFileDir+ OUTBOUND_UNPROCESSED_TOSEND_DIR + TEMP_DIR;
+	public static final String FILE_WORKING_DIR			= baseFileDir+ Constants.OUTBOUND_UNPROCESSED_TOSEND_DIR + Constants.TEMP_DIR;
 	
 			
 	public static long defaultMaxPkgSize;
-	public static boolean defaultPkgCompressed = true;
-	public static long FileSizeConstant = 2000;
-	public static double PkgCompressionRatio = 0.01;
-	public static double PayloadCompressionRatio = 0.2;
-	public static double TxtToXmlFactor = 3.2;
-	public static long FileSignatureSizeConstant = 900;
+	public static boolean defaultPkgCompressed 			= true;
+	public static long FileSizeConstant 				= 2000;
+	public static double PkgCompressionRatio 			= 0.01;
+	public static double PayloadCompressionRatio 		= 0.2;
+	public static double TxtToXmlFactor 				= 3.2;
+	public static long FileSignatureSizeConstant 		= 900;
+	public static double FileSizeSpareLinesPercent		= 0.2;
 	//public static long specificMaxXmlFileSize = -1;
 	//public static String[] specificMaxSizeDest = null;
 	public static HashMap<String, FileSize> specificFileSizes = null;
@@ -172,7 +171,8 @@ public class Globals {
 	        //get instance of XML DocumentBuilder
 	        DocumentBuilder db = dbf.newDocumentBuilder();
 	        //parse the document using DOM; at this point all doc is already sitting in memory!
-	        Document doc = db.parse(new File(Globals.configDir + batchCfgFile));
+	        Document doc = db.parse(new File(//Globals.configDir + 
+	        		batchCfgFile));
            // log.debug(fp + "Document parsed");
            
             //getting jndi lookup name

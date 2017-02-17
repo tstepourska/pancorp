@@ -256,7 +256,8 @@ public class Helper extends AbstractXmlHelper {
 					messageRefId="", 
 					messageTypeIndic="";
 			List<String> corrMessageRefId = null;
-			MessageSpecType messageSpec = this.createMessageSpec(p, reportingFIRec, warning, contact, messageRefId, messageTypeIndic, corrMessageRefId);
+			MessageSpecType messageSpec = this.createMessageSpec(p, reportingFIRec, warning, contact,// messageRefId, 
+					messageTypeIndic, corrMessageRefId);
 			marshaller.startDocument(messageSpec, writer);
 			marshaller.transformMessageSpec(messageSpec, writer);			
 		}
@@ -637,7 +638,7 @@ public class Helper extends AbstractXmlHelper {
     		FIWrapper reportingFIRec,
             String warning,
             String contact,
-            String messageRefId,
+          //  String messageRefId,
             String messageTypeIndic,
             List<String> corrMessageRefId
             ) throws Exception {
@@ -694,9 +695,9 @@ public class Helper extends AbstractXmlHelper {
     	messageSpec.setContact				(contact);
     	if(lg.isDebugEnabled())
     		lg.debug(fp + "contact set: " + contact);
-    	messageSpec.setMessageRefId			(messageRefId);
-    	if(lg.isDebugEnabled())
-    		lg.debug(fp + "messageRefId set: " + messageRefId);
+    	messageSpec.setMessageRefId			(Constants.MSG_REF_ID_PLACEHOLDER);//messageRefId);
+    	//if(lg.isDebugEnabled())
+    	//	lg.debug(fp + "messageRefId set: " + messageRefId);
     	if(corrMessageRefId!=null){
     	messageSpec.getCorrMessageRefId().addAll(corrMessageRefId);
     	if(lg.isDebugEnabled())

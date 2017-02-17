@@ -60,13 +60,13 @@ public class SavePreparedOutboundData extends AbstractTask {
 		
 		try {
 			sourcePathName = Globals.FILE_WORKING_DIR+p.getXmlFilename();
-			targetPathName = Globals.baseFileDir + Globals.OUTBOUND_PROCESSED_TOSEND_DIR + p.getXmlFilename();
+			targetPathName = Globals.baseFileDir + Constants.OUTBOUND_PROCESSED_TOSEND_DIR + p.getXmlFilename();
 			boolean success = Utils.moveFile(sourcePathName, targetPathName);
 			if(!success)				
 				throw new Exception("Error moving file " + sourcePathName);
 			
 			sourcePathName = Globals.FILE_WORKING_DIR+p.getMetadataFilename();
-			targetPathName = Globals.baseFileDir + Globals.OUTBOUND_PROCESSED_TOSEND_DIR + p.getMetadataFilename();
+			targetPathName = Globals.baseFileDir + Constants.OUTBOUND_PROCESSED_TOSEND_DIR + p.getMetadataFilename();
 			success = Utils.moveFile(sourcePathName, targetPathName);
 			if(!success)				
 				throw new Exception("Error moving file " + sourcePathName);

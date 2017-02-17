@@ -1,23 +1,13 @@
 package ca.gc.cra.fxit.xmlt.task;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.IllegalFormatException;
-
 import org.apache.log4j.Logger;
 
 import ca.gc.cra.fxit.xmlt.dao.InsertRecordDAOBean;
-//import ca.gc.cra.db.framework.exceptions.DataException;
-//import ca.gc.cra.fxit.ca2us.batch.BridgeException;
-//import ca.gc.cra.fxit.ca2us.data.RetrieveFxmtDataInterface;
-//import ca.gc.cra.fxit.ca2us.integration.cobol.IP6PRTHD;
-//import ca.gc.cra.fxit.xmlt.exception.TaskException;
-//import ca.gc.cra.fxit.xmlt.task.compression.CompressionHelper;
 import ca.gc.cra.fxit.xmlt.exception.InvalidMessageRefIdException;
 import ca.gc.cra.fxit.xmlt.model.PackageInfo;
 import ca.gc.cra.fxit.xmlt.task.messagerefid.AbstractMessageRefId;
 import ca.gc.cra.fxit.xmlt.util.Constants;
-import ca.gc.cra.fxit.xmlt.util.Globals;
 import ca.gc.cra.fxit.xmlt.util.Utils;
 
 public class GenerateMessageRefId extends AbstractMessageRefId {
@@ -36,37 +26,30 @@ public class GenerateMessageRefId extends AbstractMessageRefId {
 	}
 	
 	@Override
-	protected final int invoke(PackageInfo p) {
+	public final int invoke(PackageInfo p) {
 		lg.debug("GenerateMessageRefID executing");
 		int status = Constants.STATUS_CODE_INCOMPLETE;
 		String messageRefId = null;
+		boolean update = false;
 		
 		try {
 			messageRefId = p.getMessageRefId();
 			if(messageRefId==null){
+				lg.info("messageRefId is not available, generating...");
 				//generate message Ref ID if not available
 				messageRefId = generateMessageRefID(p);
+				if(messageRefId==null)
+					throw new Exception("Failed to generate messageRefId");
+				//set the flag to update MessageSpec element in the XML file
+				update = true;
 			}
 			lg.info("messageRefId: " + messageRefId);
 			
 			//validate message Ref ID
 			validateMessageRefId(p);		
 
-			//add message Ref ID to the xml file name
-			String origXmlFileName = p.getXmlFilename();
-			String finalXmlFileName = origXmlFileName.replaceAll(Constants.MSG_REF_ID_PLACEHOLDER, messageRefId);
-			if(lg.isDebugEnabled())
-				lg.debug("finalXmlFileName: " + finalXmlFileName);
-			p.setXmlFilename(finalXmlFileName);
-			boolean renamed = Utils.renameFile(Globals.FILE_WORKING_DIR + origXmlFileName,Globals.FILE_WORKING_DIR + finalXmlFileName);
-			
-			if(!renamed)
-				throw new Exception("Could not attach messageRefID to the file name");
-			
-			String metadataFilename = Constants.METADATA + Constants.UNDERSCORE + finalXmlFileName;
-			if(lg.isDebugEnabled())
-				lg.debug("metadata filename: " + metadataFilename);
-			p.setMetadataFilename(metadataFilename);
+			//messageRefIDd is valid, do stuff dependent on it
+			setMessageRefIDDependants(p, update); 
 			
 			status = Constants.STATUS_CODE_SUCCESS;
 		}
@@ -103,16 +86,13 @@ public class GenerateMessageRefId extends AbstractMessageRefId {
 		String fp = "generateMessageRefID:";
 		lg.debug("Begin " + fp);
 		
-		int status = Constants.STATUS_CODE_INCOMPLETE;
+	//	int status = Constants.STATUS_CODE_INCOMPLETE;
 	
 		//RetrieveFxmtDataInterface fxmtDataBean;
 		//messageRefID = fxmtDataBean.getNextMessageRefID(TRANSMITTING_COUNTRY_CODE, RECEIVING_COUNTRY_CODE, headerRec.getRtnTxYr());
 		InsertRecordDAOBean dao = new InsertRecordDAOBean();
 		String messageRefId = dao.invoke(p);
-	
-		// TODO: Interim solution to hard-code value "US" until recipient country code is validated in InfoDec. 
-		// RtnRcpntCntryCd is currently not validated in InfoDec, and can be any 2 characters.
-					
+			
 		if(lg.isDebugEnabled())
 			lg.debug(fp + "messageRefID: " + messageRefId);
 		p.setMessageRefId(messageRefId);

@@ -5,7 +5,9 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.math.BigInteger;
+//import java.util.ArrayList;
 import java.util.LinkedList;
 
 import org.apache.log4j.Logger;
@@ -20,28 +22,30 @@ public class CheckFileSize extends AbstractTask{
 	private static Logger lg = Logger.getLogger(CheckFileSize.class);
 
 	@Override
-	protected final int invoke(PackageInfo p) {
+	public final int invoke(PackageInfo p) {
 		String fp = "invoke: ";
 		lg.debug("CheckFileSize executing");
 		int status = Constants.STATUS_CODE_INCOMPLETE;
 		
 		try {
-			String filename = Globals.FILE_WORKING_DIR+ p.getOrigFilename();
-			
+			String filename = Globals.FILE_WORKING_DIR+ p.getOrigFilename();			
 			String country = p.getReceivingCountry();
 			lg.info(fp+"Checking size of file " + filename + " for " + country);
+			
 			File file = new File(filename);
 			long filesize = file.length();
 			lg.info(fp + "file size: " + filesize);
+			p.setOrigUncompressFileSizeKBQty(BigInteger.valueOf(filesize));
 
 			//get allowed maximum file size from configuration
 			Globals.FileSize fs =Globals.specificFileSizes.get(country);
 
 			//estimate final file size and set split file count to package
-			int splitFileCount = estimateSize(filesize,p,  fs);
-			p.setSplitFileCount(splitFileCount);
+			double splitFactor = estimateSize(filesize,p,  fs);
+			//lg.info(fp + "splitFileCount: " + splitFileCount);
+			//p.setSplitFileCount(splitFileCount);			
 			
-			if(splitFileCount>Constants.NO_SPLIT){
+			if(splitFactor>Constants.NO_SPLIT){
 				//no splitting of XML files, reject
 				if(filename.endsWith(Constants.FILE_EXT_XML)){
 					status = Constants.STATUS_CODE_FILE_REJECTED_TOO_BIG;
@@ -49,9 +53,9 @@ public class CheckFileSize extends AbstractTask{
 				}
 				
 				//split flat file
-				splitFile(filename, p);			
+				splitFile(filename, splitFactor, p);			
 			}
-			
+
 			status = Constants.STATUS_CODE_SUCCESS;
 		}
 		catch(Exception e){
@@ -91,8 +95,9 @@ public class CheckFileSize extends AbstractTask{
 	 * @param p
 	 * @return
 	 */
-	private int estimateSize(long filesize, PackageInfo p, Globals.FileSize fs){
-		int splitCount = Constants.NO_SPLIT;
+	private double estimateSize(long filesize, PackageInfo p, Globals.FileSize fs){
+		String fp = "estimateSize: ";
+		//int splitCount = Constants.NO_SPLIT;
 		boolean compressed = true;
 		long maxSize = -1;
 		double estimatedSize = -1;
@@ -108,6 +113,8 @@ public class CheckFileSize extends AbstractTask{
 			maxSize = fs.getSize();
 			compressed = fs.isCompressed();
 		}
+		if(lg.isDebugEnabled())
+			lg.debug(fp + "maxSize=" + maxSize + ", compressed: " + compressed);
 		//						actual			with spare		compress ratio
 		//signature - 			839 			900
 		//compressed payload	4096
@@ -141,57 +148,79 @@ public class CheckFileSize extends AbstractTask{
 			//estimatedSizeUncompressed = estimatedSize;
 			//estimatedSizeUncompressedNoSignature = estimatedSizeUncompressed-Globals.FileSignatureSizeConstant;
 		}
+		if(lg.isDebugEnabled())
+			lg.debug(fp + "estimatedSize=" + estimatedSize);
 		
 		double splitFactor = estimatedSize/maxSize;
-		
-		if(splitFactor>1){
-			splitCount = (int) Math.ceil(splitFactor);		
-			//xmlChunkSize = (int)Math.ceil(estimatedSizeUncompressedNoSignature / splitCount);
-		}
-		
-		return splitCount;
+		if(lg.isDebugEnabled())
+			lg.debug(fp + "splitFactor=" + splitFactor);
+
+		return splitFactor;
 	}
 	
-	@SuppressWarnings("resource")
-	private void splitFile(String fn, PackageInfo p) throws Exception {
+	//@SuppressWarnings("resource")
+	private void splitFile(String fn, double splitFactor, PackageInfo p) throws Exception {
 		String fp = "splitFile: ";
-		int splitCount = p.getSplitFileCount();	
+		//int splitCount =(int) Math.ceil(splitFactor);	
 		int lineNum = 0;
 		Exception err = null;
 		
-		//count number of lines first
+		//first pass - count number of lines 
 		try (BufferedReader reader = new BufferedReader(new FileReader(fn))) {
-			//String line;
 			while((reader.readLine())!=null)
 				lineNum++;
 		}
 		catch(Exception e){
 			Utils.logError(lg, e);		
-		}			
-		
+		}					
 		if(lg.isDebugEnabled())
-			lg.debug(fp + "Lines: " + lineNum);
-		//calculate number of lines in a chunk
-		int chunkNumLines = (int) Math.ceil(lineNum / splitCount);
+			lg.debug(fp + "lineNums: " + lineNum);
+		
+		//calculate max number of lines in a chunk
+		int chunkNumLines = (int) Math.floor(lineNum / splitFactor);
 		if(lg.isDebugEnabled())
 			lg.debug(fp + "chunkNumLines: " + chunkNumLines);
 
-		int chunkCounter = 0;
+		int chunkCounter = 1;
+		int lineCounter = 0;
 		BufferedReader reader = null;
 		BufferedWriter writer = null;
+		
 		//keeps the last fi record with all corresponding elements here
 		LinkedList<String> fiRecordBuffer = new LinkedList<>();
 		
 		try {	
 			reader = new BufferedReader(new FileReader(fn));
+			writer = new BufferedWriter(new FileWriter(fn+Constants.UNDERSCORE+chunkCounter));
 			
-			for(chunkCounter=0;chunkCounter<splitCount;chunkCounter++){
-				writer = new BufferedWriter(new FileWriter(fn+"_"+chunkCounter));
-				processChunk( reader, 
-						writer,
-						chunkNumLines,
-						fiRecordBuffer);
+			String line;
+			int returnChunkCounter = 0;
+	
+			lg.info(fp + "starting chunk #" + chunkCounter);
+			while((line=reader.readLine())!=null){
+				returnChunkCounter = writeLine(writer, line, chunkCounter, chunkNumLines, lineCounter, fiRecordBuffer);
+				lineCounter++;
+			//	lg.info(fp + "returning chunk #" + chunkCounter);
+				
+				if(returnChunkCounter>chunkCounter){
+					//reset and start new chunk
+					chunkCounter = returnChunkCounter;		
+					lg.info(fp + "starting chunk #" + chunkCounter);
+					lineCounter = 0;
+					try {
+						writer.flush();
+						writer.close();
+					}catch(Exception ex){}
+					writer = new BufferedWriter(new FileWriter(fn+Constants.UNDERSCORE+chunkCounter));
+				}
 			}
+			
+			//flush remaining cache, if any
+			while(!fiRecordBuffer.isEmpty()){
+				writer.write(fiRecordBuffer.removeFirst());
+			}
+			
+			p.setSplitFileCount(chunkCounter);
 		}
 		catch(Exception e){
 			Utils.logError(lg, e);	
@@ -203,6 +232,7 @@ public class CheckFileSize extends AbstractTask{
 			}	catch(Exception e){}
 			
 			try{
+				writer.flush();
 				writer.close();
 			}	catch(Exception e){}
 		}
@@ -211,98 +241,65 @@ public class CheckFileSize extends AbstractTask{
 	}
 	
 	/**
-	 * Processes chunk of the original file according to the splitCount
+	 * Writes a single line. When required, dumps the queue, and/or resets chunkCounter
 	 * 
-	 * @param reader
 	 * @param writer
+	 * @param line
+	 * @param chunkCounter
 	 * @param chunkNumLines
+	 * @param lineCounter
 	 * @param firec
-	 * 
-	 * @throws Exception
+	 * @return
+	 * @throws IOException
 	 */
-	private void processChunk(BufferedReader reader, 
-			BufferedWriter writer,
-			int chunkNumLines,
-			LinkedList<String> firec
-			) throws //EndOfChunkEvent, 
-			Exception {
-		String fp = "processChunk: ";
-		int lineNum = 0;
-		int code = 0;
-		Exception err = null;
-		
-		try {	
-			//write down anything left in the firec queue - supposed to be the last fi record 
-			//with all corresponding records
-			if(!firec.isEmpty()){
-				while(!firec.isEmpty()){
-					writer.write(firec.removeFirst());
+	private int writeLine(BufferedWriter writer, String line, int chunkCounter, int chunkNumLines, int lineCounter, LinkedList<String> firec) throws IOException {
+		String fp = "writeLine: ";
+		int code = Integer.parseInt(line.substring(0,4));
+
+		if(code==Constants.LINE_CODE_FI || code==Constants.LINE_CODE_TRAILER) {//start of the new FI record
+			//check if there is a space for a previous FI record plus a current line to be written
+			int check = firec.size()+lineCounter + 1;
+			lg.debug(fp + "check==" + check + ", chunkNumLines==" + chunkNumLines);
+			if(firec.size()+lineCounter + 1<=chunkNumLines){
+				//space ok
+				if(lg.isDebugEnabled()){
+					lg.debug(fp + check + "<=" + chunkNumLines);
+					lg.debug(fp + "line code: " + code + ", flushing old FI, starting new");
 				}
-				writer.flush();
+				
+				if(!firec.isEmpty()){
+					while(!firec.isEmpty()){
+						writer.write(firec.removeFirst()); //write previous FI if any
+						if(firec.size()>1)
+						writer.newLine();						
+					}
+					writer.flush();
+				}				
 			}
-			
-			String line;
-			while((line = reader.readLine())!=null){	//same reader continues where we stopped earlier
-				lineNum++;
-				code = Integer.parseInt(line.substring(0,4));
-				if(lg.isDebugEnabled())
-					lg.debug(fp + "line code: " + code);
+			else {
+				//not enough space
 				
-				if(code==Constants.LINE_CODE_FI) {//start of the new FI record
-					if(!firec.isEmpty()){
-						while(!firec.isEmpty()){
-							writer.write(firec.removeFirst()); //write previous FI if any
-						}
-						writer.flush();
-					}
-					
-					firec.addLast(line);//add start of the new record
-				}
-				else if(code==Constants.LINE_CODE_HEADER){
-					;
-				}
-				else if(code==Constants.LINE_CODE_TRAILER){ //
-					if(!firec.isEmpty()){
-						while(!firec.isEmpty()){
-							writer.write(firec.removeFirst()); //write last FI if any
-						}
-						writer.flush();
-					}
-					writer.write(line); //actual trailer
-					return;
-				}
-				else {
-					firec.addLast(line);	//add any subrecord that belongs to the current fi record
-				}
-				
-				if(lineNum<chunkNumLines){
-					writer.write(line);
-					continue;
-				}
-				
-				//lineNum==chunkLineSize, do not write anymore into this chunk
-				break;			
-			}	//end of while
+				//set counter for a new chunk
+				chunkCounter++;
+			}
+			firec.addLast(line);//add start of the new record line (or trailer line) to the cache			
 		}
-		/*catch(EndOfChunkEvent e){
-			Utils.logError(lg, e);	
-			err = e;
-		}*/
-		catch(Exception e){
-			Utils.logError(lg, e);	
-			err = e;
+		else if(code==Constants.LINE_CODE_HEADER){
+			if(lineCounter<=chunkNumLines){
+				writer.write(line);
+				if(lineCounter<chunkNumLines)
+					writer.newLine();
+				
+				//lineCounter++;
+			}
 		}
-		finally{		
-			try{
-				writer.flush();
-				writer.close();
-			}	catch(Exception e){}
-		}	
-		
-		if(err!=null)
-			throw err;
-	}
+		else {
+			firec.addLast(line);	//add any subrecord that belongs to the current fi record to the cache
+		}
 	
+		return chunkCounter;
+	}
+		
 	/*
 	private void countLines(String fn, PackageInfo p){
 		String fp = "splitFile: ";
@@ -406,7 +403,7 @@ public class CheckFileSize extends AbstractTask{
 		String filename = "C:/git/repository/CTS_dataprep/test/testfiles/outbound/unprocessed/IP.AIP5S182.CAUS.A14.S0000001";
 		
 		try {
-		c.splitFile(filename, p);
+		//c.splitFile(filename, p);
 		}
 		catch(Exception e){
 			

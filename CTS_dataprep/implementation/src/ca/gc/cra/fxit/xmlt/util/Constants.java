@@ -33,6 +33,13 @@ public class Constants {
 	
 	public static final String CANADA						= "CA";
 	
+	public static final String OUTBOUND_UNPROCESSED_TOSEND_DIR = "outbound/unprocessed/";
+	public static final String OUTBOUND_PROCESSED_TOSEND_DIR = "outbound/processed/";
+	//public static final String INBOUND_UNPROCESSED_DIR = "inbound/unprocessed/";
+	//public static final String INBOUND_PROCESSED_DIR = "inbound/unprocessed/";
+	public static final String TEMP_DIR					 = "temp/";
+	
+	
 	//public static final String KEY_MAX_XML_FILE_SIZE		= "maxXmlFileSize";
 	public static final String DEFAULT_MAX_PKG_SIZE_KEY		= "DefaultMaxPkgSize";
 	public static final String SPECIFIC_MAX_FILE_SIZE_KEY	= "specificMaxFileSize";	

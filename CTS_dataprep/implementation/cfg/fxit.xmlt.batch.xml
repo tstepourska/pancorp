@@ -15,7 +15,7 @@
 	     <DefaultMaxPkgSize compressed="true">262144000</DefaultMaxPkgSize>
 	     <!-- Some countries can't process XML more than 100MB non-compresses -->
 	     <SpecificMaxFileSize dest="IT"  compressed="false">104857600</SpecificMaxFileSize>
-	     <SpecificMaxFileSize dest="FR"  compressed="false">104857600</SpecificMaxFileSize>
+	     <SpecificMaxFileSize dest="FR"  compressed="false">600857</SpecificMaxFileSize>
 	     <!-- metadata file size plus key file size: 636 + 256 = 892 -->
 	     <FileSizeConstant>1000</FileSizeConstant>
 	     <!-- digital signature size 1 char == 2 bytes: 1670  -->

@@ -66,6 +66,7 @@ public class XmlStatusMessageHelperTest extends TestCase{
 	public void testGenerateXml(){
 		int status = helper.invoke(p);
 		lg.info("Helper completed with status " + status);
+		assertEquals(Constants.STATUS_CODE_SUCCESS, status);
 	}
 	
 	//@Test

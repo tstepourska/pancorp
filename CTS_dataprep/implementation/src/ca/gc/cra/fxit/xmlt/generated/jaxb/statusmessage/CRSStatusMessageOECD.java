@@ -111,9 +111,8 @@ public class CRSStatusMessageOECD {
     public String getVersion() {
         if (version == null) {
             return "1.0";
-        } else {
-            return version;
-        }
+        } 
+        return version;
     }
 
     /**

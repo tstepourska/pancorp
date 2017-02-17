@@ -80,7 +80,7 @@ public class BatchInitiatorBeanOutbound implements SessionBean {
 		//create task manager
 		TaskManager taskman = new TaskManager();		
 		PackageInfo p = null;
-		String sendingRepPath = Globals.baseFileDir + Globals.OUTBOUND_UNPROCESSED_TOSEND_DIR;
+		String sendingRepPath = Globals.baseFileDir + Constants.OUTBOUND_UNPROCESSED_TOSEND_DIR;
 		final File sendingRepository 	= new File(sendingRepPath);
 		
 		try {		

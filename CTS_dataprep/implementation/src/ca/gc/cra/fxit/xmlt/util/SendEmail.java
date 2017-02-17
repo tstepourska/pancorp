@@ -1,7 +1,7 @@
 package ca.gc.cra.fxit.xmlt.util;
 
 import java.util.Date;
-import java.util.List;
+//import java.util.List;
 
 import javax.mail.Message;
 import javax.mail.Session;
@@ -15,19 +15,16 @@ import org.apache.log4j.Logger;
 public class SendEmail {
 	private static Logger log = Logger.getLogger(SendEmail.class);
 	
-	public void sendConfirmationEmail(List<String> targetDataSets, List<String> targetArchives) {
-
-		if ((targetDataSets == null || targetDataSets.size() == 0) && 
-			(targetArchives == null || targetArchives.size() == 0)) {
-			log.debug("Suppressing confirmation email because no files were transferred to the mainframe.");
+	public void sendEmail(//List<String> _targetDataSets, List<String> targetArchives
+			String subject,
+			String content
+			) {
+		if (!Globals.sendMailFlag){
+			log.info("Suppressing email because sendFlag environment property is set to False.");
+			return;
 		}
-
-		String errMsg = "Unable to send FTP confirmation email to IRMS";
+		
 		try {
-			//JNDINames batchProperties = new JNDINames();
-	    	//batchProperties.loadProperties();
-			
-			if (Globals.sendMailFlag) {
 				//String fromAddress = batchProperties.getMailFromAddress();
 				//String toAddressList = batchProperties.getMailToAddressList();
 				//String docTypeIndicEnv = Globals.docTypeIndicEnv;
@@ -42,49 +39,24 @@ public class SendEmail {
 				msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(Globals.mailToAddressList));
 				
 				msg.setSentDate(new Date());
-				String emailSubject = "FXIT transfered PRT18 " + Globals.docTypeIndicEnv + " Files to the mainframe";
-				msg.setSubject(emailSubject);
+				//String emailSubject = "FXIT transfered PRT18 " + Globals.docTypeIndicEnv + " Files to the mainframe";
+				msg.setSubject(subject);
 				
-				String newLine = System.lineSeparator();
-				StringBuilder emailBody = new StringBuilder();
-				emailBody.append("FXIT " + Globals.docTypeIndicEnv + " file transfer completed.");
-				emailBody.append(newLine);
-				emailBody.append("FXIT Database Environment: " + Globals.databaseEnvironment);
-				emailBody.append(newLine);
-				emailBody.append(newLine);
-				emailBody.append("The following " + targetDataSets.size() + " data sets were successfully transfered to the mainframe for IRMS to load.");
-				emailBody.append(newLine);
-				for (String sFileName : targetDataSets) {
-					emailBody.append(sFileName);
-					emailBody.append(newLine);
-				}
-				emailBody.append(newLine);
-				emailBody.append("The following " + targetArchives.size() + " archive files were successfully transfered to the mainframe for FATCA XML file retention purposes.");
-				emailBody.append(newLine);
-				for (String sFileName : targetArchives) {
-					emailBody.append(sFileName);
-					emailBody.append(newLine);
-				}
-				emailBody.append(newLine);
-				emailBody.append("\nThis email is sent automatically by the eBCI FXIT batch application. eApplid=FXIT, componentID=ca2us"); 
-				
-				String content = emailBody.toString();
+				//String newLine = System.lineSeparator();
+			
 				msg.setContent(content,"text/plain; charset=UTF-8");   
 
-				log.info("Sending email to IRMS");
+				log.info("Sending email");
 				
 				log.debug("Email Subject    : " + msg.getSubject());
 				log.debug("Email Body       : " + msg.getContent().toString());
 				
-				Transport.send(msg);
-			}
-			else {
-				log.info("Suppressing confirmation email because FXIT sendFlag environment property is set to False.");
-			}
-	    	
+				Transport.send(msg);	    	
 		}
 		catch (Exception e) {
-			log.error(errMsg, e);
+			String errMsg = "Unable to send email";
+			log.error(errMsg);
+			Utils.logError(log, e);
 		}
 
 	}
