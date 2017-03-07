@@ -1,14 +1,8 @@
-package com.pancorp.tbroker.main;
-
+package samples.testbed;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import samples.testbed.advisor.FAMethodSamples;
 import samples.testbed.contracts.ContractSamples;
@@ -24,39 +18,31 @@ import com.ib.client.ExecutionFilter;
 import com.ib.client.Order;
 import com.ib.client.Types.FADataType;
 import com.ib.controller.AccountSummaryTag;
-import com.pancorp.tbroker.data.DataFactory;
-import com.pancorp.tbroker.util.Constants;
-import com.pancorp.tbroker.util.Globals;
 
-public class Main {
-	private static Logger lg = LogManager.getLogger(Main.class);
+public class Testbed {
+
 	public static void main(String[] args) throws InterruptedException {
 		EWrapperImpl wrapper = new EWrapperImpl();
 		
 		final EClientSocket m_client = wrapper.getClient();
-		
-		//I've added to try:
-		//m_client.setAsyncEConnect(false);
-		
 		final EReaderSignal m_signal = wrapper.getSignal();
 		//! [connect]
-		m_client.eConnect(Globals.host, Globals.port, Globals.paperClientId);//TWS		
+		m_client.eConnect("127.0.0.1", 7497, 0);//TWS
+		
 		//m_client.eConnect("127.0.0.1", 4001, 0);  //IB Gateway
 		
 		//! [connect]
 		//! [ereader]
 		final EReader reader = new EReader(m_client, m_signal);        
-		reader.setName("Reader_1");
         reader.start();        
         new Thread() {
         	public void run() {
-        		this.setName("Runner_1");
         		while (m_client.isConnected()) {
 	    			m_signal.waitForSignal();
     				try {
     					reader.processMsgs();
     				} catch (Exception e) {
-    					lg.error("Exception: "+e.getMessage());
+    					System.out.println("Exception: "+e.getMessage());
     				}
         		}
         	}
@@ -74,22 +60,10 @@ public class Main {
         //marketDataType(wrapper.getClient());
         //historicalDataRequests(wrapper.getClient());
         //accountOperations(wrapper.getClient());
-        //marketScanners(wrapper.getClient());
-        
-        //load the list of stocks to monitor
-        HashMap<Integer,String> stocks = DataFactory.loadDayList();
-        Iterator<Integer> keys = stocks.keySet().iterator();
-        int key;
-       // String sym;
-        while(keys.hasNext()){
-        	key = keys.next();
-        	realTimeBars(wrapper.getClient(), key, stocks.get(key));
-        }
+        marketScanners(wrapper.getClient());
 		
-		//Thread.sleep(10000);
-		//m_client.eDisconnect();
-		//lg.trace("disconnected");
-		
+		Thread.sleep(100000);
+		m_client.eDisconnect();
 	}
 	
 	private static void orderOperations(EClientSocket client, int nextOrderId) throws InterruptedException {
@@ -239,40 +213,19 @@ public class Main {
 		
 	}
 	
-	private static void realTimeBars(EClientSocket client, int id, String sym) throws InterruptedException {
+	private static void realTimeBars(EClientSocket client) throws InterruptedException {
 		
-		Contract contract = new Contract();
-		contract.symbol(sym);
-		contract.secType("STK");
-		contract.currency("USD");
-		contract.exchange("SMART");
-		//Specify the Primary Exchange attribute to avoid contract ambiguity
-		contract.primaryExch("ISLAND");
 		/*** Requesting real time bars ***/
-        //! [reqrealtimebars]
-        client.reqRealTimeBars(id, contract, Constants.BAR_SIZE, Constants.BAR_WHAT_TO_SHOW_TRADES, true, null);
-        //! [reqrealtimebars]
-        //Thread.sleep(5000);
-        /*** Canceling real time bars will happen on callback ***/
-        //! [cancelrealtimebars]
-        //client.cancelRealTimeBars(3001);
-        //! [cancelrealtimebars]
-		
-	}
-	
-/*	private static void realTimeBars(EClientSocket client) throws InterruptedException {
-		
-		/// Requesting real time bars 
         //! [reqrealtimebars]
         client.reqRealTimeBars(3001, ContractSamples.EurGbpFx(), 5, "MIDPOINT", true, null);
         //! [reqrealtimebars]
-        //Thread.sleep(5000);
-        /// Canceling real time bars 
+        Thread.sleep(2000);
+        /*** Canceling real time bars ***/
         //! [cancelrealtimebars]
-        //client.cancelRealTimeBars(3001);
+        client.cancelRealTimeBars(3001);
         //! [cancelrealtimebars]
 		
-	}*/
+	}
 	
 	private static void marketDepthOperations(EClientSocket client) throws InterruptedException {
 		

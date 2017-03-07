@@ -24,34 +24,57 @@ import com.ib.client.ExecutionFilter;
 import com.ib.client.Order;
 import com.ib.client.Types.FADataType;
 import com.ib.controller.AccountSummaryTag;
-import com.pancorp.tbroker.data.DataFactory;
+import com.pancorp.tbroker.day.DataFactory;
+import com.pancorp.tbroker.day.Broker;
 import com.pancorp.tbroker.util.Constants;
 import com.pancorp.tbroker.util.Globals;
+import com.pancorp.tbroker.util.Utils;
 
-public class Main {
-	private static Logger lg = LogManager.getLogger(Main.class);
-	public static void main(String[] args) throws InterruptedException {
-		EWrapperImpl wrapper = new EWrapperImpl();
-		
-		final EClientSocket m_client = wrapper.getClient();
+public class BrokerManager {
+	private static Logger lg = LogManager.getLogger(BrokerManager.class);
+	
+	private volatile boolean orderPlaced;
+	private EClientSocket client;
+	private BrokerManagerEWrapperImpl wrapper;
+	
+	public static void main(String[] args) {
+		try {
+			new BrokerManager().invoke(args);
+		}
+		catch(InterruptedException e){
+			Utils.logError(lg, e);
+		}
+		catch(Exception e){
+			Utils.logError(lg, e);
+		}
+		finally{
+			
+		}
+	}
+	
+
+	public void invoke(String[] args) throws InterruptedException, Exception {
+		wrapper = new BrokerManagerEWrapperImpl(this);		
+		//final EClientSocket m_client = wrapper.getClient();
+		client = wrapper.getClient();
 		
 		//I've added to try:
 		//m_client.setAsyncEConnect(false);
 		
 		final EReaderSignal m_signal = wrapper.getSignal();
 		//! [connect]
-		m_client.eConnect(Globals.host, Globals.port, Globals.paperClientId);//TWS		
+		client.eConnect(Globals.host, Globals.port, Globals.paperClientId);//TWS		
 		//m_client.eConnect("127.0.0.1", 4001, 0);  //IB Gateway
 		
 		//! [connect]
 		//! [ereader]
-		final EReader reader = new EReader(m_client, m_signal);        
+		final EReader reader = new EReader(client, m_signal);        
 		reader.setName("Reader_1");
         reader.start();        
         new Thread() {
         	public void run() {
         		this.setName("Runner_1");
-        		while (m_client.isConnected()) {
+        		while (client.isConnected()) {
 	    			m_signal.waitForSignal();
     				try {
     					reader.processMsgs();
@@ -76,13 +99,33 @@ public class Main {
         //accountOperations(wrapper.getClient());
         //marketScanners(wrapper.getClient());
         
-        //load the list of stocks to monitor
+        //load the list of stocks to monitor and start broker threads
         HashMap<Integer,String> stocks = DataFactory.loadDayList();
+        
+        HashMap<String,Broker> tMap = new HashMap<>();
         Iterator<Integer> keys = stocks.keySet().iterator();
         int key;
+        Broker t;
+        String sym;
+        Contract contract;
+        //TODO setup pooled database connection to accommodate up to 100 contracts
+        DataFactory df = new DataFactory(this.wrapper);
        // String sym;
         while(keys.hasNext()){
         	key = keys.next();
+        	sym = stocks.get(key);
+        	contract = new Contract();
+    		contract.symbol(sym);
+    		contract.secType("STK");
+    		contract.currency("USD");
+    		contract.exchange("SMART");
+    		//Specify the Primary Exchange attribute to avoid contract ambiguity
+    		contract.primaryExch("ISLAND");
+    		
+        	t = new Broker(contract,key,df,Constants.TFU_MIN, wrapper, this);
+        	
+        	//t.start();
+        	tMap.put(sym, t);
         	realTimeBars(wrapper.getClient(), key, stocks.get(key));
         }
 		
@@ -91,10 +134,38 @@ public class Main {
 		//lg.trace("disconnected");
 		
 	}
+
+	
+	public synchronized boolean isOrderPlaced(){
+		return this.orderPlaced;
+	}
+	
+	public synchronized boolean setOrderPlaced(boolean placed){
+		if(placed){ //for setting to true (locking the order right)
+			if(this.isOrderPlaced()) { //double check the flag first
+				//the flag is taken, can't touch it, return false
+				return false;
+			}
+			else{
+				this.orderPlaced = placed;	//set the flag and lock the order right
+				return true;
+			}
+		}
+		else {
+			//resetting the flag to false (releasing the right to place an order)
+			this.orderPlaced = false;
+			return true;
+		}
+	}
+	
+	public void setOrderFilled(int orderId, int parentId, int clientId){
+		
+	}
+	
 	
 	private static void orderOperations(EClientSocket client, int nextOrderId) throws InterruptedException {
 		
-		/*** Requesting the next valid id ***/
+		//Requesting the next valid id 
 		//! [reqids]
         //The parameter is always ignored.
         client.reqIds(-1);
@@ -161,7 +232,7 @@ public class Main {
         Thread.sleep(10000);
         
     }
-	
+	/*
 	private static void OcaSample(EClientSocket client, int nextOrderId) {
 		
 		//OCA order
@@ -178,7 +249,7 @@ public class Main {
 		//! [ocasubmit]
 		
 	}
-	
+*/	
 	private static void tickDataOperations(EClientSocket client) throws InterruptedException {
 		
 		/*** Requesting real time market data ***/
