@@ -49,7 +49,7 @@ public class XmlReportHelperTest extends TestCase{
 	@Override
 	@Before
     protected void setUp() throws Exception { 		
-    	Globals.loadBatchProperties(Globals.configDir + "fxit.xmlt.batch.xml");
+    	Globals.loadBatchProperties();//Globals.configDir + "fxit.xmlt.batch.xml");
     	
     	initPackage();
     	
@@ -104,7 +104,6 @@ public class XmlReportHelperTest extends TestCase{
 			//p.setDataProvider("ftc");
 			//p.setDataProvider("etr");
 			//p.setDataProvider("cbc");
-			p.setDataProvider("crs");
 			
 			p.setJobDirection(Constants.JOB_OUTBOUND);
 			
@@ -124,6 +123,8 @@ public class XmlReportHelperTest extends TestCase{
 			String origFilename = "IP.AIP5S182.CAUS.A14.S0000001";
 			p.setOrigFilename(origFilename);
 			//p.setXmlFilename(filename);
+			String fileWorkingDir = "C:/git/repository2/CTS_XMLT/CTS_dataprep/test/testfiles/outbound/unprocessed/temp/";
+			p.setFileWorkingDir(fileWorkingDir);
 			
 			p.setMessageRefId("CA2016FR123456789");
 			p.setReportingPeriod(Utils.generateReportingPeriod("2016", null, null));

@@ -7,15 +7,12 @@ import ca.gc.cra.fxit.xmlt.model.PackageInfo;
 
 /**
  * @author Txs285
- *
  */
 public interface ITask extends Comparable<ITask> {
 	
 	public int execute(PackageInfo p);
 	public int getResultCode();
-	public String getResultMessage();
 	public void setResultCode(int c);
-	public void setResultMessage(String s);
 	
 	public String getId();
 	public void setId(String id);

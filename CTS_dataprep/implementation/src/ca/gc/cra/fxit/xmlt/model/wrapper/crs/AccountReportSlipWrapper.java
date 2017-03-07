@@ -16,8 +16,8 @@ public class AccountReportSlipWrapper extends IP6PRTSL {
 	public AccountReportSlipWrapper(String line) throws Exception {
 		super();
 		if(line.length() != this.length()){
-			lg.info("line: " + line);
-			lg.error("Header record line length is not correct: " + line.length() + "!=" + this.length());
+			//lg.info("line: " + line);
+			//lg.error("Header record line length is not correct: " + line.length() + "!=" + this.length());
 			//TODO throw exception?
 		}
 		this.setRec(line);
@@ -40,8 +40,8 @@ public class AccountReportSlipWrapper extends IP6PRTSL {
 
 		docSpec.setDocRefId		(docRefId);
 		driList.add(docRefId);
-		if(lg.isDebugEnabled())
-			lg.debug("createDocSpec: docRefId added: " + docRefId);
+		//if(lg.isDebugEnabled())
+		//	lg.debug("createDocSpec: docRefId added: " + docRefId);
 		docSpec.setCorrDocRefId	(corrDocRefId);
 		
 			// read docSpec content from input 

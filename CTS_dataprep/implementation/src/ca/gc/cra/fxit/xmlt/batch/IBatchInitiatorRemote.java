@@ -4,11 +4,8 @@ import java.rmi.RemoteException;
 import javax.ejb.Remote;
 
 /**
- * 
  * @author Txs285
- *
  */
-
 @Remote
 public interface IBatchInitiatorRemote 
 {

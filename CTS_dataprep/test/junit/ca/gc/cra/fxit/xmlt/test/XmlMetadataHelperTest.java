@@ -44,7 +44,7 @@ public class XmlMetadataHelperTest extends TestCase{
 	@Override
 	@Before
     protected void setUp() throws Exception { 		
-    	Globals.loadBatchProperties(Globals.configDir + "fxit.xmlt.batch.xml");
+    	Globals.loadBatchProperties();//Globals.configDir + "fxit.xmlt.batch.xml");
     	
     	initPackage();
     	
@@ -99,17 +99,18 @@ public class XmlMetadataHelperTest extends TestCase{
 			p.setPackageType(Constants.PKG_TYPE_STATUS);
 			p.setOECDMessageType(p.getDataProvider().toUpperCase() + Constants.MSG_TYPE_MESSAGE_STATUS);
 			try {
-				p.setReportingPeriod(Utils.generateMetadataTaxYear("2016"));
+				p.setReportingPeriod(Utils.generateReportingPeriod("2016",null,null));
+				//p.setTaxYear("2016");
 				}
 				catch(Exception e){Utils.logError(lg, e);}
 			
-			p.setXmlFilename(Utils.generateXMLFileName(p));
-			String filename = p.getSendingCountry() + "_"+p.getDataProvider().toUpperCase()+"_Metadata.xml";
+			p.setXmlFilename(Utils.generateXMLFileName(p, true));
+			//String filename = p.getSendingCountry() + "_"+p.getDataProvider().toUpperCase()+"_Metadata.xml";
 			//String filename = p.getSendingCountry() + "_CRSMessageStatus.xml";
 			//p.setOrigFilename(filename);
 			//p.setXmlFilename(filename);
 			//p.setOrigFilename(filename);
-			p.setMetadataFilename(filename);
+			p.setMetadataFilename(Utils.generateMetadataFilename(p, true));
 			p.setSendingCountry("CA");
 			p.setReceivingCountry("FR");
 			p.setMessageRefId("234678990");

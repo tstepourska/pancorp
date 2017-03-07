@@ -4,7 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.OutputStream;
-import java.sql.Timestamp;
+//import java.sql.Timestamp;
 //import java.util.ArrayList;
 import java.util.List;
 
@@ -52,6 +52,47 @@ public class Helper extends AbstractXmlHelper {
 	IP6PRTAC accountHolderRec = null;
 
 	
+	@Override
+	public final int invoke(PackageInfo p){
+		lg.info("FTC Helper started");
+		int status = Constants.STATUS_CODE_INCOMPLETE;
+
+		try {
+			//generate XML
+			status = transform(p);
+			if(lg.isDebugEnabled())
+			lg.debug("status: " + status);
+		}
+		catch(Exception e){
+			Utils.logError(lg, e);
+			status = Constants.STATUS_CODE_ERROR;
+		}
+		
+		//TODO for wireframe testing only, to remove!
+		//status=Constants.STATUS_CODE_SUCCESS;
+		if(status==Constants.STATUS_CODE_SUCCESS){
+			//reset status for validation
+			status = Constants.STATUS_CODE_INCOMPLETE;
+			String outputFile = p.getFileWorkingDir() + p.getXmlFilename();		//Globals.FILE_WORKING_DIR
+			lg.debug("outputFile: " + outputFile);
+			String[] xsdpaths = getSchemas();
+					
+			try {
+				status = this.validate(p, xsdpaths, outputFile);
+				lg.info("Validation completed with status " + status);
+			}
+			catch(Exception e){
+				Utils.logError(lg, e);
+				status = Constants.STATUS_CODE_FAILED_SCHEMA_VALIDATION;
+			}
+		}
+		
+		//TODO to remove
+		status= Constants.STATUS_CODE_SUCCESS;
+		
+		return status;
+	}
+	
 	/**
 	 * Reads text from the inputStream and transforms it to the international XML format 
 	 * writing the document to the outputStream. The input is read and processed in chunks 
@@ -64,8 +105,11 @@ public class Helper extends AbstractXmlHelper {
 	public int transform(PackageInfo p){
 		String fp = "transform: ";
 		int status = Constants.STATUS_CODE_INCOMPLETE;
-		String inputFile  = Globals.FILE_WORKING_DIR + p.getOrigFilename();
-		String outputFile = Globals.FILE_WORKING_DIR + new Timestamp(System.currentTimeMillis()) + p.getOrigFilename() + ".xml";
+		String fwDir = p.getFileWorkingDir();
+		String inputFile  = fwDir + p.getOrigFilename();
+		//p.setXmlFilename(xmlFilename);
+		
+		String outputFile =  fwDir+ p.getXmlFilename();
 		if(lg.isDebugEnabled())
 			lg.debug(fp + "original file name: " + inputFile);
 		
@@ -367,10 +411,11 @@ public class Helper extends AbstractXmlHelper {
 	@Override
 	public String[] getSchemas() {
 		String[] xsdpaths = new String[] {
-				  Globals.schemaLocationBaseDir +"ftc/isofatcatypes_v1.1.xsd",
-				  Globals.schemaLocationBaseDir +"ftc/oecdtypes_v4.2.xsd",
-				  Globals.schemaLocationBaseDir +"ftc/stffatcatypes_v2.0.xsd",
-				  Globals.schemaLocationBaseDir + "crs/" + Constants.MAIN_SCHEMA_NAME};
+				Constants.RESOURCE_BASE_PKG +"schema/ftc/isofatcatypes_v1.1.xsd",
+				Constants.RESOURCE_BASE_PKG +"schema/ftc/oecdtypes_v4.2.xsd",
+				Constants.RESOURCE_BASE_PKG +"schema/ftc/stffatcatypes_v2.0.xsd",
+				Constants.RESOURCE_BASE_PKG +"schema/ftc/" + Constants.MAIN_SCHEMA_NAME
+		};
 		return xsdpaths;
 	}
 }

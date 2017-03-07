@@ -1,6 +1,9 @@
 package ca.gc.cra.fxit.xmlt.job;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 //import java.util.Iterator;
 import java.util.LinkedList;
 //import java.util.Properties;
@@ -8,13 +11,13 @@ import java.util.LinkedList;
 import org.apache.log4j.Logger;
 
 import ca.gc.cra.fxit.xmlt.model.PackageInfo;
+import ca.gc.cra.fxit.xmlt.model.PackageInfoFactory;
 import ca.gc.cra.fxit.xmlt.task.ITask;
 import ca.gc.cra.fxit.xmlt.util.Globals;
 import ca.gc.cra.fxit.xmlt.util.Constants;
 import ca.gc.cra.fxit.xmlt.util.Utils;
 
 /**
- * 
  * Called from the BatchController EJB or from the ActionServlet of the web application
  * 
  * @author Txs285
@@ -43,43 +46,61 @@ public class TaskManager implements Serializable {
 			
 			//do the job
 			status = executeJob(job, pInfo);
+			log.info("invoke: status: " + status);
 					
-			switch(status){
-			case Constants.STATUS_CODE_CREATE_JOB_LOOP:
+			if(status== Constants.STATUS_CODE_CREATE_JOB_LOOP) {
 				//configure remaining tasks as a loop for more than one file
 				//at this point splitted file pieces must be generated on a disc and 
 				//named with <xml file name>.xml_<file count> 
-				
+				log.info("initiating job loop");
 				//initialize list of PackageInfos for each file
-				PackageInfo[] list = this.initPackageList(pInfo);
-				
-				LinkedList<ITask> newjob; 				
+				ArrayList<PackageInfo> list = PackageInfoFactory.initPackageList(pInfo);
+				if(log.isDebugEnabled()){
+					Iterator<PackageInfo> itDebug = list.iterator();
+					while(itDebug.hasNext()){
+						log.debug("package: " + itDebug.next().toString());
+					}
+					itDebug = null;
+				}
+				Iterator<PackageInfo> it = list.iterator();
+				HashMap<String,Integer> resultMap = new HashMap<>();
+
+				LinkedList<ITask> newjob; 		
+				int fileCounter = 0;
 				//for each part of the splitted file
-				for(int i=0;i<list.length;i++){
+				//for(int i=0;i<list.length;i++){
+				while(it.hasNext()){
+					fileCounter++;
 					//make deep copy of a remaining job
 					newjob = cloneJob(job);
+					log.debug("got a job for package #" + fileCounter + ": " + newjob);
 					
 					//do the job for a single file
-					status = executeJob(newjob, pInfo);
+					PackageInfo p0=it.next();
+					if(log.isDebugEnabled())
+						log.debug("Executing job for package " + p0);
+					status = executeJob(newjob, p0);
+					log.info("job for package " + fileCounter + " completed with status " + status);
 					
 					//TODO record status somewhere along with 
 					//the knowledge of original (unsplitted) file 
 					// name, split count etc
+					resultMap.put(p0.getOrigFilename(), status);
 				}
-			break;
-			case Constants.STATUS_CODE_FILE_REJECTED_TOO_BIG:
-				//TODO handle rejected file
-				break;
-				default:
+				log.info("All jobs completed: " + resultMap);
 			}
-	
+			else if(status== Constants.STATUS_CODE_FILE_REJECTED_TOO_BIG){
+				//TODO handle rejected file
+				log.error("XML file is REJECTED by XMLT because the size exceeds the limit.");
+			}
+
 			//all onJobEnd routines here
 			onJobEnd(status,pInfo);
 		}
 		catch(Exception e){
 			Utils.logError(log, e);
 		}
-
+		
 		return status;
 	}
 	
@@ -108,8 +129,7 @@ public class TaskManager implements Serializable {
 				break __job;
 			}
 		}	
-		log.info("Job execution stopped with status " + status);
-
+		log.info(fp + "Job execution stopped with status " + status);
 		return status;
 	}
 	
@@ -129,31 +149,7 @@ public class TaskManager implements Serializable {
 		}
 		return newjob;
 	}
-	
-	/**
-	 * Initializes list of PackageInfo objects, each corresponding to the chunk of 
-	 * original file created by splitting
-	 * 
-	 * @param p
-	 * @return
-	 * @throws Exception
-	 */
-	private PackageInfo[] initPackageList(PackageInfo p) throws Exception {
-		int splitCnt = p.getSplitFileCount();
-		PackageInfo[] pList = new PackageInfo[splitCnt];
-		
-		String origFileName = p.getOrigFilename();
-		
-		for(int i=1;i<=pList.length;i++){
-			PackageInfo pi = p.clone();
-			pi.setSplitFileCount(splitCnt);
-			pi.setOrigFilename(origFileName+"_" + i);
-			pList[i] = pi;
-		}
-		
-		return pList;
-	}
-	    
+		    
 	/**
 	 * Loads appropriate job based on known job direction (IN - inbound or OUT - outbound) and 
 	 * package type (DT - data or SM - status message)
@@ -223,11 +219,11 @@ public class TaskManager implements Serializable {
 		log.info(fp);
 		//TODO handle success and any error cases here or pass it back to the calling class?
 		OnJobEnd oje = new OnJobEnd();
-		oje.invoke(p);
-		switch(st){
-		case Constants.STATUS_CODE_SUCCESS:
-			break;
-		default:
-		}
+		oje.invoke(st, p);
+		//switch(st){
+		//case Constants.STATUS_CODE_SUCCESS:
+		//	break;
+		//default:
+		//}
 	}
 }

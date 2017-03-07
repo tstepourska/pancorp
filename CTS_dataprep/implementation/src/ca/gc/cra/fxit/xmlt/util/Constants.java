@@ -20,7 +20,7 @@ public class Constants {
 	public static final String MSG_TYPE_MESSAGE_STATUS							= "MessageStatus";
 	//used in the MessageSpec of the CRSStatusMessage as MessageTypeEnumType,
 	//as per CRS Status Message User Guide - might be a typo!
-	public static final String STATUS_MESSAGE							= "StatusMessage";
+	public static final String STATUS_MESSAGE									= "StatusMessage";
 	//////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////
 	
@@ -30,50 +30,52 @@ public class Constants {
 	//public static final String SUFFIX_UNPAK								= "UPK"; // used for inbound, decrypts, uncompreses payload, validates dig signature etc
 	
 	public static final String JAVA_PKG_TASK							= "ca.gc.cra.fxit.xmlt.task.";
+	public static final String RESOURCE_BASE_PKG						= "ca/gc/cra/fxit/xmlt/resources/";							
 	
-	public static final String CANADA						= "CA";
+	public static final String CANADA								= "CA";
 	
-	public static final String OUTBOUND_UNPROCESSED_TOSEND_DIR = "outbound/unprocessed/";
-	public static final String OUTBOUND_PROCESSED_TOSEND_DIR = "outbound/processed/";
-	//public static final String INBOUND_UNPROCESSED_DIR = "inbound/unprocessed/";
-	//public static final String INBOUND_PROCESSED_DIR = "inbound/unprocessed/";
-	public static final String TEMP_DIR					 = "temp/";
+	public static final String OUTBOUND_UNPROCESSED_TOSEND_DIR 		= "outbound/unprocessed/";
+	public static final String OUTBOUND_PROCESSED_TOSEND_DIR 		= "outbound/processed/";
+	public static final String TEMP_DIR					 			= "temp/";
 	
 	
-	//public static final String KEY_MAX_XML_FILE_SIZE		= "maxXmlFileSize";
-	public static final String DEFAULT_MAX_PKG_SIZE_KEY		= "DefaultMaxPkgSize";
-	public static final String SPECIFIC_MAX_FILE_SIZE_KEY	= "specificMaxFileSize";	
-	public static final String SPECIFIC_MAX_SIZE_VALUE_KEY   = "value";		//attribute name
-	public static final String SPECIFIC_MAX_SIZE_DEST_KEY   = "dest";		//attribute name
-	public static final String SPECIFIC_MAX_SIZE_COMPRESSED_KEY   = "compressed";		//attribute name
+	//public static final String KEY_MAX_XML_FILE_SIZE				= "maxXmlFileSize";
+	public static final String KEY_DEFAULT_MAX_PKG_SIZE				= "DefaultMaxPkgSize";
+	public static final String KEY_SPECIFIC_MAX_FILE_SIZE			= "specificMaxFileSize";	
+	public static final String KEY_SPECIFIC_MAX_SIZE_VALUE   		= "value";		//attribute name
+	public static final String KEY_SPECIFIC_MAX_SIZE_DEST   		= "dest";		//attribute name
+	public static final String KEY_SPECIFIC_MAX_SIZE_COMPRESSED   	= "compressed";		//attribute name
 	
 	/**
 	 * Value in bytes corresponding to tested maximum size of digital signature,
 	 * metadata file, key file
 	 */
-	public static final String PKG_SIZE_CONSTANT_KEY			= "PkgSizeConstant";
+	public static final String KEY_PKG_SIZE_CONSTANT				= "PkgSizeConstant";
 	/**
 	 * Value in percents of package compression ratio
 	 */
-	public static final String PKG_COMPRESSION_RATIO_KEY		= "PkgCompressionRatio";
+	//public static final String KEY_PKG_COMPRESSION_RATIO			= "PkgCompressionRatio";
 	/**
 	 *  Value in percents of XML payload compression ratio
 	 */
-	public static final String PAYLOAD_COMPRESSION_RATIO_KEY	= "PayloadCompressionRatio";
-	public static final String TXT_TO_XML_FACTOR_KEY 			= "TxtToXmlFactor";
-	public static final String FILE_SIGNATURE_SIZE_CONSTANTS_KEY = "FileSignatureSizeConstant";
+	public static final String KEY_PAYLOAD_COMPRESSION_RATIO		= "PayloadCompressionRatio";
+	public static final String KEY_TXT_TO_XML_FACTOR 				= "TxtToXmlFactor";
+	public static final String KEY_FILE_SIGNATURE_SIZE_CONSTANT 	= "FileSignatureSizeConstant";
+	public static final String KEY_FILE_SIZE_CONSTANT 				= "FileSizeConstant";
 	
-	public static final int NO_SPLIT							= 1;
+	public static final String KEY_JOB_CONFIG						= "JobConfig";
+	public static final String KEY_DATA_PROVIDERS					= "DataProviders";
 	
-	public static final String MAIN_SCHEMA_NAME					= "main_schema.xsd";
+	public static final String KEY_LOG_LEVEL						= "log_level";
 	
-	public static final String KEY_JOB_CONFIG					= "JobConfig";
-	public static final String KEY_DATA_PROVIDERS				= "DataProviders";
+	public static final int NO_SPLIT								= 1;
+	
+	public static final String MAIN_SCHEMA_NAME						= "main_schema.xsd";
 	
 	public static final int STATUS_CODE_SUCCESS 					= 0;
 	public static final int STATUS_CODE_ERROR	 					= 9;
 	public static final int STATUS_CODE_INVALID_INPUT_FILE			= 90000;	
-	public static final int STATUS_CODE_FAILED_XML_TRANSFORMATION	= 90001;
+	//public static final int STATUS_CODE_FAILED_XML_TRANSFORMATION	= 90001;
 	public static final int STATUS_CODE_NOT_FOUND					= 8;
 	public static final int STATUS_CODE_CREATE_JOB_LOOP	    		= -98;
 	public static final int STATUS_CODE_INCOMPLETE					= -99;
@@ -82,100 +84,103 @@ public class Constants {
 	public static final int STATUS_CODE_INVALID_MESSAGE_REF_ID		= 50008;
 	public static final int STATUS_CODE_DUPLICATED_MESSAGE_REF_ID	= 50009;
 	
+	/**
+	 * EEI Specific Status / Error Codes
+	Outbound:
+	10001		Transformation Failed   	Something fatal happened during transformation/file split /messageRefId generation, file cannot be processed 
+	10002		Ready For Review			Outbound XML message is waiting for CASD to review and approve
+	10003		Release Rejected			CASD rejected message for sending, file cannot be packaged for transmission
+	10004		DataPrep Initiated			CASD triggered data prep 
+	10005		DataPrep Failed				Something fatal happened during data prep, file cannot be processed
+	10006		Package Sent				Data prep successfully completed and package has been pushed to the drop zone for transmitting to CTS
+	10007		Accepted By OJ				Package has been accepted by the OJ without error
+	10008 		Accepted By OJ with Error	Package has been accepted by the OJ with error (Record level error)
+	10009 		Rejected By OJ  (file error)	Package has been rejected by the OJ (File level error)
+	10010 		Rejected By OJ (other reasons)	Package has been rejected by the OJ (unknown reason)
+
+
+	Inbound:
+	10011		Package Received			Zipped package came from CTS
+	10012		Ready for Review			After metadata validated, ready for CASD access
+	10013		Delivery Approved			CASD triggered delivery to the data provider
+	10014		Delivery Completed			After all data is in the drop zone for data provider and any additional info is provided  to them (such as MessageRefID/DocRefID mapping for accepted file)
+	10015		Accepted By Canada			Package has been accepted by the data provider without error
+	10016 		Accepted By Canada with Error		Package has been accepted by the Canadian data provider with error (Record level error)
+	10017 		Rejected By Canada (File Error)  	Package has been rejected by the Canada (File level error)
+	10018 		Rejected By Canada (Other Reason)  	Package has been rejected by the Canada (other reason)
+	*/
+	public static final int STATUS_CODE_TRANSOFRMATION_FAILED		 		= 10001;
+	public static final int STATUS_CODE_OUT_READY_FOR_REVIEW		 		= 10002;
+/*	public static final int STATUS_CODE_RELEASE_REJECTED		 			= 10003;
+	public static final int STATUS_CODE_DATAPREP_INITIATED		 			= 10004;
+	public static final int STATUS_CODE_DATAPREP_FAILED		 				= 10005;
+	public static final int STATUS_CODE_PACKAGE_SENT		 				= 10006;
+	public static final int STATUS_CODE_ACCEPTED_BY_OJ		 				= 10007;
+	public static final int STATUS_CODE_ACCEPTED_BY_OJ_WITH_ERROR		 	= 10008;
+	public static final int STATUS_CODE_REJECTED_BY_OJ		 				= 10009;
+	public static final int STATUS_CODE_REJECTED_BY_OJ_OTHER		 		= 10010;
+	public static final int STATUS_CODE_PACKAGE_RECEIVED		 			= 10011;
+	public static final int STATUS_CODE_IN_READY_FOR_REVIEW		 			= 10012;
+	public static final int STATUS_CODE_DELIVERY_APPROVED		 			= 10013;
+	public static final int STATUS_CODE_DELIVERY_COMPLETED		 			= 10014;
+	public static final int STATUS_CODE_ACCEPTED_BY_CANADA		 			= 10015;
+	public static final int STATUS_CODE_ACCEPTED_BY_CANADA_WITH_ERROR		= 10016;
+	public static final int STATUS_CODE_REJECTED_BY_CANADA_FILE_ERROR		= 10017;
+	public static final int STATUS_CODE_REJECTED_BY_CANADA_OTHER		 	= 10018;
+	*/
+	
 	public static final String STATUS_MESSAGE_SUCCESS 				= "success";
 	public static final String STATUS_MESSAGE_ERROR					= "error";
 	
 	//public static final String AUDIT								= "AUDIT: ";
 	
-	public static final String DEFAULT_ENCODING = "ISO-8859-1";  
+	public static final String DEFAULT_ENCODING 					= "ISO-8859-1";  
 	
 	public static final String FILE_EXT_XML							= ".xml";
 	public static final String METADATA								= "Metadata";
 	public static final String MSG_REF_ID_PLACEHOLDER				= "MESSAGEREFID";
 	public static final int MIX_TAX_YEAR							= 1970;
+	
+	public static final String STATS_CFG							= "stats.cfg";
+	
+	public static final String CLEANUP_FILENAME						= "~";
 	////////////////////////////////////////////
 	// out bound create package constants
+
+	public static final int maxAttempts 							= 5;
+
+	public static int bufSize 										= 8 * 1024;
 	
-	///////////////////////////
-	/** Outbound FATCA payload xml file name */
-	//public static final String CANADA_FATCA_PAYLOAD_FILE = "000000.00000.TA.124_0_Payload.xml";
+	public static final String UNDERSCORE		 					= "_";
+	public static final String ENV_TEST								= "T";
+	public static final String ENV_PROD			 					= "P";
+	public static final String COMMA								= ",";
 
-	/** AES cryptographic Cipher transformation algorithm */
-	// public static final String AES_TRANSFORMATION = "AES/ECB/PKCS5Padding";
-
-	//public static final String AES_TRANSFORMATION = "AES/CBC/PKCS5Padding";
-
-	/** RSA transformation algorithm */
-	//public static final String RSA_TRANSFORMATION = "RSA";
-
-	/** Symmetric key algorithm */
-	//public static final String SECRET_KEY_ALGO = "AES";
-
-	/** Symmetric key size */
-	//public static final int SECRET_KEY_SIZE = 256;
-
-	public static final int maxAttempts = 5;
-
-	public static int bufSize = 8 * 1024;
+	public static SimpleDateFormat sdfFileName 				= new SimpleDateFormat("yyyyMMdd'T'HHmmssSSSz"); //'Z'
+	public static SimpleDateFormat sdfFileCreateTs 			= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss_z");
+	public static SimpleDateFormat sdfStatusMessageTs 		= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+	public static SimpleDateFormat sdfMetadataTimestamp 	= new SimpleDateFormat("YYYY-MM-DD'T'hh:mm:ss.SSZ");
+	public static SimpleDateFormat sdfMetadataYear 			= new SimpleDateFormat("YYYY");
+	public static SimpleDateFormat sdfSweepTimeTs 			= new SimpleDateFormat("yyyyMMdd'T'HHmmss");
+	public static SimpleDateFormat sdfReportTs 				= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 	
-	public static final String UNDERSCORE		 = "_";
-	public static final String ENV_TEST			 = "T";
-	public static final String ENV_PROD			 = "P";
 
-	//public Long fileId = 0L;
-	//private ObjectFactory objFMetadata;
-	public static SimpleDateFormat sdfFileName = new SimpleDateFormat("yyyyMMdd'T'HHmmssSSSz"); //'Z'
-	public static SimpleDateFormat sdfFileCreateTs = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss_z");
-	public static SimpleDateFormat sdfStatusMessageTs = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-	public static SimpleDateFormat sdfMetadataTimestamp = new SimpleDateFormat("YYYY-MM-DD'T'hh:mm:ss.SSZ");
-	public static SimpleDateFormat sdfMetadataYear = new SimpleDateFormat("YYYY");
-	public static SimpleDateFormat sdfSweepTimeTs = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
-	public static SimpleDateFormat sdfReportTs = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-	
-	//public static final SimpleDateFormat runDateFormatter = new SimpleDateFormat("yyyyMMdd");
-	//public final static SimpleDateFormat runTimeFormatter = new SimpleDateFormat("HHmmssSSS");
-	
-	//public static final SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
-//////////////////////////////////////////////////////////////////////////////
-	// endo f outbound create package constants
+	//////////////////////////////////////////////////////////////////////////////
+	// end of outbound create package constants
 	///////////////////////////////
 	
 	///////////////////////////////////
 	//batch processisgn
-	
-	/**
-     * FATCA Entity Sender ID for Canada. Value {@value}.
-     */
-	//public static final String FATCA_ENTITY_SENDER_ID_CANADA = "000000.00000.TA.124";
-	/**
-     * Transmitting country code. Use 2-character country code for Canada. Value {@value}.
-     */
-	//public static final String TRANSMITTING_COUNTRY_CODE = "CA";
-	/**
-     * Receiving country code. Use 2-character country code for United States. Value {@value}.
-     */
-	//public static final String RECEIVING_COUNTRY_CODE = "US";
-	/**
-     * PackageInfo direction code.
-     */
-	//public static final String OUTGOING_DIRECTION_CODE = "01";
 	/**
      * Warning text for outgoing FATCA XML files. 
      * The exact wording of the warning text is provided by Canada's Competent Authority.
      */
 	public static final String PACKAGE_WARNING_TEXT = "THIS INFORMATION IS FURNISHED UNDER THE PROVISIONS OF AN INCOME TAX TREATY WITH A FOREIGN GOVERNMENT. ITS USE AND DISCLOSURE MUST BE GOVERNED BY THE PROVISIONS OF THAT TREATY.";
 
-
 	// end of batch processing
 	//////////////////////////////////////
 	
 	/////////////////////////////////////
-    /**
-     * The US FATCA XML schema location in a format that the parser requires consisting of the  
-     * namespace, and the name and location of schema. Note that there is a custom implementation
-     * of the EntityResolver to resolve the location. 
-     */
-	//public static String FATCA_SCHEMA_LOCATION = "urn:oecd:ties:fatca:v1 FatcaXML_v1.1.xsd";
 
     /**
      * Value of TRANS-CD for PART XVIII Master header record: IP6PRTHD. Value {@value}.
@@ -292,7 +297,7 @@ public class Constants {
     /**
      * Factor to apply to cobol record length to determine approximate length of XML. 
      */
-	public static final long TXT2XML_FACTOR = 3L;
+	public static final long TXT2XML_FACTOR 			= 3L;
 	
 
 	
@@ -306,43 +311,97 @@ public class Constants {
      * Maximum number of occurrences of Controlling Person per Account Report. Value {@value}.
      * This is the maximum number of occurrences of Controlling Person per Account Report in the input file. The output is unbounded. 
      */
-	public static final int MAX_CONTROLLING_PERSONS = 16;
+	public static final int MAX_CONTROLLING_PERSONS 	= 16;
 
 	/**
      * Number of digits after the decimal place in account balance and payment amounts. Value {@value}. 
      */
-	public static final int MAX_DECIMAL_PLACES = 2;
+	public static final int MAX_DECIMAL_PLACES 			= 2;
 
 	/**
 	 * If true, use test DocTypeIndic codes. If false, use production codes.
 	 * Test codes should ONLY be used to create FATCA XML files to be sent to IRS during system testing periods, 
 	 * and not for PRODUCTION files to be sent to IRS. 
 	 */
-	public boolean useTestDocTypeIndicCodes = false;
-    
-	/**
-     * FATCA Entity Sender ID for Canada. Value {@value}.
-     */
-	//public static final String FATCA_ENTITY_SENDER_ID_CANADA = "000000.00000.TA.124";
-	/**
-     * Transmitting country code. Use 2-character country code for Canada. Value {@value}.
-     */
-	//public static final String TRANSMITTING_COUNTRY_CODE = "CA";
-	/**
-     * Receiving country code. Use 2-character country code for United States. Value {@value}.
-     */
-	//public static final String RECEIVING_COUNTRY_CODE = "US";
+	public boolean useTestDocTypeIndicCodes 			= false;
 	
+	/////////////////////////////////////////////////////////////////////////////
+	// JNDI NAMES
+	/////////////////////////////////////////////////////////////////////////////
 	/**
-     * FATCA form type in InfoDec. Value {@value}.
-     */
-	//public static final String FATCA_FORM_TYPE = "31";
-	
-	//public static final String MESSAGE_TYPE_CRS_DATA	= "CRS";
-		
+	 * JNDI name to lookup data directory.
+	 */
+	public static final String JNDI_BATCH_DATA_DIRECTORY 		= "ca/gc/cra/fxit/xmlt/env/basedir";  
+	 /**
+	  *  JNDI name to lookup directory name where unprocessed flat files will be picked up in the next batch run.
+	  *  The directory will include files for the tax years for which original, amended, and cancel data is available.
+	  */
+	//public static final String JNDI_BATCH_UNPROCESSED_INPUT = "ca/gc/cra/fxit/ca2us/env/unprocessed";  
+	 /**
+	  *  JNDI name to lookup directory name where XML output files will be created.
+	  */
+	//public static final String JNDI_BATCH_XML_OUTPUT = "ca/gc/cra/fxit/ca2us/env/xml_output";  
+	 /**
+	  *  JNDI name to lookup directory name where flat file output files will be created.
+	  */
+	//public static final String JNDI_BATCH_FLAT_FILE_OUTPUT = "ca/gc/cra/fxit/ca2us/env/flat_file_output";  
+	 /**
+	  *  JNDI name to lookup directory name of local directory for file transfers.
+	  */
+	//public static final String JNDI_BATCH_FILE_TRANSFER_LOCALDIR = "ca/gc/cra/fxit/ca2us/env/file_transfer_localdir";  
 
-	// end of bridge
-	//////////////////////////////////
+	/**
+	 * JNDI name to lookup log level. Valid Values: TRACE  DEBUG  INFO  WARN  ERROR  FATAL
+	 * Refer to org.apache.commons.logging.Log interface for more information.
+	 */
+	public static final String JNDI_LOG_LEVEL 					= "ca/gc/cra/fxit/xmlt/env/log_level";
+
+	/**
+	 * JNDI name to lookup DocTypeIndic codes to use. Valid Values: TEST PRODUCTION
+	 */
+	public static final String JNDI_DOCTYPEINDIC_ENV 			= "ca/gc/cra/fxit/xmlt/env/docTypeIndicEnv";
+	/**
+	 * JNDI name to lookup host for file transfers from eBCI to mainframe.
+	 */
+	//public static final String JNDI_MAINFRAME_HOST = "ca/gc/cra/fxit/ca2us/env/mainframe/host";
+	/**
+	 * JNDI name to lookup userid for file transfers from eBCI to mainframe.
+	 */
+	//public static final String JNDI_MAINFRAME_USERID = "ca/gc/cra/fxit/ca2us/env/mainframe/userid";
+	/**
+	 * JNDI name to lookup encrypted password for file transfers from eBCI to mainframe.
+	 */
+	//public static final String JNDI_MAINFRAME_PASSWORD = "ca/gc/cra/fxit/ca2us/env/mainframe/password";
+	
+	/**
+	 * JNDI name to lookup FXMT database environment: U (UT), S (SI), A (UA), O (OT), or P (PR)
+	 */
+	public final static String JNDI_FXMT_ENV   					= "ca/gc/cra/db/fxmt/environment";
+	/**
+	 * JNDI name to lookup EJB for FXMT database access.
+	 */
+	public final static String JNDI_FXMT_DATA_HOME   			= "ca/gc/cra/fxit/xmlt/data/RetrieveFxmtDataHome";
+	
+	/**
+	 * JNDI name to lookup FXMT From address used for sending email.
+	 */
+	public final static String JNDI_FXIT_MAIL_FROM_ADDRESS   	= "ca/gc/cra/fxit/mail/FromAddress";
+	
+	/**
+	 * JNDI name to lookup IRMS email address that will receive FTP confirmation from FXIT.
+	 */
+	public final static String JNDI_FXIT_MAIL_TO_ADDRESS   		= "ca/gc/cra/fxit/mail/ToAddressList";
+	
+	public final static String JNDI_FXIT_MAIL_SENDER_ADDRESS   	= "ca/gc/cra/fxit/mail/SenderAddressList";
+
+	/**
+	 * JNDI name to lookup flag that controls whether or not FXIT sends email.
+	 */
+	public final static String JNDI_FXIT_MAIL_SEND_FLAG   = "ca/gc/cra/fxit/mail/sendFlag";
+	///////////////////////////////////////////////////////////////////////////////////////////////////
+	// END OF JNDI NAMES
+	///////////////////////////////////////////////////////////////////////////////////////////////////
+
 	//TODO
 		public static final String getStatusMessage(int c){
 			String msg;

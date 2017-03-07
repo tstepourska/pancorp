@@ -10,7 +10,7 @@ import ca.gc.cra.fxit.xmlt.util.Utils;
 public abstract class AbstractTask implements ITask, Comparable<ITask> {
 	private static Logger log = Logger.getLogger(AbstractTask.class);
 	protected int resultCode = Constants.STATUS_CODE_INCOMPLETE;
-	protected String resultMessage="";
+	//protected String resultMessage="";
 	protected String id;
 	protected int sequence;
 	protected String jobId;
@@ -110,33 +110,25 @@ public abstract class AbstractTask implements ITask, Comparable<ITask> {
 	
 	protected abstract int invoke(PackageInfo p);
 	
-	/*protected abstract void begin();
-	
-	protected void end(int status){
-		this.setResultCode(status);
-		//TODO
-		//set message 
-	}*/
-	
 	@Override
 	public int getResultCode(){
 		return this.resultCode;
 	}
 	
-	@Override
+/*	@Override
 	public String getResultMessage(){
 		return this.resultMessage;
-	}
+	}*/
 	
 	@Override
 	public void setResultCode(int c){
 		this.resultCode = c;
 	}
 	
-	@Override
+/*	@Override
 	public void setResultMessage(String s){
 		this.resultMessage = s;
-	}
+	}*/
 
 	/**
 	 * Overrides Object hashCode() method.

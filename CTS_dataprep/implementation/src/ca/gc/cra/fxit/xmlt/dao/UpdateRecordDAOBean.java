@@ -66,14 +66,18 @@ public class UpdateRecordDAOBean implements SessionBean{
 	 * 
 	 * @param transmitterCountryCode
 	 * @param recipientCountryCode
-	 * @param taxYear
+	 * @param taxYearw
 	 * @return
 	 * @throws DataException, RemoteException, IllegalFormatException, IndexOutOfBoundsException  
 	 */
-	public int invoke(PackageInfo p) throws DataException, RemoteException, IllegalFormatException, IndexOutOfBoundsException {
+	public void invoke(int status, PackageInfo p) throws DataException, RemoteException, IllegalFormatException, IndexOutOfBoundsException {
 		String fp = "invoke: "; 
 		log.trace("Begin" + fp);
-		int status = Constants.STATUS_CODE_INCOMPLETE;
+		//int status = Constants.STATUS_CODE_INCOMPLETE;
+		int statusToUpdate = Constants.STATUS_CODE_OUT_READY_FOR_REVIEW;
+		if(status!=Constants.STATUS_CODE_SUCCESS)
+			statusToUpdate = Constants.STATUS_CODE_TRANSOFRMATION_FAILED;
+		String sql = "UPDATE <table> SET status_code=? WHERE messageRefID=? AND data_provider=?";
 		
 		String messageRefID = null;
 		int nextID = 1;
@@ -85,7 +89,7 @@ public class UpdateRecordDAOBean implements SessionBean{
 		log.debug(fp + "Returning");
 		
 		//log.trace(fp + "End getNextMessageRefID");
-		return status;
+		//return status;
 	}
 	
 	/**

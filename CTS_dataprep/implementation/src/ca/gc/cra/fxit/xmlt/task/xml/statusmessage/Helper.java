@@ -50,10 +50,52 @@ public class Helper extends AbstractXmlHelper {
 	 /////////////////////////////////////////////////////////////////////////////
 	
 	@Override
+	public final int invoke(PackageInfo p){
+		lg.info("Status Message Helper started");
+		int status = Constants.STATUS_CODE_INCOMPLETE;
+
+		try {
+			//generate XML
+			status = transform(p);
+			if(lg.isDebugEnabled())
+			lg.debug("status: " + status);
+		}
+		catch(Exception e){
+			Utils.logError(lg, e);
+			status = Constants.STATUS_CODE_ERROR;
+		}
+		
+		//TODO for wireframe testing only, to remove!
+		//status=Constants.STATUS_CODE_SUCCESS;
+		if(status==Constants.STATUS_CODE_SUCCESS){
+			//reset status for validation
+			status = Constants.STATUS_CODE_INCOMPLETE;
+			String outputFile = p.getFileWorkingDir() + p.getXmlFilename();		//Globals.FILE_WORKING_DIR
+			lg.debug("outputFile: " + outputFile);
+			String[] xsdpaths = getSchemas();
+					
+			try {
+				status = this.validate(p, xsdpaths, outputFile);
+				lg.info("Validation completed with status " + status);
+			}
+			catch(Exception e){
+				Utils.logError(lg, e);
+				status = Constants.STATUS_CODE_FAILED_SCHEMA_VALIDATION;
+			}
+		}
+		
+		//TODO to remove
+		status= Constants.STATUS_CODE_SUCCESS;
+		
+		return status;
+	}
+	
+	@Override
 	public String[] getSchemas(){
 		String[] xsdpaths = new String[] {
-				  Globals.schemaLocationBaseDir +"statusmessage/isocsmtypes_v1.0.xsd",
-				 Globals.schemaLocationBaseDir +"statusmessage/" + Constants.MAIN_SCHEMA_NAME};
+				Constants.RESOURCE_BASE_PKG +"schema/statusmessage/isocsmtypes_v1.0.xsd",
+				Constants.RESOURCE_BASE_PKG + "schema/statusmessage/" + Constants.MAIN_SCHEMA_NAME
+				 };
 		
 		return xsdpaths;
 	}
@@ -65,23 +107,17 @@ public class Helper extends AbstractXmlHelper {
 	 * 
 	 * @return int status code
 	 */
-	@SuppressWarnings("resource")
+	//@SuppressWarnings("resource")
 	@Override
 	public int transform(PackageInfo p){
 		String fp = "transform: ";
 		int status = Constants.STATUS_CODE_INCOMPLETE;
 		//String inputFile  = Globals.baseFileDir + Globals.outboundUnprocessed + p.getOrigFilename();
 		long timestamp = System.currentTimeMillis();
-		String outputFile = Globals.FILE_WORKING_DIR + p.getXmlFilename();
-				
-			/*	
-				p.getSendingCountry() + "_" + p.getDataProvider().toUpperCase() + 
-				"MessageStatus"+ 
-				//"_"+Constants.sdfFileName.format(new Date(timestamp))+
-				".xml";*/
+		//p.setXmlFilename(xmlFilename);
+		String outputFile =  p.getFileWorkingDir() + p.getXmlFilename();
 		if(lg.isDebugEnabled())
-			lg.debug(fp + "output file name: " + outputFile);		
-		
+			lg.debug(fp + "output file name: " + outputFile);				
 		
 		marshaller 		= new JaxbMarshaller();
 		//TODO
@@ -316,7 +352,6 @@ public class Helper extends AbstractXmlHelper {
      * @return
      * @throws Exception
      */
-
     private OriginalMessageType createOriginalMessageType(PackageInfo p) throws Exception {
     	OriginalMessageType omt = new OriginalMessageType();
     	omt.setOriginalMessageRefID(p.getOrigMessageRefId());

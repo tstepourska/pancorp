@@ -16,8 +16,8 @@ public class FIWrapper extends IP6PRTSM {
 	
 	public FIWrapper(String line) throws Exception {
 		if(line.length() != this.length()){
-			lg.info("line: " + line);
-			lg.error("Header record line length is not correct: " + line.length() + "!=" + this.length());
+			//lg.info("line: " + line);
+			//lg.error("Header record line length is not correct: " + line.length() + "!=" + this.length());
 			//TODO throw exception?
 		}
 		this.setRec(line);
@@ -30,21 +30,21 @@ public class FIWrapper extends IP6PRTSM {
 
 	    	try {
 	    	List<CountryCodeType> resCountryCode = createCountryCodeList();
-	    	if(lg.isDebugEnabled())
-	    		lg.debug(fp + " resCountryCode created");
+	    //	if(lg.isDebugEnabled())
+	    	//	lg.debug(fp + " resCountryCode created");
 	    	//List<String> resCountryCode = createCountryCodeListFromIP6PRTSM(reportingFIRec);
 			List<TINType> tin = createTINList();
-			if(lg.isDebugEnabled())
-	    		lg.debug(fp + " tin list created");
+			//if(lg.isDebugEnabled())
+	    	//	lg.debug(fp + " tin list created");
 			List<NameOrganisationType> name = createNameOrganisationList();
-			if(lg.isDebugEnabled())
-	    		lg.debug(fp + " name created");
+		//	if(lg.isDebugEnabled())
+	    //		lg.debug(fp + " name created");
 			List<AddressType> address = createAddressList();
-			if(lg.isDebugEnabled())
-	    		lg.debug(fp + " address created");
+		//	if(lg.isDebugEnabled())
+	    //		lg.debug(fp + " address created");
 			DocSpecType docSpec = createDocSpec(factory, driList);
-			if(lg.isDebugEnabled())
-	    		lg.debug(fp + " docSpec created");
+		//	if(lg.isDebugEnabled())
+	    //		lg.debug(fp + " docSpec created");
 			
 	    	if (resCountryCode != null && !resCountryCode.isEmpty()) {
 	    		party.getResCountryCode().addAll(resCountryCode);
@@ -98,8 +98,8 @@ public class FIWrapper extends IP6PRTSM {
 	    	
 	    	List<CountryCodeType> countryCodeList = null;
 	    	String country = this.getFiRsdCntryCd();
-	    	if(lg.isDebugEnabled())
-	    		lg.debug("createCountryCodeList: country: "+ country);
+	    //	if(lg.isDebugEnabled())
+	    //		lg.debug("createCountryCodeList: country: "+ country);
 	    	try {
 	    	CountryCodeType countryCode = CountryCodeType.fromValue(country);
 			if (countryCode != null) {
@@ -126,8 +126,8 @@ public class FIWrapper extends IP6PRTSM {
 				docRefId 		= this.getFiDocRefId().trim();
 
 				driList.add(docRefId);
-				if(lg.isDebugEnabled())
-					lg.debug("createDocSpec: docRefId added: " + docRefId);
+				//if(lg.isDebugEnabled())
+				//	lg.debug("createDocSpec: docRefId added: " + docRefId);
 				
 				corrDocRefId 	= this.getFiCorrDocRefId().trim();
 			// read docSpec content from input 
@@ -147,7 +147,7 @@ public class FIWrapper extends IP6PRTSM {
 	    }  
 	    
 	    private List<AddressType> createAddressList() throws Exception {
-	    	
+	    	//lg.debug("createAddressList started");
 	    	List<AddressType> addressList = null;
 	    	
 			AddressType address = createAddress();
@@ -155,6 +155,7 @@ public class FIWrapper extends IP6PRTSM {
 				addressList = new ArrayList<AddressType>();
 				addressList.add(address);
 			}
+			//lg.debug("createAddressList done");
 			return addressList;
 	    }
 	    
@@ -163,19 +164,24 @@ public class FIWrapper extends IP6PRTSM {
 	     * @return
 	     */    
 	    private AddressType createAddress() throws Exception {
-	    		
+	    	//lg.debug("createAddress started");
 	    		AddressType address = new AddressType();
 	    		ObjectFactory factory = new ObjectFactory(); 
 
 	    		// read address content from input 
 	    		//CountryCodeType countryCode = createCountryCode(input, countryCodeBeginIndex);
 	    		CountryCodeType countryCode = CountryCodeType.fromValue(this.getFiRsdCntryCd());//getFilrCntryCd());
+	    	//	lg.debug("country code: " + countryCode);
 	    		String addressFree = WrapperUtils.createAddressFreeFromStr(this.getFilrAddrFrstTxt(),this.getFilrAddrSecTxt());
+	    	//	lg.debug("addressFree: " + addressFree);
 	    		AddressFixType addressFix = WrapperUtils.createAddressFixFromStr(this.getFilrPstlZipCd(), this.getFilrCtyNm(), this.getFiPvstNm());
+	    	//	lg.debug("addressFix: " + addressFix);
 
 	    		// set address content
 	    		if (countryCode != null) {
+	    			//lg.debug("creating JAXBElement country code");
 	    			JAXBElement<CountryCodeType> jaxbCountryCode = factory.createAddressTypeCountryCode(countryCode);
+	    			//lg.debug("JAXBElement country code created");
 	    			//JAXBElement<String> jaxbCountryCode = factory.createAddressTypeCountryCode(countryCode);
 	    			address.getContent().add(jaxbCountryCode);
 	    		}
@@ -189,7 +195,7 @@ public class FIWrapper extends IP6PRTSM {
 	    		}
 
 	    		factory = null;
-	    		
+	    		//lg.debug("createAddress done");
 	    		return address;
 	    }    
 	        

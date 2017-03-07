@@ -4,6 +4,7 @@ package ca.gc.cra.fxit.xmlt.dao;
 import javax.ejb.*;
 
 import java.util.IllegalFormatException;
+import java.util.Random;
 import java.rmi.RemoteException;
 //import org.apache.commons.logging.Log;
 //import org.apache.commons.logging.LogFactory;
@@ -82,8 +83,11 @@ public class InsertRecordDAOBean implements SessionBean{
 	//	int nextID = 1;
 		//messageRefId = "CA2016FR123456789";
 				try {
-
-					messageRefId = p.getSendingCountry()+p.getReportingPeriod().getYear()+p.getReceivingCountry() + 1234567890;
+					//for testing only
+					Random r = new Random(System.currentTimeMillis());
+					long pkgid = Math.abs(r.nextLong());
+					String yr = (""+p.getReportingPeriod().getYear()).substring(2);
+					messageRefId = p.getSendingCountry()+yr+p.getReceivingCountry() + pkgid;
 					//status = Constants.STATUS_CODE_SUCCESS;
 				} 
 				catch (IllegalFormatException e) {

@@ -25,8 +25,8 @@ public class PersonWrapper extends IP6PRTCP {
 	public PersonWrapper(String line) throws Exception {
 		super();
 		if(line.length() != this.length()){
-			lg.info("line: " + line);
-			lg.error("Header record line length is not correct: " + line.length() + "!=" + this.length());
+			//lg.info("line: " + line);
+			//lg.error("Header record line length is not correct: " + line.length() + "!=" + this.length());
 			//TODO throw exception?
 		}
 		this.setRec(line);

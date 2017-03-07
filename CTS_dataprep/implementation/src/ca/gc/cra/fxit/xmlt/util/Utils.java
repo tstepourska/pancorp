@@ -90,28 +90,39 @@ public class Utils {
 		//month and day might be null, then set defaults
 		int iMon = 12;
 		int iDay = 31;
-		try { iMon = Integer.parseInt(month); }
-		catch(Exception e){ iMon = 12; }
-		
-		try{ iDay = Integer.parseInt(day); }
-		catch(Exception e){ iDay = 31; }
-		
-		XMLGregorianCalendar taxyear = null;
-			taxyear = DatatypeFactory.newInstance().newXMLGregorianCalendar(new GregorianCalendar());
+		try { 
+			iMon = Integer.parseInt(month); 
+			try{ 
+				iDay = Integer.parseInt(day); 
+			}
+			catch(Exception e){ 
+				iDay = -1; 
+			}
+		}
+		catch(Exception e){ 
+			iMon = 12; 
+			iDay = 31;
+		}
+	
+		XMLGregorianCalendar taxyear = DatatypeFactory.newInstance().newXMLGregorianCalendar(new GregorianCalendar());
 			
 			taxyear.setTime(DatatypeConstants.FIELD_UNDEFINED,
 							DatatypeConstants.FIELD_UNDEFINED,
 							DatatypeConstants.FIELD_UNDEFINED);
 			taxyear.setTimezone(DatatypeConstants.FIELD_UNDEFINED);
 			
-			taxyear.setDay  (iDay);
+			if(iDay>0)
+				taxyear.setDay  (iDay);
+			else
+				taxyear.setDay(DatatypeConstants.FIELD_UNDEFINED);
 			taxyear.setMonth(iMon);
 			taxyear.setYear (iYear);
 
 		return taxyear;
 	}
 	
-	public static XMLGregorianCalendar generateMetadataTaxYear(String year) throws Exception {
+/*	public static XMLGregorianCalendar generateMetadataTaxYear(String year) throws Exception {
+		log.debug("generateMetadataTaxYear: year: " + year);
 		//year must be valid
 		int iYear = Integer.parseInt(year);
 		
@@ -126,6 +137,25 @@ public class Utils {
 			taxyear.setDay  (DatatypeConstants.FIELD_UNDEFINED);
 			taxyear.setMonth(DatatypeConstants.FIELD_UNDEFINED);
 			taxyear.setYear (iYear);
+
+		return taxyear;
+	}*/
+	
+	public static XMLGregorianCalendar generateMetadataTaxYear(XMLGregorianCalendar reportingPeriod) throws Exception {
+		log.debug("generateMetadataTaxYear");
+		//year must be valid
+		//int iYear = Integer.parseInt(year);
+		
+		XMLGregorianCalendar taxyear = (XMLGregorianCalendar)reportingPeriod.clone(); // DatatypeFactory.newInstance().newXMLGregorianCalendar(new GregorianCalendar());
+		log.debug("generateMetadataTaxYear: cloned reportingPeriod");
+			taxyear.setTime(DatatypeConstants.FIELD_UNDEFINED,
+							DatatypeConstants.FIELD_UNDEFINED,
+							DatatypeConstants.FIELD_UNDEFINED);
+			taxyear.setTimezone(DatatypeConstants.FIELD_UNDEFINED);
+			
+			taxyear.setDay  (DatatypeConstants.FIELD_UNDEFINED);
+			taxyear.setMonth(DatatypeConstants.FIELD_UNDEFINED);
+			//taxyear.setYear (iYear);
 
 		return taxyear;
 	}
@@ -202,7 +232,23 @@ public class Utils {
 		return strdate;
 	}
 		
-	public static String generateXMLFileName(PackageInfo p) throws Exception {
+	/**
+	 * Creates XML filename in a format 
+	 * 	<CRSStatus_CA16FR1234567890_2017022T3145012_U>
+	 * If parameter appendExtention is true, appends .xml to the file name string
+	 * 
+	 * appendExtention is set to false when original file is split, and 
+	 * a counter needs to be appended to each generated XML file
+	 * 
+	 * @param p
+	 * @param appendExtention
+	 * 
+	 * @return String
+	 * 
+	 * @throws Exception
+	 */
+	public static String generateXMLFileName(PackageInfo p, boolean appendExtention) throws Exception {
+		String fp = "generateXMLFileName: ";
 		StringBuilder sb = new StringBuilder();
 		//senderFileId format
 		//CountryCdSender_CountryCdReceiver_CommunicationType_MessageRefID
@@ -217,7 +263,7 @@ public class Utils {
 		//sb.append(c.value()).append(Constants.UNDERSCORE);
 
 		if(p.getOECDMessageType()!=null)
-		sb.append(p.getOECDMessageType()).append(Constants.UNDERSCORE);
+			sb.append(p.getOECDMessageType()).append(Constants.UNDERSCORE);
 		else
 			throw new Exception("Message type is not set!");
 		
@@ -231,16 +277,22 @@ public class Utils {
 			throw new Exception("sweep time is not set!");
 		
 		if(p.getTestIndicator().equals(Constants.ENV_PROD))
-			sb.append(p.getTestIndicator());
+			sb.append(Constants.ENV_PROD);
 		else
 			sb.append(Constants.ENV_TEST);
-		sb.append(Constants.FILE_EXT_XML);
+		
+		if(appendExtention)
+			sb.append(Constants.FILE_EXT_XML);
 	
 		return sb.toString();
 	}
 	
-	public static String generateMetadataFilename(PackageInfo p){
-		return Constants.METADATA + Constants.UNDERSCORE+p.getXmlFilename();
+	public static String generateMetadataFilename(PackageInfo p, boolean appendExtention) throws Exception {
+		String name = Constants.METADATA + Constants.UNDERSCORE+ generateXMLFileName(p,false);
+		if(appendExtention)
+			name = name + Constants.FILE_EXT_XML;
+		
+		return name;
 	}
 	
 	
@@ -428,15 +480,19 @@ public class Utils {
 		try {
 			File source = new File(sourcePathName);
 			File target = new File(targetPathName);
-			FileUtils.moveFile(source, target);
+			//FileUtils.moveFile(source, target);
+			FileUtils.copyFile(source, target);
 
 			if(target.exists()){
 				if(log.isDebugEnabled())
-				log.debug("File moved. Source: " + sourcePathName + ", Target: " + targetPathName);
+				log.debug("moveFile: File created in the new destination. Source: " + sourcePathName + ", Target: " + targetPathName);
 				isMoved = true;
 			}
 			else
 				throw new Exception("moveFile: file not found in the target location"); 
+			
+			boolean deleted = FileUtils.deleteQuietly(source);
+			log.debug("moveFile: source file deleted: " + deleted);
 		}
 		catch (IOException ex) {
 			log.error("moveFile: File not copied. An IOException occurred: " + ex.toString());
@@ -585,6 +641,17 @@ public class Utils {
 		String filename = "fxit.ctsagent.batch.xml";	
 		String path = "C:/git/repository/CTS_dataprep/implementation/cfg/";
 		//Utils.cleanXmlFile(path, filename);
-		String ts = Utils.toUTC(new Date(System.currentTimeMillis()));
+		//String ts = Utils.toUTC(new Date(System.currentTimeMillis()));
+		String year = "2016";
+		String month = null;
+		String day = null;
+		try {
+		XMLGregorianCalendar cal = generateReportingPeriod(year,  month,  day);
+		int yr = cal.getYear();
+		log.info("year: " + yr);
+		}
+		catch(Exception e){
+			
+		}
 	}
 }

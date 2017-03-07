@@ -1,5 +1,8 @@
 package ca.gc.cra.fxit.xmlt.task;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.IllegalFormatException;
@@ -20,13 +23,12 @@ import ca.gc.cra.fxit.xmlt.util.Utils;
  *
  */
 public class SavePreparedOutboundData extends AbstractTask {
-	private static Logger log = Logger.getLogger(SavePreparedOutboundData.class);
+	private static Logger lg = Logger.getLogger(SavePreparedOutboundData.class);
 	
 	@Override
 	public SavePreparedOutboundData cloneTask(){
 		SavePreparedOutboundData t = new SavePreparedOutboundData();
 		t.setResultCode(this.resultCode);
-		t.setResultMessage(this.resultMessage);
 		t.setId(this.id);
 		t.setSequence(this.sequence);
 		t.setJobId(this.jobId);
@@ -36,7 +38,7 @@ public class SavePreparedOutboundData extends AbstractTask {
 	
 	@Override
 	protected final int invoke(PackageInfo p) {
-		log.info("SavePreparedOutboundData executing");
+		lg.info("SavePreparedOutboundData executing");
 	
 		int status = Constants.STATUS_CODE_INCOMPLETE;
 
@@ -45,10 +47,16 @@ public class SavePreparedOutboundData extends AbstractTask {
 		
 		// save into directory for further move to dataprep and CASD  to access
 		//save in outbound/processed local directory
-		//status = saveForDropzone(p);
-		
+		status = saveForDropzone(p);
+		lg.info("Saved for dropzone: " + status);
 		//save metadata and messageRefID and docRefIDs(PSN Infodec numbers) in the database
 		//status = saveMetadataAndStatus(p);
+		
+		cleanup(p);
+		
+		//TODO for wireframe testing only - to comment out!
+		//status = Constants.STATUS_CODE_SUCCESS;
+		// end of to comment out
 		
 		return status;
 	}
@@ -59,13 +67,14 @@ public class SavePreparedOutboundData extends AbstractTask {
 		String targetPathName = null;
 		
 		try {
-			sourcePathName = Globals.FILE_WORKING_DIR+p.getXmlFilename();
+			String fileWorkingDir = p.getFileWorkingDir();		
+			sourcePathName = fileWorkingDir + p.getXmlFilename();		//Globals.FILE_WORKING_DIR
 			targetPathName = Globals.baseFileDir + Constants.OUTBOUND_PROCESSED_TOSEND_DIR + p.getXmlFilename();
 			boolean success = Utils.moveFile(sourcePathName, targetPathName);
 			if(!success)				
 				throw new Exception("Error moving file " + sourcePathName);
 			
-			sourcePathName = Globals.FILE_WORKING_DIR+p.getMetadataFilename();
+			sourcePathName = fileWorkingDir +p.getMetadataFilename();		//Globals.FILE_WORKING_DIR
 			targetPathName = Globals.baseFileDir + Constants.OUTBOUND_PROCESSED_TOSEND_DIR + p.getMetadataFilename();
 			success = Utils.moveFile(sourcePathName, targetPathName);
 			if(!success)				
@@ -73,8 +82,32 @@ public class SavePreparedOutboundData extends AbstractTask {
 		}
 		catch(Exception e){
 			status = Constants.STATUS_CODE_ERROR;
-			log.error("saveForDropzone: Error: " + e.getMessage());
+			lg.error("saveForDropzone: Error: " + e.getMessage());
 		}
 		return status;
+	}
+	
+	private void cleanup(PackageInfo p){
+
+		BufferedWriter w = null;
+		BufferedReader r = null;
+		
+		try {
+			String fileWorkingDir = p.getFileWorkingDir();		
+			String sourcePathName = fileWorkingDir + p.getXmlFilename();		//Globals.FILE_WORKING_DIR
+			String target = fileWorkingDir + Constants.CLEANUP_FILENAME;
+			
+			w = new BufferedWriter(new FileWriter(sourcePathName,false));
+			w.write(" ");
+		
+			sourcePathName = fileWorkingDir +p.getMetadataFilename();		//Globals.FILE_WORKING_DIR
+			w = new BufferedWriter(new FileWriter(sourcePathName,false));
+			w.write(" ");
+
+		}
+		catch(Exception e){
+			//status = Constants.STATUS_CODE_ERROR;
+			lg.error("cleanup: Error: " + e.getMessage());
+		}
 	}
 }

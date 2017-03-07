@@ -172,7 +172,7 @@ public class JAXBTransformer {
 		// set address content
 		if (countryCode != null) {
 			//JAXBElement<CountryCodeType> jaxbCountryCode = factory.createAddressTypeCountryCode(countryCode);
-			JAXBElement<String> jaxbCountryCode = factory.createAddressTypeCountryCode(countryCode);
+			JAXBElement<String> jaxbCountryCode = null; // factory.createAddressTypeCountryCode(countryCode);
 			address.getContent().add(jaxbCountryCode);
 		}
 		if (addressFix != null) {
@@ -204,7 +204,7 @@ public class JAXBTransformer {
 		// set address content
 		if (countryCode != null) {
 			//JAXBElement<CountryCodeType> jaxbCountryCode = factory.createAddressTypeCountryCode(countryCode);
-			JAXBElement<String> jaxbCountryCode = factory.createAddressTypeCountryCode(countryCode);
+			JAXBElement<String> jaxbCountryCode =  null; //factory.createAddressTypeCountryCode(countryCode);
 			address.getContent().add(jaxbCountryCode);
 		}
 		if (addressFix != null) {
@@ -236,7 +236,7 @@ public class JAXBTransformer {
 		// set address content
 		if (countryCode != null) {
 			//JAXBElement<CountryCodeType> jaxbCountryCode = factory.createAddressTypeCountryCode(countryCode);
-			JAXBElement<String> jaxbCountryCode = factory.createAddressTypeCountryCode(countryCode);
+			JAXBElement<String> jaxbCountryCode = null; // factory.createAddressTypeCountryCode(countryCode);
 			address.getContent().add(jaxbCountryCode);
 		}
 		if (addressFix != null) {
@@ -268,7 +268,7 @@ public class JAXBTransformer {
 		// set address content
 		if (countryCode != null) {
 			//JAXBElement<CountryCodeType> jaxbCountryCode = factory.createAddressTypeCountryCode(countryCode);
-			JAXBElement<String> jaxbCountryCode = factory.createAddressTypeCountryCode(countryCode);
+			JAXBElement<String> jaxbCountryCode = null; // factory.createAddressTypeCountryCode(countryCode);
 			address.getContent().add(jaxbCountryCode);
 		}
 		if (addressFix != null) {
@@ -398,7 +398,7 @@ public class JAXBTransformer {
             String birthDateXMLStr = birthYear + "-" + birthMonth + "-" + birthDay;
             birthInfo = new PersonPartyType.BirthInfo();
             if (birthInfo != null) {
-                   birthInfo.setBirthDate(birthDateXMLStr);
+                   //birthInfo.setBirthDate(birthDateXMLStr);
             }
       }
 		
@@ -430,13 +430,13 @@ public class JAXBTransformer {
     		report.setDocSpec(docSpec);
     	}
     	if (accountNumber != null) {
-    		report.setAccountNumber(accountNumber);
+    		//report.setAccountNumber(accountNumber);
     	}
     	if (accountHolder != null) {
     		report.setAccountHolder(accountHolder);
     	}
     	if (substantialOwner != null && !substantialOwner.isEmpty()) {
-    		report.getSubstantialOwner().addAll(substantialOwner);
+    		//report.getSubstantialOwner().addAll(substantialOwner);
     	}
     	if (accountBalance != null) {
     		report.setAccountBalance(accountBalance);
@@ -463,7 +463,7 @@ public class JAXBTransformer {
 		DocSpecType docSpec = createDocSpecFromIP6PRTSM(reportingFIRec);
 		
     	if (resCountryCode != null && !resCountryCode.isEmpty()) {
-    		party.getResCountryCode().addAll(resCountryCode);
+    		//party.getResCountryCode().addAll(resCountryCode);
     	}
     	if (tin != null && !tin.isEmpty()) {
     		party.getTIN().addAll(tin);
@@ -498,7 +498,7 @@ public class JAXBTransformer {
 		DocSpecType docSpec = createDocSpecFromIP6PRTSP(sponsorRec);
 		
     	if (resCountryCode != null && !resCountryCode.isEmpty()) {
-    		party.getResCountryCode().addAll(resCountryCode);
+    		//party.getResCountryCode().addAll(resCountryCode);
     	}
     	if (tin != null && !tin.isEmpty()) {
     		party.getTIN().addAll(tin);
@@ -844,8 +844,8 @@ public class JAXBTransformer {
 		
 		// set properties on it
     	messageSpec.setSendingCompanyIN(sendingCompanyIN);
-    	messageSpec.setTransmittingCountry(transmittingCountry);
-    	messageSpec.setReceivingCountry(receivingCountry);
+    	//messageSpec.setTransmittingCountry(transmittingCountry);
+    	//messageSpec.setReceivingCountry(receivingCountry);
     	messageSpec.setMessageType(messageType);
     	messageSpec.setWarning(warning.trim());
     	messageSpec.setContact(contact.trim());
@@ -903,7 +903,7 @@ public class JAXBTransformer {
 			BigDecimal value = new BigDecimal(amountWithDecimal);
 			monAmnt.setValue(value);
 			if (currCode != null) {
-				monAmnt.setCurrCode(currCode);
+				//monAmnt.setCurrCode(currCode);
 			}
     	}
 
@@ -1039,7 +1039,7 @@ public class JAXBTransformer {
 		List<AddressType> address = createAddressListFromIP6PRTAC(accountHolderRec);
 		
     	if (resCountryCode != null && !resCountryCode.isEmpty()) {
-    		organisation.getResCountryCode().addAll(resCountryCode);
+    		//organisation.getResCountryCode().addAll(resCountryCode);
     	}
     	if (tin != null && !tin.isEmpty()) {
     		organisation.getTIN().addAll(tin);
@@ -1148,7 +1148,7 @@ public class JAXBTransformer {
 		PersonPartyType.BirthInfo birthInfo = createBirthInfoFromStr(slipRec.getIndvAhBrthYr(), slipRec.getIndvAhBrthMo(), slipRec.getIndvAhBrthDy());
 
     	if (resCountryCode != null && !resCountryCode.isEmpty()) {
-    		person.getResCountryCode().addAll(resCountryCode);
+    	//	person.getResCountryCode().addAll(resCountryCode);
     	}
     	if (tin != null && !tin.isEmpty()) {
     		person.getTIN().addAll(tin);
@@ -1180,7 +1180,7 @@ public class JAXBTransformer {
 		PersonPartyType.BirthInfo birthInfo = createBirthInfoFromStr(personRec.getOaCpBrthYr(), personRec.getOaCpBrthMo(), personRec.getOaCpBrthDy());
 
     	if (resCountryCode != null && !resCountryCode.isEmpty()) {
-    		person.getResCountryCode().addAll(resCountryCode);
+    		//person.getResCountryCode().addAll(resCountryCode);
     	}
     	if (tin != null && !tin.isEmpty()) {
     		person.getTIN().addAll(tin);
@@ -1247,7 +1247,7 @@ public class JAXBTransformer {
 			tin = new TINType();
 			tin.setValue(tinStr);
 			if (issuedBy != null) {
-				tin.setIssuedBy(issuedBy);
+				//tin.setIssuedBy(issuedBy);
 			}
 		}
 		return tin;
@@ -1269,7 +1269,7 @@ public class JAXBTransformer {
 			tin = new TINType();
 			tin.setValue(tinStr);
 			if (issuedBy != null) {
-				tin.setIssuedBy(issuedBy);
+				//tin.setIssuedBy(issuedBy);
 			}
 		}
 		return tin;
@@ -1291,7 +1291,7 @@ public class JAXBTransformer {
 			tin = new TINType();
 			tin.setValue(tinStr);
 			if (issuedBy != null) {
-				tin.setIssuedBy(issuedBy);
+				//tin.setIssuedBy(issuedBy);
 			}
 		}
 		return tin;

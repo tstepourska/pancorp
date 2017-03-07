@@ -35,12 +35,14 @@ public class SAXUpdateMessageRefID {
 
 	public void invoke() throws Exception {		
 		final String messageRefID = pkg.getMessageRefId();
-		String xmlFilePath 		= Globals.FILE_WORKING_DIR + pkg.getXmlFilename();
+		
+		String fileWorkingDir = pkg.getFileWorkingDir();	
+		String xmlFilePath 		=  fileWorkingDir  + pkg.getXmlFilename();   //Globals.FILE_WORKING_DIR
 		lg.info("xmlFilePath: " + xmlFilePath);
 		//include messageRefID in the xml filename
 		String newXmlFilename = pkg.getXmlFilename().replaceAll(Constants.MSG_REF_ID_PLACEHOLDER, pkg.getMessageRefId());
 		//lg.info("newXmlFilename: " + newXmlFilename);
-		String xmlFilePathNew 	= Globals.FILE_WORKING_DIR + newXmlFilename;
+		String xmlFilePathNew 	= fileWorkingDir +  newXmlFilename;		//Globals.FILE_WORKING_DIR
 		lg.info("xmlFilePathNew: " + xmlFilePathNew);
 		//set it to the PackageInfo
 		pkg.setXmlFilename(newXmlFilename);

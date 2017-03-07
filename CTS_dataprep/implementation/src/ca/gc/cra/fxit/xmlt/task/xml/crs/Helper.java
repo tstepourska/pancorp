@@ -25,7 +25,6 @@ import ca.gc.cra.fxit.xmlt.util.*;
  * @author Txs285
  *
  */
-
 public class Helper extends AbstractXmlHelper {
 	private static Logger lg = Logger.getLogger(Helper.class);
 	
@@ -36,7 +35,9 @@ public class Helper extends AbstractXmlHelper {
 	private List<PersonWrapper> personRecList 		= null;	
 	//private List<PersonWrapper> controllingPersonRecList = null;
 	private CommonXMLStreamWriter writer 			= null;
+	
 	private JaxbMarshaller marshaller 				= null;
+	
 	private int nRecordsProcessed 					= 0;
 	private int lineNum 							= 0;	
 	//boolean hasSlip 								= false;
@@ -56,15 +57,62 @@ public class Helper extends AbstractXmlHelper {
 	 /////////////////////     PUBLIC METHODS      ////////////////////////////////
 	 /////////////////////////////////////////////////////////////////////////////
 	
+	@Override
+	public final int invoke(PackageInfo p){
+		lg.info("CRS Helper started");
+		int status = Constants.STATUS_CODE_INCOMPLETE;
+		try {
+			//generate XML
+			status = transform(p);
+			if(lg.isDebugEnabled())
+			lg.debug("status: " + status);
+		}
+		catch(Exception e){
+			//Utils.logError(lg, e);
+			lg.error("Error transforming: " + e.getMessage());
+			status = Constants.STATUS_CODE_ERROR;
+		}
+		
+		//TODO for wireframe testing only, to remove!
+		//status=Constants.STATUS_CODE_SUCCESS;
+		if(status==Constants.STATUS_CODE_SUCCESS){
+			//reset status for validation
+			status = Constants.STATUS_CODE_INCOMPLETE;
+			String outputFile = p.getFileWorkingDir() + p.getXmlFilename();		//Globals.FILE_WORKING_DIR
+			lg.debug("outputFile: " + outputFile);
+			String[] xsdpaths = getSchemas();
+					
+			try {
+				status = this.validate(p, xsdpaths, outputFile);
+				lg.info("Validation completed with status " + status);
+			}
+			catch(Exception e){
+				//Utils.logError(lg, e);
+				lg.error("Error validating: " + e.getMessage());
+				status = Constants.STATUS_CODE_FAILED_SCHEMA_VALIDATION;
+			}
+		}
+		
+		//TODO to remove
+		status= Constants.STATUS_CODE_SUCCESS;
+		
+		return status;
+	}
+	
 	
 	@Override
 	public String[] getSchemas(){
 		String[] xsdpaths = new String[] {
-				  Globals.schemaLocationBaseDir +"crs/isocrstypes_v1.0.xsd",
-				  Globals.schemaLocationBaseDir +"crs/oecdtypes_v4.1.xsd",
-				  Globals.schemaLocationBaseDir +"crs/CommonTypesFatcaCrs_v1.1.xsd",
-				  Globals.schemaLocationBaseDir +"crs/FatcaTypes_v1.1.xsd",
-				  Globals.schemaLocationBaseDir + "crs/" + Constants.MAIN_SCHEMA_NAME};
+				Constants.RESOURCE_BASE_PKG +"schema/crs/isocrstypes_v1.0.xsd",
+				Constants.RESOURCE_BASE_PKG +"schema/crs/oecdtypes_v4.1.xsd",
+				Constants.RESOURCE_BASE_PKG +"schema/crs/CommonTypesFatcaCrs_v1.1.xsd",
+				Constants.RESOURCE_BASE_PKG +"schema/crs/FatcaTypes_v1.1.xsd",
+				Constants.RESOURCE_BASE_PKG +"schema/crs/" + Constants.MAIN_SCHEMA_NAME
+		};
+		
+		for(int i=0;i<xsdpaths.length;i++){
+			lg.debug("getSchemas: xsdpaths["+i+"]: " + xsdpaths[i]);
+		}
 		return xsdpaths;
 	}
 	
@@ -75,18 +123,17 @@ public class Helper extends AbstractXmlHelper {
 	 * 
 	 * @return int status code
 	 */
-	@SuppressWarnings("resource")
 	@Override
-
-	public int transform(PackageInfo __p){
+	public int transform(PackageInfo __p) { 
 		String fp = "transform: ";
 		int status = Constants.STATUS_CODE_INCOMPLETE;
-		//int splitCount = p.getSplitFileCount();
 		this.p = __p;
+	
 		docRefIdList = new ArrayList<String>();
 		
-		String inputFile  = Globals.FILE_WORKING_DIR + p.getOrigFilename();		
-		String outputFile = Globals.FILE_WORKING_DIR + p.getXmlFilename();
+		String fwDir = p.getFileWorkingDir();
+		String inputFile  = fwDir + p.getOrigFilename();		//Globals.FILE_WORKING_DIR
+		String outputFile = fwDir + p.getXmlFilename();		//Globals.FILE_WORKING_DIR
 		if(lg.isDebugEnabled())
 			lg.debug(fp + "original file name: " + inputFile);		
 		
@@ -104,7 +151,7 @@ public class Helper extends AbstractXmlHelper {
 		marshaller 		= new JaxbMarshaller();
 		factory = new ObjectFactory();
 		//TODO
-		//marshaller.setUseTestDocTypeIndicCodes (isTest);
+		////marshaller.setUseTestDocTypeIndicCodes (isTest);
 		BufferedReader reader = null;
 		
 		try {
@@ -121,10 +168,11 @@ public class Helper extends AbstractXmlHelper {
 			//process each line according to the code
 			while((line = reader.readLine())!=null){
 				lineNum++;
+				//lg.debug("line #" + lineNum);
 				
 				code = Integer.parseInt(line.substring(0,4));
-				if(lg.isDebugEnabled())
-					lg.debug(fp + "line code: " + code);
+				//if(lg.isDebugEnabled())
+					//lg.debug(fp + "line code: " + code);
 				
 				switch(code){
 				case Constants.LINE_CODE_HEADER:	//1001
@@ -134,10 +182,8 @@ public class Helper extends AbstractXmlHelper {
 					processFI(line);
 					break;
 				case Constants.LINE_CODE_SPONSOR:	//1003
-				//	processSponsor(line);
 					break;
 				case Constants.LINE_CODE_SLIP:		//1004
-					//processSlip(line);
 					processAccountReport(line);
 					break;
 				case Constants.LINE_CODE_PERSON: 	//1005
@@ -184,29 +230,6 @@ public class Helper extends AbstractXmlHelper {
 	 ///////////////////  PRIVATE METHODS      ///////////////////////////////////
 	 ////////////////////////////////////////////////////////////////////////////// 
 	
-/*
-	private int countReports(String inputFile){
-		String fp = "countReports: ";
-		int cr = 0;
-		
-		try (BufferedReader reader = new BufferedReader(new FileReader(inputFile))) {
-			String line;
-
-			//read text file; each line starts with the code specifying record type
-			while((line = reader.readLine())!=null){
-				if(line.startsWith(""+Constants.LINE_CODE_SLIP))	//1004
-					cr++;
-			}
-			if(lg.isDebugEnabled())
-			lg.debug(fp + cr + " account reports found");
-		}
-		catch(Exception e){
-			Utils.logError(lg, e);		
-		}
-
-		return cr;
-	}*/
-	
 	/**
 	 * Processes Header line of the flat file
 	 * @param line
@@ -216,8 +239,8 @@ public class Helper extends AbstractXmlHelper {
 		String fp = "processHeader: ";
 
 		MessageHeaderWrapper headerRec = new MessageHeaderWrapper(line);
-		if(lg.isDebugEnabled())
-			lg.debug(fp + "header rec created");
+		//if(lg.isDebugEnabled())
+		//	lg.debug(fp + "header rec created");
 		headerRecList.add(headerRec);
 		//nothing to write to XML
 	}
@@ -240,8 +263,8 @@ public class Helper extends AbstractXmlHelper {
 		reportingFIRec.setFiInfoDtyCd("OECD_1");
 		//////////////////////////////////////////
 		
-		if(lg.isDebugEnabled())
-			lg.debug(fp + "reportingFIRec set: " + reportingFIRec.toString());
+		//if(lg.isDebugEnabled())
+		//	lg.debug(fp + "reportingFIRec set: " + reportingFIRec.toString());
 		
 		//after single FI ReportingGroup with a list of AccountReports should start
 		//so isFirstAccountReport is reset
@@ -263,10 +286,10 @@ public class Helper extends AbstractXmlHelper {
 		}
 
 		CorrectableOrganisationPartyType party = reportingFIRec.createCorrectableOrganisationParty(factory, this.docRefIdList);
-		if(lg.isDebugEnabled())
-			lg.debug(fp + "party created, marshalling...");
+		//if(lg.isDebugEnabled())
+		//	lg.debug(fp + "party created, marshalling...");
 			
-		marshaller.transformReportingFI(party,firstReportingFI, writer);
+		marshaller.transformReportingFI(party,firstReportingFI, writer);	
 		
 		//first reportingFI has been written, flip the flag
 		firstReportingFI = false;
@@ -287,8 +310,8 @@ public class Helper extends AbstractXmlHelper {
 		
 		m_slipRec = new AccountReportSlipWrapper(line);
 		numofaccreps++;
-		if(lg.isDebugEnabled())
-			lg.debug(fp + "slipRecord set: " + m_slipRec);
+		//if(lg.isDebugEnabled())
+		//	lg.debug(fp + "slipRecord set: " + m_slipRec);
 		//if (hasSlip && hasAccountHolder) {
 			//writer.writeCharacters("\n");
 			//CrsBodyType.ReportingGroup group = new CrsBodyType.ReportingGroup();
@@ -331,8 +354,8 @@ public class Helper extends AbstractXmlHelper {
 		String fp = "processPerson: ";
 
 		PersonWrapper personRec = new PersonWrapper(line);
-		if(lg.isDebugEnabled())
-			lg.debug(fp + "personRec set");
+		//if(lg.isDebugEnabled())
+		//	lg.debug(fp + "personRec set");
 		
 		//prt18RtnSize += PERSON_REC_LEN;
 		personRecList.add(personRec);
@@ -347,8 +370,8 @@ public class Helper extends AbstractXmlHelper {
 		String fp = "processAccountHolder: ";
 		accountHolderRec = new AccountHolderWrapper(line);
 		
-		if(lg.isDebugEnabled())
-			lg.debug(fp + "accountHolderRec set");
+		//if(lg.isDebugEnabled())
+		//	lg.debug(fp + "accountHolderRec set");
 		
 		//hasAccountHolder = true;		
 		//prt18RtnSize += ACCOUNT_HOLDER_REC_LEN;
@@ -516,7 +539,7 @@ public class Helper extends AbstractXmlHelper {
     	}		
     	}
 		catch(Exception e){
-			//Utils.logError(lg, e);
+			Utils.logError(lg, e);
 		}
     	
     	return organisation;
@@ -668,52 +691,52 @@ public class Helper extends AbstractXmlHelper {
     	//XMLGregorianCalendar reportingPeriodXML = DatatypeFactory.newInstance().newXMLGregorianCalendar(reportingPeriod); 
     	XMLGregorianCalendar reportingPeriodXML = p.getReportingPeriod();
         XMLGregorianCalendar xmlCreationTimestamp = Utils.generateReportXMLTimestamp(timestamp); // Utils.generateMetadataXMLTimestamp(timestamp); // DatatypeFactory.newInstance().newXMLGregorianCalendar(""+timestamp);
-        if(lg.isDebugEnabled())
-    		lg.debug(fp + "XML calendars created");
+       // if(lg.isDebugEnabled())
+    	//	lg.debug(fp + "XML calendars created");
     	
     	// create an empty MessageSpecType object                                             
     	MessageSpecType messageSpec = new MessageSpecType();
-    	if(lg.isDebugEnabled())
-    		lg.debug(fp + "Empty messageSpec created");
+    	//if(lg.isDebugEnabled())
+    	//	lg.debug(fp + "Empty messageSpec created");
 		
 		// set properties on it
     	messageSpec.setSendingCompanyIN		(sendingCompanyIN);
-    	if(lg.isDebugEnabled())
-    		lg.debug(fp + "sendingCompanyIN set: " + sendingCompanyIN);
+    	//if(lg.isDebugEnabled())
+    	//	lg.debug(fp + "sendingCompanyIN set: " + sendingCompanyIN);
     	messageSpec.setTransmittingCountry	(transmittingCountry);
-    	if(lg.isDebugEnabled())
-    		lg.debug(fp + "transmittingCountry set: " + transmittingCountry);
+    	//if(lg.isDebugEnabled())
+    	//	lg.debug(fp + "transmittingCountry set: " + transmittingCountry);
     	messageSpec.setReceivingCountry		(receivingCountry);
-    	if(lg.isDebugEnabled())
-    		lg.debug(fp + "receivingCountry set: " + receivingCountry);
+    	//if(lg.isDebugEnabled())
+    	//	lg.debug(fp + "receivingCountry set: " + receivingCountry);
     	messageSpec.setMessageType			(messageType);
-    	if(lg.isDebugEnabled())
-    		lg.debug(fp + "messageType set: " + messageType);
+    	//if(lg.isDebugEnabled())
+    	//	lg.debug(fp + "messageType set: " + messageType);
     	messageSpec.setWarning				(warning);
-    	if(lg.isDebugEnabled())
-    		lg.debug(fp + "warning set: " + warning);
+    	//if(lg.isDebugEnabled())
+    	//	lg.debug(fp + "warning set: " + warning);
     	messageSpec.setContact				(contact);
-    	if(lg.isDebugEnabled())
-    		lg.debug(fp + "contact set: " + contact);
+    	//if(lg.isDebugEnabled())
+    	//	lg.debug(fp + "contact set: " + contact);
     	messageSpec.setMessageRefId			(Constants.MSG_REF_ID_PLACEHOLDER);//messageRefId);
     	//if(lg.isDebugEnabled())
     	//	lg.debug(fp + "messageRefId set: " + messageRefId);
     	if(corrMessageRefId!=null){
     	messageSpec.getCorrMessageRefId().addAll(corrMessageRefId);
-    	if(lg.isDebugEnabled())
-    		lg.debug(fp + "corrMessageRefId set: " + corrMessageRefId);
+    	//if(lg.isDebugEnabled())
+    	//	lg.debug(fp + "corrMessageRefId set: " + corrMessageRefId);
     	}
     	else{
     		messageSpec.getCorrMessageRefId().add("");
     	}
     	messageSpec.setReportingPeriod		(reportingPeriodXML);
-    	if(lg.isDebugEnabled())
-    		lg.debug(fp + "reportingPeriodXML set: " + reportingPeriodXML);
+    	//if(lg.isDebugEnabled())
+    //		lg.debug(fp + "reportingPeriodXML set: " + reportingPeriodXML);
     	messageSpec.setTimestamp			(xmlCreationTimestamp);
-    	if(lg.isDebugEnabled())
-    		lg.debug(fp + "xmlCreationTimestamp set: " + xmlCreationTimestamp);
-    	if(lg.isDebugEnabled())
-    		lg.debug(fp + " messageSpec params set");
+    	//if(lg.isDebugEnabled())
+    	//	lg.debug(fp + "xmlCreationTimestamp set: " + xmlCreationTimestamp);
+    	//if(lg.isDebugEnabled())
+    	//	lg.debug(fp + " messageSpec params set");
     	
 		// return it
 		return messageSpec;

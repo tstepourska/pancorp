@@ -13,7 +13,6 @@ public class GenerateMetadata extends AbstractTask {
 	public GenerateMetadata cloneTask(){
 		GenerateMetadata t = new GenerateMetadata();
 		t.setResultCode(this.resultCode);
-		t.setResultMessage(this.resultMessage);
 		t.setId(this.id);
 		t.setSequence(this.sequence);
 		t.setJobId(this.jobId);
@@ -28,7 +27,7 @@ public class GenerateMetadata extends AbstractTask {
 		int status = Constants.STATUS_CODE_INCOMPLETE;
 		Helper h = new Helper();
 		status = h.invoke(p);
-		//for wireframe testing only - to comment out!
+		//TODO for wireframe testing only - to comment out!
 		//status = Constants.STATUS_CODE_SUCCESS;
 		// end of to comment out
 		

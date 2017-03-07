@@ -11,8 +11,9 @@ import org.apache.log4j.Logger;
 import org.xml.sax.SAXException;
 
 import ca.gc.cra.fxit.xmlt.task.xml.CommonXMLStreamWriter;
+import ca.gc.cra.fxit.xmlt.util.Utils;
 import ca.gc.cra.fxit.xmlt.generated.jaxb.crs.*;
-import ca.gc.cra.fxit.xmlt.model.wrapper.crs.FIWrapper;
+//import ca.gc.cra.fxit.xmlt.model.wrapper.crs.FIWrapper;
 
 /**
  * JaxbMarshaller class is used to transform large flat files into International CRS XML format.
@@ -32,8 +33,7 @@ public class JaxbMarshaller {
    // private final static QName REPORTING_GROUP_QNAME= new QName("urn:oecd:ties:crs:v1", "ReportingGroup", 	"crs");	//1 per CrsBody
     private final static QName ACCOUNT_REPORT_QNAME = new QName("urn:oecd:ties:crs:v1", "AccountReport", 	"crs");	//0...oo per CrsBody	   
     //Sponsor, Intermediary and Pool Reporting are not used for CRS - as per CRS Schema User Guide
-    //private final static QName SPONSOR_QNAME 		= new QName("urn:oecd:ties:crs:v1", "Sponsor", 			"crs");		// not used for CRS
-
+ 
     /**
      * Single JAXBContext instance for JaxbMarshaller
      */
@@ -50,7 +50,6 @@ public class JaxbMarshaller {
             			CorrectableAccountReportType.class,
             			CrsBodyType.class
             			);
-
             }
             return context;
         }
@@ -93,8 +92,6 @@ public class JaxbMarshaller {
 			xmlns:iso="urn:oecd:ties:isocrstypes:v1" 
 			targetNamespace="urn:oecd:ties:crs:v1" 
 		 */
-		// TODO: IRS advised to avoid using default namespaces, and use namespace prefixes for all elements instead.
-		// This guidance is temporary, and the restriction will be lifted. 
 		//writer.writeDefaultNamespace("urn:oecd:ties:crs:v1");
 
 		writer.writeCustomNamespace		("crs", "urn:oecd:ties:crs:v1");
@@ -131,13 +128,13 @@ public class JaxbMarshaller {
 		lg.debug(fp + "transforming messageSpec: " + messageSpec);
 		lg.debug(fp + "using writer: " + writer);
 			}
-		Marshaller marshaller = getFragmentMarshaller();
-		JAXBElement<MessageSpecType> el = new JAXBElement<MessageSpecType>(MESSAGE_SPEC_QNAME,MessageSpecType.class, messageSpec);		
+		//Marshaller marshaller = getFragmentMarshaller();
+		JAXBElement<MessageSpecType> el = new JAXBElement<>(MESSAGE_SPEC_QNAME,MessageSpecType.class, messageSpec);		
 		if(lg.isDebugEnabled())
 			lg.debug(fp + "created JAXBElement MessageSpecType: " + el);
 
 		//writer.setPrefix("crs", "urn:oecd:ties:crs:v1");//does nothing
-	    marshaller.marshal(el, writer);
+		getFragmentMarshaller().marshal(el, writer);
 	    
 	    writer.writeCharacters		("\n");
 	}

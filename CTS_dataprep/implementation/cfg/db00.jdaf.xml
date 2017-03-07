@@ -1,0 +1,450 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE domain-properties SYSTEM "environment.dtd">
+
+<!-- DB environment file. -->
+<domain-properties>
+
+  <!--  default  -->
+  <domain name="default"
+      description="default configuration.">
+   <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+             <property name="jdbc" value="false"
+                       description="Set to true if running outside of Weblogic"/>
+             <property name="jdbc-db2driver" value="com.ibm.db2.jcc.DB2Driver"
+                       description="The JDBC driver.  Local connection only."/>
+   		     <!--  only used when reading environment file directly  -->
+             <property name="timetolive-enable" value="true"
+                       description="Set to true to have the config XML file automatically refreshed at the specified interval"/>
+             <property name="timetolive-interval" value="quarterHour"
+                       description="Interval setting can be one of following values (minute, quarterHour, halfHour, hour, day, week, month, year)"/>
+             <!--  can be overwritten by application loggers  -->
+             <property name="log-to-screen" value="false"
+                        description="true or false (default) to log to the screen in addition of the log file (reserve this for development)"/>
+             <property name="should-log" value="true"
+                       description="Set to true if you wish to log the SQL"/>
+             <property name="log-file-name" value="db00database.log"
+                       description="File to log to for sql and dataacess"/>
+             <property name="log-level" value="1"
+                       description="Debug, Info,..."/>
+
+             <!--  used just by Log4J  -->
+             <property name="log-location" value="./logs"
+                       description="The location of the log file"/>
+             <property name="log-max-file-size" value="5000000"
+                       description="Set the maximum size that the output file is allowed to reach before being rolled over to backup files"/>
+             <property name="log-max-backup-index" value="10"
+                       description="Set the maximum number of backup files to keep around"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+ <!-- end of default-->
+
+  <!--  @domain@  -->
+  <domain name="@domain@"
+      description="plug in configuration.">
+   <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+             <property name="log-max-backup-index" value="10"
+                       description="Set the maximum number of backup files to keep around"/>
+           </context>
+         </context>
+       </context>
+    </context>
+   </context>
+  </domain>
+ <!-- end of @domain@-->
+
+ <!-- d-domain01 -->
+  <domain name="d-domain01"
+         description="local testing domain">
+   <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+             <property name="log-max-backup-index" value="10"
+                       description="Set the maximum number of backup files to keep around"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+ <!-- end of d-domain01 -->
+
+ <!-- u-domain01 -->
+  <domain name="u-domain01" description="UT">
+    <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+	     <property name="log-max-file-size" value="10000000"
+                       description="Set the maximum size that the output file is allowed to reach before being rolled over to backup files"/>
+             <property name="log-max-backup-index" value="10"
+                       description="Set the maximum number of backup files to keep around"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of u-domain01-->
+
+ <!-- u-domain02 -->
+  <domain name="u-domain02" description="UT-CMS">
+    <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+             <property name="log-max-file-size" value="10000000"
+                       description="Set the maximum size that the output file is allowed to reach before being rolled over to backup files"/>
+             <property name="log-max-backup-index" value="10"
+                       description="Set the maximum number of backup files to keep around"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of u-domain02-->
+
+ <!-- u2-domain01 -->
+  <domain name="u2-domain01" description="UT2">
+    <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+             <property name="log-max-file-size" value="10000000"
+                       description="Set the maximum size that the output file is allowed to reach before being rolled over to backup files"/>
+             <property name="log-max-backup-index" value="10"
+                       description="Set the maximum number of backup files to keep around"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of u2-domain01-->
+ 
+ <!-- u3-domain01 -->
+  <domain name="u3-domain01" description="UT3">
+    <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+             <property name="log-max-file-size" value="10000000"
+                       description="Set the maximum size that the output file is allowed to reach before being rolled over to backup files"/>
+             <property name="log-max-backup-index" value="10"
+                       description="Set the maximum number of backup files to keep around"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of u3-domain01-->
+
+  <!-- s-domain01 -->
+  <domain name="s-domain01" description="SI">
+   <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+             <property name="log-max-backup-index" value="5"
+                       description="Set the maximum number of backup files to keep around"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of s-domain01-->
+
+  <!-- s-domain02 -->
+  <domain name="s-domain02" description="SI-CMS">
+   <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+             <property name="log-max-backup-index" value="5"
+                       description="Set the maximum number of backup files to keep around"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of s-domain02-->
+
+  <!-- s2-domain01 -->
+  <domain name="s2-domain01" description="SI2">
+   <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+             <property name="log-max-backup-index" value="5"
+                       description="Set the maximum number of backup files to keep around"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of s2-domain01-->
+
+  <!-- a-domain01 -->
+  <domain name="a-domain01" description="UA">
+   <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+             <property name="log-max-backup-index" value="5"
+                       description="Set the maximum number of backup files to keep around"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of a-domain01-->
+
+  <!-- a-domain02 -->
+  <domain name="a-domain02" description="UA-CMS">
+   <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+             <property name="log-max-backup-index" value="5"
+                       description="Set the maximum number of backup files to keep around"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of a-domain02-->
+
+  <!-- a2-domain01 -->
+  <domain name="a2-domain01" description="UA2">
+   <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+             <property name="log-max-backup-index" value="5"
+                       description="Set the maximum number of backup files to keep around"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of a2-domain01-->
+
+  <!-- o-domain01 -->
+  <domain name="o-domain01" description="OT">
+   <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+             <property name="log-max-backup-index" value="5"
+                       description="Set the maximum number of backup files to keep around"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of o-domain01-->
+  <!-- o-domain02 -->
+  <domain name="o-domain02" description=" CMS -OT">
+   <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+             <property name="log-max-backup-index" value="5"
+                       description="Set the maximum number of backup files to keep around"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of o-domain02-->
+  
+  <!-- t-domain01 -->
+  <domain name="t-domain01" description="lt">
+   <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+             <property name="log-max-backup-index" value="5"
+                       description="Set the maximum number of backup files to keep around"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of t-domain01-->
+  
+<!-- c-domain01 -->
+  <domain name="c-domain01" description="CT">
+   <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+             <property name="log-max-backup-index" value="5"
+                       description="Set the maximum number of backup files to keep around"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of c-domain01-->
+
+  <!-- f-domain01 -->
+  <domain name="f-domain01" description="EF">
+   <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+             <property name="log-max-backup-index" value="5"
+                       description="Set the maximum number of backup files to keep around"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of f-domain01-->
+
+  <!-- f-domain02 -->
+  <domain name="f-domain02" description="CMS-EF">
+   <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+             <property name="log-max-backup-index" value="5"
+                       description="Set the maximum number of backup files to keep around"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of f-domain02-->
+
+  <!-- e-domain01 -->
+  <domain name="e-domain01" description="EA">
+   <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+             <property name="log-max-backup-index" value="5"
+                       description="Set the maximum number of backup files to keep around"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of e-domain01-->
+  
+  <!-- e-domain02 -->
+  <domain name="e-domain02" description="EA">
+   <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+             <property name="log-max-backup-index" value="5"
+                       description="Set the maximum number of backup files to keep around"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of e-domain02-->
+
+  <!-- e-domain03 -->
+  <domain name="e-domain03" description="EA">
+   <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+             <property name="log-max-backup-index" value="5"
+                       description="Set the maximum number of backup files to keep around"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of e-domain03-->
+
+  <!-- p-domain01 -->
+  <domain name="p-domain01" description="P">
+   <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+             <property name="should-log" value="false"
+                       description="Set to true if you wish to log the SQL"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of p-domain01-->
+
+ <!-- p-domain02 -->
+  <domain name="p-domain02" description=" CMS -PR">
+   <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="framework">
+  	     <property name="should-log" value="false"
+                       description="Set to true if you wish to log the SQL"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of p-domain02-->
+
+
+</domain-properties>

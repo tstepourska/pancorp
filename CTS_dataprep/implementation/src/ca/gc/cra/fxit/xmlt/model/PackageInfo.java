@@ -15,8 +15,6 @@ public class PackageInfo {
 	
 	private String testIndicator = Constants.ENV_TEST;
 	
-	private String OECDMessageType;
-	
 	/**
 	 * Specfies direction of the transaction:
 	 * inbound (I) or outbound (O)
@@ -29,7 +27,7 @@ public class PackageInfo {
 	private String jobSuffix;
 	
 	private int splitFileCount = Constants.NO_SPLIT;
-	private int splittedFileSeq = 0;
+	//private int splittedFileSeq = 0;
 
 	/**
 	 * Specifies type of the package processed:
@@ -42,7 +40,7 @@ public class PackageInfo {
 	 * TODO   to merge tax year and reporting period
 	 */
 	private XMLGregorianCalendar reportingPeriod;
-	private String taxYear; 
+	//private String taxYear; 
 	
 	private String sendingCountry;
 	private String receivingCountry;
@@ -57,11 +55,6 @@ public class PackageInfo {
 	private String dataProvider;
 	
 	/**
-	 * Location of the XSD schema file
-	 */
-	//private String schemaPath;
-	
-	/**
 	 * Location of the XML file
 	 */
 	private String xmlFilename;
@@ -69,6 +62,8 @@ public class PackageInfo {
 	private String metadataFilename;
 	
 	private boolean fileRevisionIndic;
+	
+	private String fileWorkingDir;
 	
 	/**
 	 * Indicates CTS transmission type
@@ -80,6 +75,7 @@ public class PackageInfo {
 	 * CBCStatus
 	 */
 	private CTSCommunicationTypeCdType ctsCommunicationType;
+	private String OECDMessageType;
 	
 	/**
 	 * UTC_<MessageType>_<SenderCountryCd>.zip
@@ -90,10 +86,13 @@ public class PackageInfo {
 	//or correctedMessageRefId(comma separated string for amendments or cancellations)
 	private String origMessageRefId;
 	private XMLGregorianCalendar origCTSSendingTimeStamp;
+	
 	// the CTS Transmission ID for the original transmission as sent by the sending Competent Authority
 	private String origCTSTransmissionId;
+	
 	//the sender of the original transmission
 	private String origSenderFileId;
+	
 	// the size of the decrypted, uncompressed CRS message
 	private BigInteger origUncompressFileSizeKBQty;
 	
@@ -102,9 +101,7 @@ public class PackageInfo {
 	
 	List<FileErrorType> fileErrors = null;
 	List<RecordErrorType> recordErrors = null;
-	
-	private boolean fileRevisionInd = false;
-	
+
 	private String sweepTime;
 	
 	/**
@@ -163,7 +160,6 @@ public class PackageInfo {
 	public void setJobSuffix(String jobSuffix) {
 		this.jobSuffix = jobSuffix;
 	}
-
 
 	/**
 	 * @return the origFilename
@@ -239,16 +235,16 @@ public class PackageInfo {
 	/**
 	 * @return the taxYear
 	 */
-	public String getTaxYear() {
+/*	public String __getTaxYear() {
 		return taxYear;
-	}
+	}*/
 
 	/**
 	 * @param taxYear the taxYear to set
 	 */
-	public void setTaxYear(String taxYear) {
+/*	public void __setTaxYear(String taxYear) {
 		this.taxYear = taxYear;
-	}
+	}*/
 
 	/**
 	 * @return the xmlFilename
@@ -263,21 +259,7 @@ public class PackageInfo {
 	public void setXmlFilename(String xmlFName) {
 		this.xmlFilename = xmlFName;
 	}
-	
-	/**
-	 * @return the schemaPath
-	 */
-/*	public String getSchemaPath() {
-		return schemaPath;
-	}
-*/
-	/**
-	 * @param schemaPath the schemaPath to set
-	 */
-/*	public void setSchemaPath(String schemaPath) {
-		this.schemaPath = schemaPath;
-	}
-*/
+
 	public PackageInfo(){
 		
 	}	
@@ -303,15 +285,6 @@ public class PackageInfo {
 	public void setMessageRefId(String s){
 		this.messageRefId = s;
 	}
-	
-	/*
-public String getInputPathName(){
-		return this.inputPathName;
-	}
-	
-	public void setInputPathName(String s){
-		this.inputPathName = s;
-	}*/
 
 	/**
 	 * @return the ctsCommunicationType
@@ -413,39 +386,18 @@ public String getInputPathName(){
 	}
 
 	/**
-	 * @return the senderFileId
-	 */
-/*	public String getSenderFileId() {
-		return senderFileId;
-	}*/
-
-	/**
-	 * @param senderFileId the senderFileId to set
-	 */
-/*	public void setSenderFileId(String senderFileId) {
-		this.senderFileId = senderFileId;
-	}*/
-
-	/**
-	 * @return the messageType
-	 */
-/*	public String getMessageType() {
-		return messageType;
-	}*/
-
-	/**
 	 * @return the splittedFileSeq
 	 */
-	public int getSplittedFileSeq() {
+/*	public int getSplittedFileSeq() {
 		return splittedFileSeq;
-	}
+	}*/
 
 	/**
 	 * @param splittedFileSeq the splittedFileSeq to set
 	 */
-	public void setSplittedFileSeq(int splittedFileSeq) {
+/*	public void setSplittedFileSeq(int splittedFileSeq) {
 		this.splittedFileSeq = splittedFileSeq;
-	}
+	}*/
 
 	/**
 	 * @return the fileErrors
@@ -504,20 +456,6 @@ public String getInputPathName(){
 	}
 
 	/**
-	 * @return the fileRevisionInd
-	 */
-	public boolean isFileRevisionInd() {
-		return fileRevisionInd;
-	}
-
-	/**
-	 * @param fileRevisionInd the fileRevisionInd to set
-	 */
-	public void setFileRevisionInd(boolean fileRevisionInd) {
-		this.fileRevisionInd = fileRevisionInd;
-	}
-
-	/**
 	 * @return the sweepTime
 	 */
 	public String getSweepTime() {
@@ -559,12 +497,13 @@ public String getInputPathName(){
 		OECDMessageType = oECDMessageType;
 	}
 
-	/**
-	 * @param messageType the messageType to set
-	 */
-/*	public void setMessageType(String messageType) {
-		this.messageType = messageType;
-	}*/
+	public String getFileWorkingDir() {
+		return fileWorkingDir;
+	}
+
+	public void setFileWorkingDir(String fileWorkingDir) {
+		this.fileWorkingDir = fileWorkingDir;
+	}
 	
 	@Override
 	public PackageInfo clone(){
@@ -572,6 +511,10 @@ public String getInputPathName(){
 		
 		pi.setCtsCommunicationType			(this.ctsCommunicationType);
 		pi.setDataProvider					(this.dataProvider);
+		pi.setOECDMessageType				(this.getOECDMessageType());
+		pi.setSweepTime                     (this.getSweepTime());
+		pi.setTestIndicator                 (this.getTestIndicator());
+		pi.setFileRevisionIndic             (this.fileRevisionIndic);
 		//pi.setInputPathName					(this.inputPathName);
 		pi.setJobDirection					(this.jobDirection);
 		pi.setJobSuffix						(this.jobSuffix);
@@ -589,12 +532,51 @@ public String getInputPathName(){
 		pi.setSendingCountry				(this.sendingCountry);
 		pi.setSplitFileCount				(this.splitFileCount);
 		pi.setXmlFilename					(this.xmlFilename);
-		pi.setSplittedFileSeq				(this.splittedFileSeq);
+		pi.setMetadataFilename				(this.metadataFilename);
+		//pi.setSplittedFileSeq				(this.splittedFileSeq);
 		
 		pi.setOrigFileAcceptanceStatus		(this.origFileAcceptanceStatus);		
 		pi.setFileErrors					(this.fileErrors);
 		pi.setRecordErrors					(this.recordErrors);
 		
+		pi.setFileWorkingDir(this.fileWorkingDir);
+		
 		return pi;
+	}
+	
+	@Override
+	public String toString(){
+		StringBuilder sb = new StringBuilder();
+	
+		sb.append("\n ctsCommunicationType: " 		+ this.ctsCommunicationType);		
+		sb.append("\n OECDMessageType: "			+ this.getOECDMessageType());
+		sb.append("\n dataProvider: " 				+ this.dataProvider);
+		sb.append("\n sweepTime: "                  + this.getSweepTime());
+		sb.append("\n testIndicator: "              + this.getTestIndicator());
+
+		sb.append("\n jobDirection: " 				+ this.jobDirection);
+		sb.append("\n jobSuffix: " 					+ this.jobSuffix);
+		sb.append("\n messageRefId: " 				+ this.messageRefId);
+		sb.append("\n origCTSSendingTimeStamp: " 	+ this.origCTSSendingTimeStamp);
+		sb.append("\n origCTSTransmissionId: " 		+ this.origCTSTransmissionId);
+		sb.append("\n origFileAcceptanceStatus: " 	+ this.origFileAcceptanceStatus);
+		sb.append("\n origFilename: " 				+ this.origFilename);
+		sb.append("\n origMessageRefId: " 			+ this.origMessageRefId);
+		sb.append("\n origSenderFileId: " 			+ this.origSenderFileId);
+		sb.append("\n origUncompressFileSizeKBQty: "+ this.origUncompressFileSizeKBQty);
+		sb.append("\n packageType: " 				+ this.packageType);
+		sb.append("\n receivingCountry: " 			+ this.receivingCountry);
+		sb.append("\n reportingPeriod: " 			+ this.reportingPeriod);
+		sb.append("\n sendingCountry: " 			+ this.sendingCountry);
+		sb.append("\n splitFileCount: " 			+ this.splitFileCount);
+		sb.append("\n xmlFilename: " 				+ this.xmlFilename);
+		sb.append("\n metadataFilename: " 			+ this.metadataFilename);
+		//sb.append("\n splittedFileSeq: " 			+ this.splittedFileSeq);				
+		sb.append("\n fileErrors: " 					+ this.fileErrors);
+		sb.append("\n recordErrors: " 				+ this.recordErrors);
+		
+		sb.append("\n fileWorkingDir: "				+ this.fileWorkingDir);
+		
+		return sb.toString();
 	}
 }

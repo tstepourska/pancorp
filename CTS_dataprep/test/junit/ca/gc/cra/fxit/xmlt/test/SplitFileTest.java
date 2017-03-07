@@ -42,7 +42,7 @@ public class SplitFileTest extends TestCase{
 	@Override
 	@Before
     protected void setUp() throws Exception { 		
-    	Globals.loadBatchProperties(Globals.configDir + "fxit.xmlt.batch.xml");  	
+    	Globals.loadBatchProperties();//Globals.configDir + "fxit.xmlt.batch.xml");  	
     	initPackage();		
 		helper 			= new CheckFileSize(); 
 

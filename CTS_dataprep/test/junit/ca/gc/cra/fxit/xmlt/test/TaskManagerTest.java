@@ -45,7 +45,7 @@ public class TaskManagerTest extends TestCase{
 	@Override
 	@Before
     protected void setUp() throws Exception { 		
-    	Globals.loadBatchProperties(Globals.configDir + "fxit.ctsagent.batch.xml");
+    	Globals.loadBatchProperties();//Globals.configDir + "fxit.ctsagent.batch.xml");
     	//log.debug(Globals.getJobs());
     	
     	taskman = new TaskManager();

@@ -17,7 +17,6 @@ public class GenerateMessageRefId extends AbstractMessageRefId {
 	public GenerateMessageRefId cloneTask(){
 		GenerateMessageRefId t = new GenerateMessageRefId();
 		t.setResultCode(this.resultCode);
-		t.setResultMessage(this.resultMessage);
 		t.setId(this.id);
 		t.setSequence(this.sequence);
 		t.setJobId(this.jobId);
@@ -66,7 +65,7 @@ public class GenerateMessageRefId extends AbstractMessageRefId {
 			Utils.logError(lg, e);
 		}
 		
-		//for wireframe testing only - to comment out!
+		//TODO for wireframe testing only - to comment out!
 		//status = Constants.STATUS_CODE_SUCCESS;
 		// end of to comment out
 		

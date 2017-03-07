@@ -31,7 +31,8 @@ public abstract class AbstractMessageRefId extends AbstractTask {
 		
 		//XMLGregorianCalendar cal = DatatypeFactory.newInstance().newXMLGregorianCalendar();
 		Date curdate = new Date(System.currentTimeMillis());
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
+		//SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
+		SimpleDateFormat sdf = new SimpleDateFormat("yy");
 		int currYear = Integer.parseInt(sdf.format(curdate));
 		if(lg.isDebugEnabled())
 		lg.debug(fp + "currYear: " + currYear);

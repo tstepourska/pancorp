@@ -16,7 +16,6 @@ public class GenerateXML extends AbstractTask {
 	public GenerateXML cloneTask(){
 		GenerateXML t = new GenerateXML();
 		t.setResultCode(this.resultCode);
-		t.setResultMessage(this.resultMessage);
 		t.setId(this.id);
 		t.setSequence(this.sequence);
 		t.setJobId(this.jobId);
@@ -33,10 +32,10 @@ public class GenerateXML extends AbstractTask {
 		
 		try {			
 			String dataProvider		= p.getDataProvider();
-			//log.debug("dataProvider: " + dataProvider);
+			log.debug("dataProvider: " + dataProvider);
 			
 			String messageType = p.getPackageType();
-			//log.debug("messageType: " + messageType);
+			log.debug("messageType: " + messageType);
 			
 			//load appropriate helper 
 			ClassLoader classLoader = GenerateXML.class.getClassLoader();
@@ -49,6 +48,7 @@ public class GenerateXML extends AbstractTask {
 				myObjectClass 	= classLoader.loadClass(Constants.JAVA_PKG_TASK + "xml.sm.Helper");
 			}
 			IHelper helper 			= (IHelper) myObjectClass.newInstance();
+			//TODO uncomment
 			status 					= helper.invoke(p);
 		}
 		catch(Exception e){
@@ -56,7 +56,7 @@ public class GenerateXML extends AbstractTask {
 			Utils.logError(log, e);
 		}
 		
-		//for wireframe testing only - to comment out!
+		//TODO for wireframe testing only - to comment out!
 		//status = Constants.STATUS_CODE_SUCCESS;
 		// end of to comment out
 		log.debug(fp + "status: " + status);

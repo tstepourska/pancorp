@@ -23,28 +23,33 @@ public class CheckFileSize extends AbstractTask{
 
 	@Override
 	public final int invoke(PackageInfo p) {
-		String fp = "invoke: ";
+		//String fp = "invoke: ";
 		lg.debug("CheckFileSize executing");
 		int status = Constants.STATUS_CODE_INCOMPLETE;
 		
 		try {
-			String filename = Globals.FILE_WORKING_DIR+ p.getOrigFilename();			
+			if(lg.isDebugEnabled()){
+				lg.debug("Package: " + p.toString());
+			}
+			String filename = p.getFileWorkingDir() + p.getOrigFilename();			// Globals.FILE_WORKING_DIR+
 			String country = p.getReceivingCountry();
-			lg.info(fp+"Checking size of file " + filename + " for " + country);
+			lg.info("Checking size of file " + filename + " for " + country);
+			//String xmlFilename = null;
 			
 			File file = new File(filename);
 			long filesize = file.length();
-			lg.info(fp + "file size: " + filesize);
+			lg.info("file size: " + filesize);
 			p.setOrigUncompressFileSizeKBQty(BigInteger.valueOf(filesize));
 
 			//get allowed maximum file size from configuration
-			Globals.FileSize fs =Globals.specificFileSizes.get(country);
+			Globals.FileSize fs = Globals.specificFileSizes.get(country);
+			lg.info("FileSize object: " + fs);
 
 			//estimate final file size and set split file count to package
 			double splitFactor = estimateSize(filesize,p,  fs);
-			//lg.info(fp + "splitFileCount: " + splitFileCount);
-			//p.setSplitFileCount(splitFileCount);			
+			lg.info("splitFactor: " + splitFactor);
 			
+			//estimated file size exceeds maximum allowed
 			if(splitFactor>Constants.NO_SPLIT){
 				//no splitting of XML files, reject
 				if(filename.endsWith(Constants.FILE_EXT_XML)){
@@ -52,11 +57,22 @@ public class CheckFileSize extends AbstractTask{
 					return status;
 				}
 				
-				//split flat file
-				splitFile(filename, splitFactor, p);			
+				//split flat file into chunks and set split count to package info
+				int splitCount = splitFile(filename, splitFactor, p);
+				//set status for TaskManager
+				status = Constants.STATUS_CODE_CREATE_JOB_LOOP;
 			}
-
-			status = Constants.STATUS_CODE_SUCCESS;
+			else { //estimated file size is within the limit, no split
+				//generate single XML file name and metadata file name and 
+				//set it to the package info object
+				p.setXmlFilename	(Utils.generateXMLFileName(p, true));
+				p.setMetadataFilename(Utils.generateMetadataFilename(p, true));
+				if(lg.isDebugEnabled()){
+					lg.debug("XMLFile: " + p.getXmlFilename() + ", Metadata name: " + p.getMetadataFilename());
+				}
+				
+				status = Constants.STATUS_CODE_SUCCESS;
+			}
 		}
 		catch(Exception e){
 			status = Constants.STATUS_CODE_ERROR;
@@ -68,14 +84,12 @@ public class CheckFileSize extends AbstractTask{
 		// end of to comment out
 		
 		return status;
-	}
-	
+	}	
 
 	@Override
 	public CheckFileSize cloneTask(){
 		CheckFileSize t = new CheckFileSize();
 		t.setResultCode(this.resultCode);
-		t.setResultMessage(this.resultMessage);
 		t.setId(this.id);
 		t.setSequence(this.sequence);
 		t.setJobId(this.jobId);
@@ -104,6 +118,8 @@ public class CheckFileSize extends AbstractTask{
 		//double estimatedSizeUncompressed = -1;
 		//double estimatedSizeUncompressedNoSignature = -1;
 		//int xmlChunkSize = 0;
+		
+		lg.debug(fp + "filesize: " + filesize);
 		
 		if(fs==null){
 			maxSize = Globals.defaultMaxPkgSize;
@@ -136,14 +152,14 @@ public class CheckFileSize extends AbstractTask{
 		
 		if(compressed){
 			//final size of the package
-			estimatedSize = (filesize*Globals.TxtToXmlFactor+Globals.FileSignatureSizeConstant)*Globals.PayloadCompressionRatio + Globals.FileSizeConstant;
+			estimatedSize = (filesize*Globals.txtToXmlFactor+Globals.fileSignatureSizeConstant)*Globals.payloadCompressionRatio + Globals.fileSizeConstant;
 			//size of XML payload non-compressed with digital signature
 			//estimatedSizeUncompressed = filesize*Globals.TxtToXmlFactor+Globals.FileSignatureSizeConstant;
 			//estimatedSizeUncompressedNoSignature = estimatedSizeUncompressed-Globals.FileSignatureSizeConstant;
 		}
 		else{
 			//final total size of XML payload non-compressed with digital signature
-			estimatedSize = filesize*Globals.TxtToXmlFactor + Globals.FileSignatureSizeConstant;
+			estimatedSize = filesize*Globals.txtToXmlFactor + Globals.fileSignatureSizeConstant;
 			//size of XML payload non-compressed with digital signature
 			//estimatedSizeUncompressed = estimatedSize;
 			//estimatedSizeUncompressedNoSignature = estimatedSizeUncompressed-Globals.FileSignatureSizeConstant;
@@ -159,7 +175,7 @@ public class CheckFileSize extends AbstractTask{
 	}
 	
 	//@SuppressWarnings("resource")
-	private void splitFile(String fn, double splitFactor, PackageInfo p) throws Exception {
+	private int splitFile(String fn, double splitFactor, PackageInfo p) throws Exception {
 		String fp = "splitFile: ";
 		//int splitCount =(int) Math.ceil(splitFactor);	
 		int lineNum = 0;
@@ -238,6 +254,8 @@ public class CheckFileSize extends AbstractTask{
 		}
 		if(err!=null)
 			throw err;
+		
+		return chunkCounter;
 	}
 	
 	/**
@@ -259,13 +277,14 @@ public class CheckFileSize extends AbstractTask{
 		if(code==Constants.LINE_CODE_FI || code==Constants.LINE_CODE_TRAILER) {//start of the new FI record
 			//check if there is a space for a previous FI record plus a current line to be written
 			int check = firec.size()+lineCounter + 1;
-			lg.debug(fp + "check==" + check + ", chunkNumLines==" + chunkNumLines);
-			if(firec.size()+lineCounter + 1<=chunkNumLines){
+			//if(lg.isDebugEnabled())
+			//lg.debug(fp + "check==" + check + ", chunkNumLines==" + chunkNumLines);
+			if(check<=chunkNumLines){
 				//space ok
-				if(lg.isDebugEnabled()){
-					lg.debug(fp + check + "<=" + chunkNumLines);
-					lg.debug(fp + "line code: " + code + ", flushing old FI, starting new");
-				}
+				//if(lg.isDebugEnabled()){
+				//	lg.debug(fp + check + "<=" + chunkNumLines);
+					//lg.debug(fp + "line code: " + code + ", flushing old FI, starting new");
+				//}
 				
 				if(!firec.isEmpty()){
 					while(!firec.isEmpty()){
@@ -396,11 +415,11 @@ public class CheckFileSize extends AbstractTask{
 	*/
 	
 	public static void main(String[] args){
-		CheckFileSize c = new CheckFileSize();
-		PackageInfo p = new PackageInfo();
-		p.setSplitFileCount(3);
+	//	CheckFileSize c = new CheckFileSize();
+		//PackageInfo p = new PackageInfo();
+		//p.setSplitFileCount(3);
 		//int status = c.invoke(p);
-		String filename = "C:/git/repository/CTS_dataprep/test/testfiles/outbound/unprocessed/IP.AIP5S182.CAUS.A14.S0000001";
+		//String filename = "C:/git/repository/CTS_dataprep/test/testfiles/outbound/unprocessed/IP.AIP5S182.CAUS.A14.S0000001";
 		
 		try {
 		//c.splitFile(filename, p);

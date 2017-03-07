@@ -1,5 +1,0 @@
-xjc -d C:\git\repository\CTS_dataprep\implementation\src -p ca.gc.cra.fxit.xmlt.generated.jaxb.crs -xmlschema C:\git\repository\CTS_dataprep\implementation\schema\crs\*.xsd -verbose
-
-xjc -d C:\git\repository\CTS_dataprep\implementation\src -p ca.gc.cra.fxit.xmlt.generated.jaxb.statusmessage -xmlschema C:\git\repository\CTS_dataprep\implementation\schema\statusmessage\CrsStatusMessageXML_v1.0.xsd -verbose
-
-xjc -d C:\git\repository\CTS_dataprep\implementation\src -p ca.gc.cra.fxit.xmlt.generated.jaxb.metadata -xmlschema C:\git\repository\CTS_dataprep\implementation\schema\metadata\*.xsd -verbose

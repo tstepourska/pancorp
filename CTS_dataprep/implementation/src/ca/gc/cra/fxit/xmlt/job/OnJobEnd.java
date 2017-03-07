@@ -10,50 +10,48 @@ import ca.gc.cra.fxit.xmlt.dao.UpdateRecordDAOBean;
 import ca.gc.cra.fxit.xmlt.exception.FileTransferException;
 import ca.gc.cra.fxit.xmlt.model.PackageInfo;
 import ca.gc.cra.fxit.xmlt.util.Constants;
-import ca.gc.cra.fxit.xmlt.util.FileTransfer;
+//import ca.gc.cra.fxit.xmlt.util.FileTransfer;
 import ca.gc.cra.fxit.xmlt.util.Utils;
 
 public class OnJobEnd {
-	private static Logger log = Logger.getLogger(OnJobEnd.class);
+	private static Logger lg = Logger.getLogger(OnJobEnd.class);
 	
-	public  void invoke(PackageInfo p){
+	public  void invoke(int status, PackageInfo p) {
 		//update file processing status and save available statistics and mapping (or status message) 
-		int status = saveStats(p);
-		
+		saveStats(status, p);
+
 		//TODO tentative - to remove this method, as SSC script 
 		// should be put in place to do this
-		status = archiveFiles(p);
+		//status = archiveFiles(p);
 		
 		status = cleanup(p);
 	}
 	
-	private int saveStats(PackageInfo p){
-		int status = Constants.STATUS_CODE_INCOMPLETE;
-		
-			String fp = "saveStats: ";
-			String messageRefID = null;
-			try {
-				UpdateRecordDAOBean dao = new UpdateRecordDAOBean();
-				status = dao.invoke(p);
-				log.debug(fp + "messageRefID: " + messageRefID);
-			} 
-			catch (IllegalFormatException e) {
-				log.error(fp + "Caught IllegalFormatException: " + e.getMessage());
-			}
-			catch (IndexOutOfBoundsException e) {
-				log.error(fp + "Caught IndexOutOfBoundsException: " + e.getMessage());
-			}
-			catch (DataException e) {
-				log.error(fp + "Caught DataException: " + e.getMessage());
-			}
-			catch (RemoteException e) {
-				log.error(fp + "Caught RemoteException: " + e.getMessage());
-			}
-			catch(Exception e){
-				Utils.logError(log, e);
-			}
+	private void saveStats(int status, PackageInfo p) {
+		String fp = "saveStats: ";
+		String messageRefID = null;
+		try {
+			UpdateRecordDAOBean dao = new UpdateRecordDAOBean();
+			dao.invoke(status, p);
+			lg.debug(fp + "messageRefID: " + messageRefID);
+		} 
+		catch (IllegalFormatException e) {
+			lg.error(fp + "Caught IllegalFormatException: " + e.getMessage());
+		}
+		catch (IndexOutOfBoundsException e) {
+			lg.error(fp + "Caught IndexOutOfBoundsException: " + e.getMessage());
+		}
+		catch (DataException e) {
+			lg.error(fp + "Caught DataException: " + e.getMessage());
+		}
+		catch (RemoteException e) {
+			lg.error(fp + "Caught RemoteException: " + e.getMessage());
+		}
+		catch(Exception e){
+			Utils.logError(lg, e);
+		}
 	
-		return status;
+		//return status;
 	}
 	
 	
@@ -65,7 +63,7 @@ public class OnJobEnd {
 	 * 
 	 * @return
 	 */
-	private int archiveFiles(PackageInfo p) 	{
+/*	private int archiveFiles(PackageInfo p) 	{
 		
 		
 		long startTime = System.currentTimeMillis();
@@ -93,7 +91,7 @@ public class OnJobEnd {
 		log.debug("End transferFilesToMainframe");
 		
 		return status;
-	}
+	}*/
 	
 	private int cleanup(PackageInfo p){
 		int status = Constants.STATUS_CODE_INCOMPLETE;

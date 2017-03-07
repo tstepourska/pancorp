@@ -14,7 +14,6 @@ public class ValidateMessageRefId extends AbstractMessageRefId {
 	public ValidateMessageRefId cloneTask(){
 		ValidateMessageRefId t = new ValidateMessageRefId();
 		t.setResultCode(this.resultCode);
-		t.setResultMessage(this.resultMessage);
 		t.setId(this.id);
 		t.setSequence(this.sequence);
 		t.setJobId(this.jobId);

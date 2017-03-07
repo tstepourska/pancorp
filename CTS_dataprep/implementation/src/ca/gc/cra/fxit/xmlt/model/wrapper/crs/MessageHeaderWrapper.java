@@ -10,13 +10,11 @@ public class MessageHeaderWrapper extends IP6PRTHD {
 	public MessageHeaderWrapper(String line){
 		super();
 		if(line.length() != this.length()){
-			lg.info("line: " + line);
-			lg.error("Header record line length is not correct: " + line.length() + "!=" + this.length());
+			//lg.info("line: " + line);
+			//lg.error("Header record line length is not correct: " + line.length() + "!=" + this.length());
 			//TODO throw exception?
 		}
 		this.setRec(line);
-		if(lg.isDebugEnabled())
-			lg.debug("header rec created");
 	}
 	
 }

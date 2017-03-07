@@ -14,7 +14,6 @@ public class ValidateXML extends AbstractTask{
 	public ValidateXML cloneTask(){
 		ValidateXML t = new ValidateXML();
 		t.setResultCode(this.resultCode);
-		t.setResultMessage(this.resultMessage);
 		t.setId(this.id);
 		t.setSequence(this.sequence);
 		t.setJobId(this.jobId);
@@ -24,7 +23,7 @@ public class ValidateXML extends AbstractTask{
 	
 	
 	@Override
-	protected final int invoke(PackageInfo p) {
+	public final int invoke(PackageInfo p) {
 	log.debug("ValidateXML executing");
 
 	int status = Constants.STATUS_CODE_INCOMPLETE;
