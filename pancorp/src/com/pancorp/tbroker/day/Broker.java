@@ -227,6 +227,8 @@ public class Broker ///extends Thread
 					// PATTERN COMPLETED AND CONFIRMED, OPEN POSITION!!!
 					//tell manager to lock the right to place order; if true, proceed
 					if(manager.setOrderPlaced(true)){	
+						//switch mode of operation, on callback, if not filled, switch back to OPENING
+						this.mode = Constants.MODE_CLOSING;
 						double lmtPrice = 0;
 						if(dir>0)
 							lmtPrice = newCandle.close();
@@ -245,8 +247,9 @@ public class Broker ///extends Thread
 								manager
 								);
 						placeOrderThread.start();
+						//reset current pattern
 						currentPattern = null;
-						//wait for order to be filled - callback to wrapper, then change mode of operation
+						//wait for order to be filled - see callback to wrapper
 						}
 						catch(Exception e){
 							Utils.logError(lg, e);
