@@ -36,7 +36,9 @@ public enum Globals {
 	public static int MIN_TREND_CANDLES = 3;
 	public static int MAX_TREND_CANDLES = 5;
 	/** For calculation of body and shadows length to determine 'small' (< 1/3 len) and 'large' (> 3 len) */
-	public static int CANDLE_TYPE_FACTOR	 = 3;
+	public static int CANDLE_TYPE_FACTOR	 				= 3;
+	/** Helps to define concept of approximate the same, or close; taken out of candle body length */
+	public static final double DEVIATION_FACTOR					= 0.05;
 	public static int MAX_PATTERN_CONFIRMATION_COUNT		 = 1;
 	
 	public static int ATR_PERIOD		= 14;

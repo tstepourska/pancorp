@@ -30,6 +30,12 @@ public class Calculator {
        public Calculator(){
     	   
        }
+       
+       public boolean approximatelySame(double base, double compared, double dev){
+    	   boolean same = Math.abs(base-compared)<dev;
+    	   
+    	   return same;
+       }
 
 
 	/**

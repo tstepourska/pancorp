@@ -53,6 +53,10 @@ public enum Constants {
 	// have an open position, monitoring it until close, or force to close
 	public static final int MODE_CLOSING			= 0;
 	
+	public static final int TRIGGER_ACTION_NONE						= -1;
+	public static final int TRIGGER_ACTION_PATTERN_TO_CONFIRM		= 0;
+	public static final int TRIGGER_ACTION_OPEN_POSITION			= 1;
+	
 	public static final int EMA_TYPE_CLOSE			= 0;
 	public static final int EMA_TYPE_PLUS_DMI		= 1;
 	public static final int EMA_TYPE_MINUS_DMI		= 2;
