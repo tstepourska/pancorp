@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- logger automatically checks configuration for changes every 30 secs -->
+<Configuration status="INFO" monitorInterval="30">
+	<Properties>
+        <Property name="logdir">/Users/pankstep/log/TBroker/</Property>
+    </Properties>
+    <Appenders>
+        <Console name="main">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
+        </Console>
+      <!--  <File name="main" fileName="${logdir}application.log" immediateFlush="true" append="true">
+            <PatternLayout pattern="%d: %-5p: %-17x{callID}: %-17c{1}: %m%n"/>
+        </File>
+        -->
+        <!--
+         <File name="log_in" fileName="${logdir}log_in.log" immediateFlush="true" append="true">
+            <PatternLayout pattern="%d: %-5p: %-17x{callID}: %-17c{1}: %m%n"/>
+        </File>
+         <File name="log_out" fileName="${logdir}log_out.log" immediateFlush="true" append="true">
+            <PatternLayout pattern="%d: %-5p: %-17x{callID}: %-17c{1}: %m%n"/>
+        </File>
+        -->
+      <!--    <File name="history" fileName="${logdir}history.log" immediateFlush="true" append="true">
+            <PatternLayout pattern="%d: %-5p: %-17x{callID}: %-17c{1}: %m%n"/>
+        </File>
+         <File name="pool" fileName="${logdir}pool.log" immediateFlush="true" append="true">
+            <PatternLayout pattern="%d: %-5p: %-17x{callID}: %-17c{1}: %m%n"/>
+        </File>-->
+    </Appenders>
+    <Loggers>
+    	<Logger name="com.pancorp" level="trace">
+      		<AppenderRef ref="main"/>
+    	</Logger>
+    <!-- 	<Logger name="CallHistory" level="trace">
+      		<AppenderRef ref="history"/>
+    	</Logger>
+    	-->
+   <!--   	<Logger name="InLog" level="trace">
+      		<AppenderRef ref="log_in"/>
+    	</Logger>
+    	<Logger name="OutLog" level="trace">
+      		<AppenderRef ref="log_out"/>
+    	</Logger>
+    	-->
+        <Root level="OFF">
+           <!--<AppenderRef ref="Console" />-->
+            <!-- <AppenderRef ref="pool"/>-->
+        </Root>
+    </Loggers>
+</Configuration>
