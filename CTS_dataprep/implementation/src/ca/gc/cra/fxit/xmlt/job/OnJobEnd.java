@@ -6,6 +6,7 @@ import java.util.IllegalFormatException;
 import org.apache.log4j.Logger;
 
 import ca.gc.cra.db.framework.exceptions.DataException;
+import ca.gc.cra.fxit.xmlt.dao.InsertStatsDAOBean;
 import ca.gc.cra.fxit.xmlt.dao.UpdateRecordDAOBean;
 import ca.gc.cra.fxit.xmlt.exception.FileTransferException;
 import ca.gc.cra.fxit.xmlt.model.PackageInfo;
@@ -18,7 +19,7 @@ public class OnJobEnd {
 	
 	public  void invoke(int status, PackageInfo p) {
 		//update file processing status and save available statistics and mapping (or status message) 
-		saveStats(status, p);
+		updateRec(status, p);
 
 		//TODO tentative - to remove this method, as SSC script 
 		// should be put in place to do this
@@ -27,13 +28,14 @@ public class OnJobEnd {
 		status = cleanup(p);
 	}
 	
-	private void saveStats(int status, PackageInfo p) {
+	private void updateRec(int status, PackageInfo p) {
 		String fp = "saveStats: ";
-		String messageRefID = null;
+		//String messageRefID = null;
 		try {
+			//messageRefId
 			UpdateRecordDAOBean dao = new UpdateRecordDAOBean();
 			dao.invoke(status, p);
-			lg.debug(fp + "messageRefID: " + messageRefID);
+			lg.debug(fp + "record updated");
 		} 
 		catch (IllegalFormatException e) {
 			lg.error(fp + "Caught IllegalFormatException: " + e.getMessage());

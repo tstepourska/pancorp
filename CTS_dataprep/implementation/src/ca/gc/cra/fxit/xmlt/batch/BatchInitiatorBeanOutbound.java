@@ -101,6 +101,19 @@ public class BatchInitiatorBeanOutbound implements SessionBean { //, BatchInitia
 			Utils.logError(log, e);
 			throw new RemoteException();
 		}
+		
+		
+		try {
+			File workingDir 	= new File(sendingRepPath+Constants.TEMP_DIR);
+			//loop through the folder of files to delete
+			for (final File file : workingDir.listFiles()) {
+				if(file.length()<=0)
+					file.delete();
+			}
+		}
+		catch(Exception e){
+			
+		}
 	}
 	
 	/**

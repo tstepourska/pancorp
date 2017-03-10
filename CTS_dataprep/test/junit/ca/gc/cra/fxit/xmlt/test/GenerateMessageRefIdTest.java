@@ -74,10 +74,12 @@ public class GenerateMessageRefIdTest extends TestCase{
 			p.setReceivingCountry("FR");
 					
 			//String filename = p.getSendingCountry() + "_"+p.getDataProvider().toUpperCase()+".xml";
-			p.setXmlFilename("CRS_MESSAGEREFID_20170216T154955_T.xml");
+			//p.setXmlFilename("CRS_MESSAGEREFID_20170216T154955_T.xml");
+			p.setXmlFilename("CRS_MESSAGEREFID_20170308T115934_T.xml");
 			
 			//p.setMessageRefId("CA2016FR123456789");
 			p.setReportingPeriod(Utils.generateReportingPeriod("2016", null, null));
+			p.setFileWorkingDir("C:\\run\\xmlt\\outbound\\unprocessed\\temp\\");
 		}
 		catch(Exception e) {
 			Utils.logError(lg, e);

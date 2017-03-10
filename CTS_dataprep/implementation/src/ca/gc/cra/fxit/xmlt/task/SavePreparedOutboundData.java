@@ -2,11 +2,13 @@ package ca.gc.cra.fxit.xmlt.task;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.IllegalFormatException;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
 import ca.gc.cra.db.framework.exceptions.DataException;
@@ -79,6 +81,12 @@ public class SavePreparedOutboundData extends AbstractTask {
 			success = Utils.moveFile(sourcePathName, targetPathName);
 			if(!success)				
 				throw new Exception("Error moving file " + sourcePathName);
+			
+			sourcePathName = fileWorkingDir +p.getOrigFilename();		//Globals.FILE_WORKING_DIR
+			targetPathName = Globals.baseFileDir + Constants.OUTBOUND_PROCESSED_TOSEND_DIR + p.getOrigFilename();
+			success = Utils.moveFile(sourcePathName, targetPathName);
+			if(!success)				
+				throw new Exception("Error moving file " + sourcePathName);
 		}
 		catch(Exception e){
 			status = Constants.STATUS_CODE_ERROR;
@@ -91,23 +99,73 @@ public class SavePreparedOutboundData extends AbstractTask {
 
 		BufferedWriter w = null;
 		BufferedReader r = null;
+		boolean success = false;
+		File file = null;
+		
+		
+		//overwrite the old file with empty content
+	/*	
+		String originalFileName = fileWorkingDir +pkg.getOrigFilename();		//Globals.FILE_WORKING_DIR
+		lg.info("originalFileName: " + originalFileName);
 		
 		try {
-			String fileWorkingDir = p.getFileWorkingDir();		
-			String sourcePathName = fileWorkingDir + p.getXmlFilename();		//Globals.FILE_WORKING_DIR
-			String target = fileWorkingDir + Constants.CLEANUP_FILENAME;
+			FileWriter w = new FileWriter(originalFileName);
+			w.write("");
+			w.flush();
+			w.close();
+		}
+		catch(Exception e){}
+		*/
+		String fileWorkingDir = null;
+		try {
+			fileWorkingDir = p.getFileWorkingDir();		
+			String cleanupTarget = fileWorkingDir + Constants.CLEANUP_FILENAME;
 			
+			String sourcePathName = fileWorkingDir + p.getXmlFilename();		//Globals.FILE_WORKING_DIR
+			//String target = fileWorkingDir + Constants.CLEANUP_FILENAME;
+			if((new File(sourcePathName)).exists()){			
 			w = new BufferedWriter(new FileWriter(sourcePathName,false));
-			w.write(" ");
-		
+			w.write("");
+			w.flush();
+			w.close();
+			//success = Utils.moveFile(sourcePathName, cleanupTarget);		
+			Utils.deleteFile(sourcePathName);
+			}		
 			sourcePathName = fileWorkingDir +p.getMetadataFilename();		//Globals.FILE_WORKING_DIR
+			
+			if((new File(sourcePathName)).exists()){
 			w = new BufferedWriter(new FileWriter(sourcePathName,false));
-			w.write(" ");
-
+			w.write("");
+			w.flush();
+			w.close();
+			//success = Utils.moveFile(sourcePathName, cleanupTarget);
+			Utils.deleteFile(sourcePathName);
+			}
+			
+			sourcePathName = fileWorkingDir +p.getOrigFilename();
+			if((new File(sourcePathName)).exists()){
+				w = new BufferedWriter(new FileWriter(sourcePathName,false));
+				w.write(" ");
+				w.flush();
+				w.close();
+				//success = Utils.moveFile(sourcePathName, cleanupTarget);
+				Utils.deleteFile(sourcePathName);
+			}
 		}
 		catch(Exception e){
 			//status = Constants.STATUS_CODE_ERROR;
 			lg.error("cleanup: Error: " + e.getMessage());
 		}
+		finally{
+			try {
+				w.flush();
+				w.close();
+			} catch(Exception e){}
+			
+			try {
+				r.close();
+			} catch(Exception e){}
+		}
+
 	}
 }

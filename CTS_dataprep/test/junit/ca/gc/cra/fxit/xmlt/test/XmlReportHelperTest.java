@@ -120,10 +120,12 @@ public class XmlReportHelperTest extends TestCase{
 			p.setSendingCountry(Constants.CANADA);
 					
 			//String filename = p.getSendingCountry() + "_"+p.getDataProvider().toUpperCase()+".xml";
-			String origFilename = "IP.AIP5S182.CAUS.A14.S0000001";
+			//String origFilename = "IP.AIP5S182.CAUS.A14.S0000001";
+			String origFilename = "IP.AIP5S182.CAUS.A14.S0000009_1";
 			p.setOrigFilename(origFilename);
 			//p.setXmlFilename(filename);
-			String fileWorkingDir = "C:/git/repository2/CTS_XMLT/CTS_dataprep/test/testfiles/outbound/unprocessed/temp/";
+			//String fileWorkingDir = "C:/git/repository2/CTS_XMLT/CTS_dataprep/test/testfiles/outbound/unprocessed/temp/";
+			String fileWorkingDir = "C:/run/xmlt/outbound/unprocessed/temp/";
 			p.setFileWorkingDir(fileWorkingDir);
 			
 			p.setMessageRefId("CA2016FR123456789");
@@ -139,6 +141,8 @@ public class XmlReportHelperTest extends TestCase{
     		p.setOrigSenderFileId("CA2016FR234567891");
     		// the size of the decrypted, uncompressed CRS message
     		p.setOrigUncompressFileSizeKBQty(new BigInteger("26542374"));
+    		
+    		p.setXmlFilename	(Utils.generateXMLFileName(p, true));
 		}
 		catch(Exception e) {
 			Utils.logError(lg, e);

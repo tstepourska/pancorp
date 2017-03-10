@@ -81,6 +81,8 @@ public class TaskManager implements Serializable {
 						log.debug("Executing job for package " + p0);
 					status = executeJob(newjob, p0);
 					log.info("job for package " + fileCounter + " completed with status " + status);
+					//all onJobEnd routines here
+					onJobEnd(status,pInfo);
 					
 					//TODO record status somewhere along with 
 					//the knowledge of original (unsplitted) file 
@@ -92,10 +94,13 @@ public class TaskManager implements Serializable {
 			else if(status== Constants.STATUS_CODE_FILE_REJECTED_TOO_BIG){
 				//TODO handle rejected file
 				log.error("XML file is REJECTED by XMLT because the size exceeds the limit.");
+				//all onJobEnd routines here
+				onJobEnd(status,pInfo);
 			}
-
-			//all onJobEnd routines here
-			onJobEnd(status,pInfo);
+			else {
+				//all onJobEnd routines here
+				onJobEnd(status,pInfo);
+			}
 		}
 		catch(Exception e){
 			Utils.logError(log, e);

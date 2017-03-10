@@ -17,16 +17,16 @@ import org.junit.Test;
 import junit.framework.TestCase;
 
 import ca.gc.cra.fxit.xmlt.model.PackageInfo;
-import ca.gc.cra.fxit.xmlt.task.CheckFileSize;
+import ca.gc.cra.fxit.xmlt.task.CreateMessageRefIdMapping;
 import ca.gc.cra.fxit.xmlt.util.Constants;
 import ca.gc.cra.fxit.xmlt.util.Globals;
 import ca.gc.cra.fxit.xmlt.util.Utils;
 
-public class SplitFileTest extends TestCase{
-	private static Logger lg = Logger.getLogger(SplitFileTest.class);
+public class CreateMessageRefIDMappingTest extends TestCase{
+	private static Logger lg = Logger.getLogger(CreateMessageRefIDMappingTest.class);
 
 	private PackageInfo p;
-	CheckFileSize helper;
+	CreateMessageRefIdMapping helper;
 	
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
@@ -42,11 +42,8 @@ public class SplitFileTest extends TestCase{
 	@Override
 	@Before
     protected void setUp() throws Exception { 		
-    	Globals.loadBatchProperties();//Globals.configDir + "fxit.xmlt.batch.xml");  	
-    	lg.info("Properties: "  +Globals.toStaticString());
     	initPackage();		
-		helper 			= new CheckFileSize(); 
-
+		helper 			= new CreateMessageRefIdMapping(); 
     }
     
 	@Override
@@ -76,15 +73,17 @@ public class SplitFileTest extends TestCase{
 			p.setReceivingCountry("US");
 			
 			String fileWorkingDir = "C:/run/xmlt/outbound/unprocessed/temp/";
+			String dir = "C:/run/xmlt/";
+			Globals.baseFileDir = dir;
 			p.setFileWorkingDir(fileWorkingDir);
-			String origFilename = "IP.AIP5S182.CAUS.A14.S0000009";
+			String origFilename = "IP.AIP5S182.CAUS.A14.S0000001";
 			p.setOrigFilename(origFilename);
-					
+			p.setMessageRefId("CA2016FR123456789");
 			//String filename = p.getSendingCountry() + "_"+p.getDataProvider().toUpperCase()+".xml";
-			//p.setXmlFilename("CRS_MESSAGEREFID_20170216T154955_T.xml");
+			p.setXmlFilename("CRS_CA2016FR123456789_20170216T154955_T_1.xml");
 			
-			//p.setMessageRefId("CA2016FR123456789");
-			p.setReportingPeriod(Utils.generateReportingPeriod("2016", null, null));
+			
+			//p.setReportingPeriod(Utils.generateReportingPeriod("2016", null, null));
 		}
 		catch(Exception e) {
 			Utils.logError(lg, e);

@@ -70,6 +70,11 @@ public class Constants {
 	
 	public static final int NO_SPLIT								= 1;
 	
+	/**
+	 * Cobol mapping file name format <orig name>.X0000001  (X + 7 digits)
+	 */
+	public static final int FILE_SEQUENCE_NUM_SIZE					= 7;  
+	
 	public static final String MAIN_SCHEMA_NAME						= "main_schema.xsd";
 	
 	public static final int STATUS_CODE_SUCCESS 					= 0;
@@ -138,6 +143,7 @@ public class Constants {
 	
 	public static final String FILE_EXT_XML							= ".xml";
 	public static final String METADATA								= "Metadata";
+	public static final String PREFIX_MAPPING						= "Mapping_";
 	public static final String MSG_REF_ID_PLACEHOLDER				= "MESSAGEREFID";
 	public static final int MIX_TAX_YEAR							= 1970;
 	

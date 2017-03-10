@@ -1,6 +1,7 @@
 package ca.gc.cra.fxit.xmlt.task.xml.crs;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.OutputStream;
@@ -153,6 +154,7 @@ public class Helper extends AbstractXmlHelper {
 		//TODO
 		////marshaller.setUseTestDocTypeIndicCodes (isTest);
 		BufferedReader reader = null;
+		XMLStreamWriter xmlWriter = null;
 		
 		try {
 			String line;
@@ -161,8 +163,9 @@ public class Helper extends AbstractXmlHelper {
 			
 			OutputStream outputStream = new FileOutputStream(outputFile);
 			XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();
-			XMLStreamWriter xmlWriter = outputFactory.createXMLStreamWriter(outputStream,"UTF-8");
+			xmlWriter = outputFactory.createXMLStreamWriter(outputStream,"UTF-8");
 			writer = new CommonXMLStreamWriter(xmlWriter);
+	
 
 			//read text file; each line starts with the code specifying record type
 			//process each line according to the code
@@ -214,8 +217,10 @@ public class Helper extends AbstractXmlHelper {
 			}catch(Exception e){}
 			
 			try {
+				xmlWriter.flush();
 				writer.flush();
 				writer.close();
+				xmlWriter.close();
 			}catch(Exception ex){}
 		}
 
@@ -236,11 +241,7 @@ public class Helper extends AbstractXmlHelper {
 	 * @throws Exception
 	 */
 	private void processHeader(String line) throws Exception {
-		String fp = "processHeader: ";
-
 		MessageHeaderWrapper headerRec = new MessageHeaderWrapper(line);
-		//if(lg.isDebugEnabled())
-		//	lg.debug(fp + "header rec created");
 		headerRecList.add(headerRec);
 		//nothing to write to XML
 	}

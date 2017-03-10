@@ -44,21 +44,30 @@
     <!--  <step id="pushData"                 sequence="5" class="ca.gc.cra.fxit.xmlt.task.PushData"/>   -->
 	<!-- </job>-->
 	
-	<job id="OUT_PL">
+	 <job id="OUT_PL">
+      <step id="checkFileSize"            item-count="1" class="ca.gc.cra.fxit.xmlt.task.CheckFileSize"/>
+	  <step id="validateXML"              item-count="2" class="ca.gc.cra.fxit.xmlt.task.ValidateXML"/>
+      <step id="generateMetadata"         item-count="3" class="ca.gc.cra.fxit.xmlt.task.GenerateMetadata"/>
+      <step id="extractStats"         	  item-count="4" class="ca.gc.cra.fxit.xmlt.task.ExtractStatistics"/>
+      <step id="savePreparedOutboundData" item-count="5" class="ca.gc.cra.fxit.xmlt.task.SavePreparedOutboundData"/>  
+    </job>
+	
+	<job id="OUT_PL_CRS">
 		<step id="checkFileSize"            item-count="1" class="ca.gc.cra.fxit.xmlt.task.CheckFileSize"/>
 	  	<step id="generateXML"              item-count="2" class="ca.gc.cra.fxit.xmlt.task.GenerateXML"/>    
-      	<step id="generateMessageRefId"     item-count="3" class="ca.gc.cra.fxit.xmlt.task.GenerateMessageRefId"/>
-      	<step id="generateMetadata"         item-count="4" class="ca.gc.cra.fxit.xmlt.task.GenerateMetadata"/>
-      	<step id="savePreparedOutboundData" item-count="5" class="ca.gc.cra.fxit.xmlt.task.SavePreparedOutboundData"/>  
-      	<!-- <step id="archiveData" 				item-count="6" class="ca.gc.cra.fxit.xmlt.task.ArchiveData"/> -->
+       	<step id="generateMessageRefId"     item-count="3" class="ca.gc.cra.fxit.xmlt.task.GenerateMessageRefId"/>
+       	<step id="createMapping"     	    item-count="4" class="ca.gc.cra.fxit.xmlt.task.CreateMessageRefIdMapping"/>
+      	<step id="generateMetadata"         item-count="5" class="ca.gc.cra.fxit.xmlt.task.GenerateMetadata"/>
+      	<step id="extractStats"         	item-count="6" class="ca.gc.cra.fxit.xmlt.task.ExtractStatistics"/>
+      	<step id="savePreparedOutboundData" item-count="7" class="ca.gc.cra.fxit.xmlt.task.SavePreparedOutboundData"/> 
     </job>
-
       
     <job id="OUT_PL_CBC">
       <step id="checkFileSize"            item-count="1" class="ca.gc.cra.fxit.xmlt.task.CheckFileSize"/>
 	  <step id="validateXML"              item-count="2" class="ca.gc.cra.fxit.xmlt.task.ValidateXML"/>
       <step id="generateMetadata"         item-count="3" class="ca.gc.cra.fxit.xmlt.task.GenerateMetadata"/>
-      <step id="savePreparedOutboundData" item-count="4" class="ca.gc.cra.fxit.xmlt.task.SavePreparedOutboundData"/>  
+      <step id="extractStats"         	  item-count="4" class="ca.gc.cra.fxit.xmlt.task.ExtractStatistics"/>
+      <step id="savePreparedOutboundData" item-count="5" class="ca.gc.cra.fxit.xmlt.task.SavePreparedOutboundData"/>  
     </job>
     
     <job id="OUT_SM">

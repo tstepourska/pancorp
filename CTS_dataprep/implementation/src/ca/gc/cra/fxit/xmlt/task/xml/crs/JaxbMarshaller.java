@@ -104,6 +104,8 @@ public class JaxbMarshaller {
 		writer.writeCustomNamespace		("iso","urn:oecd:ties:isocrstypes:v1");
 		
 		writer.writeCharacters		("\n");
+		
+		writer.flush();
     }
         
 	/**
@@ -137,6 +139,7 @@ public class JaxbMarshaller {
 		getFragmentMarshaller().marshal(el, writer);
 	    
 	    writer.writeCharacters		("\n");
+	    writer.flush();
 	}
 		
 	/**

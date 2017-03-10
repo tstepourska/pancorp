@@ -30,21 +30,21 @@ public class FIWrapper extends IP6PRTSM {
 
 	    	try {
 	    	List<CountryCodeType> resCountryCode = createCountryCodeList();
-	    //	if(lg.isDebugEnabled())
-	    	//	lg.debug(fp + " resCountryCode created");
+	    	if(lg.isDebugEnabled())
+	    		lg.debug(fp + " resCountryCode created");
 	    	//List<String> resCountryCode = createCountryCodeListFromIP6PRTSM(reportingFIRec);
 			List<TINType> tin = createTINList();
-			//if(lg.isDebugEnabled())
-	    	//	lg.debug(fp + " tin list created");
+			if(lg.isDebugEnabled())
+	    		lg.debug(fp + " tin list created");
 			List<NameOrganisationType> name = createNameOrganisationList();
-		//	if(lg.isDebugEnabled())
-	    //		lg.debug(fp + " name created");
+			if(lg.isDebugEnabled())
+	    		lg.debug(fp + " name created");
 			List<AddressType> address = createAddressList();
-		//	if(lg.isDebugEnabled())
-	    //		lg.debug(fp + " address created");
+			if(lg.isDebugEnabled())
+	    		lg.debug(fp + " address created");
 			DocSpecType docSpec = createDocSpec(factory, driList);
-		//	if(lg.isDebugEnabled())
-	    //		lg.debug(fp + " docSpec created");
+			if(lg.isDebugEnabled())
+	    		lg.debug(fp + " docSpec created");
 			
 	    	if (resCountryCode != null && !resCountryCode.isEmpty()) {
 	    		party.getResCountryCode().addAll(resCountryCode);

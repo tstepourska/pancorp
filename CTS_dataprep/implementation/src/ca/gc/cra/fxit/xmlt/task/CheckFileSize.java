@@ -21,6 +21,16 @@ import ca.gc.cra.fxit.xmlt.util.Utils;
 public class CheckFileSize extends AbstractTask{
 	private static Logger lg = Logger.getLogger(CheckFileSize.class);
 
+	private String header = null;
+	private String trailer = null;
+	int cntHeader = 0;
+	int cntFI=0;
+	int cntSponsor=0;
+	int cntSlip=0;
+	int cntPerson=0;
+	int cntAcctHolder=0;
+	int cntTrailer=0;
+	
 	@Override
 	public final int invoke(PackageInfo p) {
 		//String fp = "invoke: ";
@@ -59,13 +69,15 @@ public class CheckFileSize extends AbstractTask{
 				
 				//split flat file into chunks and set split count to package info
 				int splitCount = splitFile(filename, splitFactor, p);
+				if(lg.isDebugEnabled())
+					lg.debug("splitCount: " + splitCount);
 				//set status for TaskManager
 				status = Constants.STATUS_CODE_CREATE_JOB_LOOP;
 			}
 			else { //estimated file size is within the limit, no split
 				//generate single XML file name and metadata file name and 
 				//set it to the package info object
-				p.setXmlFilename	(Utils.generateXMLFileName(p, true));
+				p.setXmlFilename	(Utils.generateXMLFileName(p, false)+"_1.xml");
 				p.setMetadataFilename(Utils.generateMetadataFilename(p, true));
 				if(lg.isDebugEnabled()){
 					lg.debug("XMLFile: " + p.getXmlFilename() + ", Metadata name: " + p.getMetadataFilename());
@@ -180,17 +192,70 @@ public class CheckFileSize extends AbstractTask{
 		//int splitCount =(int) Math.ceil(splitFactor);	
 		int lineNum = 0;
 		Exception err = null;
+		String line;
+		int code = 0;
+		
 		
 		//first pass - count number of lines 
 		try (BufferedReader reader = new BufferedReader(new FileReader(fn))) {
-			while((reader.readLine())!=null)
+			while((line = reader.readLine())!=null){
+				//parse the code
+				code = Integer.parseInt(line.substring(0,4));
+				switch(code){
+				case Constants.LINE_CODE_HEADER:   //1001;
+					cntHeader++;
+					header = line;
+					lg.info(fp + " header: " + header);
+					break;
+				case Constants.LINE_CODE_FI:   //1002;
+					cntFI++;
+					break;
+				case Constants.LINE_CODE_SPONSOR:   //1003;
+					cntSponsor++;
+					break;
+				case Constants.LINE_CODE_SLIP:   //1004;
+					cntSlip++;
+					break;
+				case Constants.LINE_CODE_PERSON:   //1005;
+					cntPerson++;
+					break;
+				case Constants.LINE_CODE_ACCOUNT_HOLDER:   //1006;
+					cntAcctHolder++;
+					break;
+				case Constants.LINE_CODE_TRAILER:   //1007
+					cntTrailer++;
+					trailer = line;
+					break;
+					default:
+						lg.error("Unsupported code: " + code);
+				}
+				
+				//total line num
 				lineNum++;
+			}			
+			
 		}
 		catch(Exception e){
 			Utils.logError(lg, e);		
 		}					
-		if(lg.isDebugEnabled())
-			lg.debug(fp + "lineNums: " + lineNum);
+		lg.info(fp + "Original file counters: ");
+			lg.info(fp + "lineNums: " + lineNum);
+			lg.info(fp + "cntHeader: " + cntHeader);
+			lg.info(fp + "cntFI: " + cntFI);		
+			lg.info(fp + "cntSponsor: " + cntSponsor);
+			lg.info(fp + "cntSlip: " + cntSlip);
+			lg.info(fp + "cntPerson: " + cntPerson);
+			lg.info(fp + "cntAcctHolder: " + cntAcctHolder);
+			lg.info(fp + "cntTrailer: " + cntTrailer);
+			/*
+			cntHeader = 0;
+			cntFI=0;
+			cntSponsor=0;
+			cntSlip=0;
+			cntPerson=0;
+			cntAcctHolder=0;
+			cntTrailer=0;
+			*/
 		
 		//calculate max number of lines in a chunk
 		int chunkNumLines = (int) Math.floor(lineNum / splitFactor);
@@ -208,8 +273,11 @@ public class CheckFileSize extends AbstractTask{
 		try {	
 			reader = new BufferedReader(new FileReader(fn));
 			writer = new BufferedWriter(new FileWriter(fn+Constants.UNDERSCORE+chunkCounter));
+			writer.write(header);
+			//writer.newLine(); //not here
+			lineCounter++;
 			
-			String line;
+			line = null;
 			int returnChunkCounter = 0;
 	
 			lg.info(fp + "starting chunk #" + chunkCounter);
@@ -218,25 +286,62 @@ public class CheckFileSize extends AbstractTask{
 				lineCounter++;
 			//	lg.info(fp + "returning chunk #" + chunkCounter);
 				
-				if(returnChunkCounter>chunkCounter){
+				if(returnChunkCounter>chunkCounter){			
+					//output couters from completed file
+					//TODO count lines in each file and check sum
+					lg.info("Counted chunk#" + chunkCounter);
+					lg.info(fp + "lineNums: " + lineNum);
+					//lg.info(fp + "cntHeader: " + cntHeader);
+					lg.info(fp + "cntFI: " + cntFI);		
+					lg.info(fp + "cntSponsor: " + cntSponsor);
+					lg.info(fp + "cntSlip: " + cntSlip);
+					lg.info(fp + "cntPerson: " + cntPerson);
+					lg.info(fp + "cntAcctHolder: " + cntAcctHolder);
+					//lg.info(fp + "cntTrailer: " + cntTrailer);
+
 					//reset and start new chunk
 					chunkCounter = returnChunkCounter;		
-					lg.info(fp + "starting chunk #" + chunkCounter);
-					lineCounter = 0;
-					try {
+									
+					try {						
 						writer.flush();
 						writer.close();
 					}catch(Exception ex){}
+										
+					lg.info(fp + "starting chunk #" + chunkCounter);
+					
+					lineCounter = 0;
 					writer = new BufferedWriter(new FileWriter(fn+Constants.UNDERSCORE+chunkCounter));
+					//writing header for each new file
+					writer.write(header);
+					lineCounter++;
 				}
 			}
 			
 			//flush remaining cache, if any
-			while(!fiRecordBuffer.isEmpty()){
-				writer.write(fiRecordBuffer.removeFirst());
+			if(!fiRecordBuffer.isEmpty()){
+				writer.newLine();	//append new line before each reportingFI
+				while(!fiRecordBuffer.isEmpty()){
+					writer.write(fiRecordBuffer.removeFirst());
+				}
 			}
 			
 			p.setSplitFileCount(chunkCounter);
+			
+			//output couters from completed file
+			//here the final counter value of each record type should be 0
+			lg.info("Counted chunk#" + chunkCounter);
+			lg.info(fp + "lineNums: " + lineNum);
+			//lg.info(fp + "cntHeader: " + cntHeader);
+			lg.info(fp + "cntFI: " + cntFI);		
+			lg.info(fp + "cntSponsor: " + cntSponsor);
+			lg.info(fp + "cntSlip: " + cntSlip);
+			lg.info(fp + "cntPerson: " + cntPerson);
+			lg.info(fp + "cntAcctHolder: " + cntAcctHolder);
+			//lg.info(fp + "cntTrailer: " + cntTrailer);
+			
+			//String item = null;
+			if(cntFI!=0 ||cntSponsor!= 0|| cntSlip!=0||cntPerson!=0||cntAcctHolder!=0)
+				throw new Exception("Number of records in a splitted files does not match number of records in the original file! See logs for details");
 		}
 		catch(Exception e){
 			Utils.logError(lg, e);	
@@ -252,8 +357,42 @@ public class CheckFileSize extends AbstractTask{
 				writer.close();
 			}	catch(Exception e){}
 		}
-		if(err!=null)
+		if(err!=null){
+			//error splitting file
 			throw err;
+		}
+		
+		//add footer to each file
+		for(int i=1;i<=chunkCounter;i++){
+			try{
+			writer = new BufferedWriter(new FileWriter(fn+Constants.UNDERSCORE+i, true));
+			writer.newLine();
+			writer.write(trailer);
+			writer.flush();
+			}
+			catch(Exception e){
+				lg.error(fp + "error appending footer: " + e.getMessage());
+			}
+			finally{
+				try {
+					writer.close();
+				}catch(Exception ex){}
+			}		
+		}
+
+		String originalFileName = p.getFileWorkingDir() +p.getOrigFilename();		//Globals.FILE_WORKING_DIR
+		lg.info("originalFileName: " + originalFileName);
+		
+		try {
+			/*FileWriter w = new FileWriter(originalFileName);
+			w.write("");
+			w.flush();
+			w.close();*/
+			
+			//TODo uncomment
+			Utils.deleteFile(originalFileName);
+		}
+		catch(Exception e){}
 		
 		return chunkCounter;
 	}
@@ -272,21 +411,24 @@ public class CheckFileSize extends AbstractTask{
 	 */
 	private int writeLine(BufferedWriter writer, String line, int chunkCounter, int chunkNumLines, int lineCounter, LinkedList<String> firec) throws IOException {
 		String fp = "writeLine: ";
+		int check = 0;
+		
+		//parse the code
 		int code = Integer.parseInt(line.substring(0,4));
-
-		if(code==Constants.LINE_CODE_FI || code==Constants.LINE_CODE_TRAILER) {//start of the new FI record
+		switch(code){
+		case Constants.LINE_CODE_HEADER:   //1001;
+			cntHeader--;
+			//DO NOT WRITE ANYTHING HERE, its taken care of in the parent method
+			break;
+		case Constants.LINE_CODE_FI:   //1002;
+			cntFI--;
 			//check if there is a space for a previous FI record plus a current line to be written
-			int check = firec.size()+lineCounter + 1;
-			//if(lg.isDebugEnabled())
-			//lg.debug(fp + "check==" + check + ", chunkNumLines==" + chunkNumLines);
+			check = firec.size()+lineCounter + 1;
+
 			if(check<=chunkNumLines){
 				//space ok
-				//if(lg.isDebugEnabled()){
-				//	lg.debug(fp + check + "<=" + chunkNumLines);
-					//lg.debug(fp + "line code: " + code + ", flushing old FI, starting new");
-				//}
-				
 				if(!firec.isEmpty()){
+					writer.newLine();	//append new line before each reportingFI
 					while(!firec.isEmpty()){
 						writer.write(firec.removeFirst()); //write previous FI if any
 						if(firec.size()>1)
@@ -301,131 +443,49 @@ public class CheckFileSize extends AbstractTask{
 				//set counter for a new chunk
 				chunkCounter++;
 			}
-			firec.addLast(line);//add start of the new record line (or trailer line) to the cache			
-		}
-		else if(code==Constants.LINE_CODE_HEADER){
-			if(lineCounter<=chunkNumLines){
-				writer.write(line);
-				if(lineCounter<chunkNumLines)
-					writer.newLine();
-				
-				//lineCounter++;
-			}
-		}
-		else {
+			firec.addLast(line);//add start of the new record line to the cache	
+			break;
+		case Constants.LINE_CODE_SPONSOR:   //1003;
+			cntSponsor--;
 			firec.addLast(line);	//add any subrecord that belongs to the current fi record to the cache
+			break;
+		case Constants.LINE_CODE_SLIP:   //1004;
+			cntSlip--;
+			firec.addLast(line);	//add any subrecord that belongs to the current fi record to the cache
+			break;
+		case Constants.LINE_CODE_PERSON:   //1005;
+			cntPerson--;
+			firec.addLast(line);	//add any subrecord that belongs to the current fi record to the cache
+			break;
+		case Constants.LINE_CODE_ACCOUNT_HOLDER:   //1006;
+			cntAcctHolder--;
+			firec.addLast(line);	//add any subrecord that belongs to the current fi record to the cache
+			break;
+		case Constants.LINE_CODE_TRAILER:   //1007
+			cntTrailer--;
+			//check if there is a space for a previous FI record plus a current line to be written
+			check = firec.size()+lineCounter + 1;
+
+			//if(lg.isDebugEnabled())
+			//lg.debug(fp + "check==" + check + ", chunkNumLines==" + chunkNumLines);
+			if(check<=chunkNumLines){
+				//space ok				
+				if(!firec.isEmpty()){
+					writer.newLine();	//append new line before each reportingFI
+					while(!firec.isEmpty()){
+						writer.write(firec.removeFirst()); //write previous FI if any
+						if(firec.size()>1)
+						writer.newLine();						
+					}
+					writer.flush();
+				}				
+			}
+			break;
+			default:
+				lg.error("Unsupported code: " + code);
 		}
-	
+
 		return chunkCounter;
 	}
-		
-	/*
-	private void countLines(String fn, PackageInfo p){
-		String fp = "splitFile: ";
-		int code = 0;
-		int splitCount = p.getSplitFileCount();
-		String fi = "";
-		
-		int lineNum = 0;
-
-		int cHd = 0;
-		int cFi = 0;
-		int cSp = 0;
-		int cAr = 0;
-		int cPer = 0;
-		int cAccHold = 0;
-		int cTrail = 0;
-		
-		int cTotSp = 0;
-		int cTotAr = 0;
-		int cTotPer = 0;
-		int cTotAccHold = 0;
-		
-		try (BufferedReader reader = new BufferedReader(new FileReader(fn))) {
-			String line;
-			while((line = reader.readLine())!=null){
-				lineNum++;
-			code = Integer.parseInt(line.substring(0,4));
-			//if(lg.isDebugEnabled())
-			//	lg.debug(fp + "line code: " + code);
-			
-			switch(code){
-			case Constants.LINE_CODE_HEADER:	//1001
-				cHd++;
-				break;
-			case Constants.LINE_CODE_FI:     // 1002
-				//process
-				fi = "fi="+cFi + ",cSp=" + cSp + ",cAr=" + cAr + ",cPer=" + cPer + ",cAcctHold=" + cAccHold;
-				lg.info(fi);
-				
-				//reset
-				fi = "";
-				cSp = 0;
-				cAr = 0;
-				cPer = 0;
-				cAccHold = 0;
-				
-				//start new reporting group
-				cFi++;
-				
-				break;
-			case Constants.LINE_CODE_SPONSOR:	//1003
-				cSp++;
-				cTotSp++;
-				break;
-			case Constants.LINE_CODE_SLIP:		//1004
-				cAr++;
-				cTotAr++;
-				break;
-			case Constants.LINE_CODE_PERSON: 	//1005
-				cPer++;
-				cTotPer++;
-				break;
-			case Constants.LINE_CODE_ACCOUNT_HOLDER:  //1006
-				cAccHold++;
-				cTotAccHold++;
-				break;
-			case Constants.LINE_CODE_TRAILER: 		//1007
-				cTrail++;
-				
-				//process last
-				fi = "fi="+cFi + ",cSp=" + cSp + ",cAr=" + cAr + ",cPer=" + cPer + ",cAcctHold=" + cAccHold;
-				lg.info(fi);
-				break;
-			default:
-				//throw new Exception("Invalid line code!");
-			}
-			}
-			
-			if(lg.isDebugEnabled()){
-				lg.debug("Lines: " + lineNum);
-				lg.debug("Headers: " + cHd);
-				lg.debug("FIs: " + cFi);
-				lg.debug("Total Sponsors: " + cTotSp);
-				lg.debug("Total Acct Reports: " + cTotAr);
-				lg.debug("Total Persons: " + cTotPer);
-				lg.debug("Total Acct Holders: " + cTotAccHold);
-				lg.debug("Total Trailers: " + cTrail);
-			}
-		}
-		catch(Exception e){
-			Utils.logError(lg, e);		
-		}			
-	}
-	*/
 	
-	public static void main(String[] args){
-	//	CheckFileSize c = new CheckFileSize();
-		//PackageInfo p = new PackageInfo();
-		//p.setSplitFileCount(3);
-		//int status = c.invoke(p);
-		//String filename = "C:/git/repository/CTS_dataprep/test/testfiles/outbound/unprocessed/IP.AIP5S182.CAUS.A14.S0000001";
-		
-		try {
-		//c.splitFile(filename, p);
-		}
-		catch(Exception e){
-			
-		}
-	}
 }

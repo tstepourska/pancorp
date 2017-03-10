@@ -1,1 +1,44 @@
-2017-03-03 12:25:52,217 main INFO  util.Utils - year: 2016
+2017-03-10 11:24:01,101 main INFO  test.CreateMessageRefIDMappingTest - Properties: 
+job=
+	  
+PayloadCompressionRatio=0.2
+databaseEnvironment=;
+docTypeIndicEnv=;
+mailFromAddress=;
+mailToAddressList=;
+mailSenderAddressList=null;
+sendMailFlag=false;
+baseFileDir=null;
+FILE_WORKING_DIR=null;
+DefaultMaxPkgSize=262144000;
+defaultPkgCompressed=true;
+FileSizeConstant=1000;
+PayloadCompressionRatio=0.0;
+TxtToXmlFactor=3.2;
+FileSignatureSizeConstant=2000;
+US=
+country=US,size=600857,compressed=false;
+IT=
+country=IT,size=104857600,compressed=false;
+Data provider: crs;
+Data provider: cbc;
+Data provider: etr;
+{OUT_PL_CBC=[
+OUT_PL_CBC:0.CheckFileSize, 
+OUT_PL_CBC:0.ValidateXML, 
+OUT_PL_CBC:0.GenerateMetadata, 
+OUT_PL_CBC:0.ExtractStatistics, 
+OUT_PL_CBC:0.SavePreparedOutboundData], OUT_SM=[
+OUT_SM:0.GenerateXML, 
+OUT_SM:0.GenerateMessageRefId, 
+OUT_SM:0.GenerateMetadata, 
+OUT_SM:0.SavePreparedOutboundData], OUT_PL=[
+OUT_PL:0.CheckFileSize, 
+OUT_PL:0.GenerateXML, 
+OUT_PL:0.GenerateMessageRefId, 
+OUT_PL:0.GenerateMetadata, 
+OUT_PL:0.ExtractStatistics, 
+OUT_PL:0.SavePreparedOutboundData]}
+2017-03-10 11:24:01,133 main INFO  task.CreateMessageRefIDMapping - CreateMessageRefIDMapping executing
+2017-03-10 11:24:01,179 main ERROR task.CreateMessageRefIDMapping - Error: C:\run\xmlt\outbound\unprocessed\temp\IP.AIP5S182.CAUS.A14.S0000001 (The system cannot find the file specified)
+2017-03-10 11:24:01,179 main INFO  test.CreateMessageRefIDMappingTest - Helper completed with status 90000
