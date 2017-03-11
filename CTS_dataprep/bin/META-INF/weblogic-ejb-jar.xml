@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<weblogic-ejb-jar xmlns="http://www.bea.com/ns/weblogic/10.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <!--  <weblogic-enterprise-bean>
+        <ejb-name>SampleInterface</ejb-name>
+		<stateless-session-descriptor>
+			<stateless-clustering>
+				<stateless-bean-is-clusterable>True</stateless-bean-is-clusterable>
+			</stateless-clustering>
+			
+        	<business-interface-jndi-name-map>
+            	<business-remote>ca.gc.cra.fxit.xmlt.batch.SampleInterface</business-remote>
+            	<jndi-name>ca.gc.cra.fxit.xmlt.batch.SampleInterface</jndi-name>
+        	</business-interface-jndi-name-map>
+        </stateless-session-descriptor>
+        <enable-call-by-reference>True</enable-call-by-reference>
+    </weblogic-enterprise-bean>
+    -->
+    
+    <weblogic-enterprise-bean>
+        <ejb-name>BatchInitiatorBeanOutbound</ejb-name>
+         <transaction-descriptor> 
+         	<trans-timeout-seconds>3600</trans-timeout-seconds>
+         </transaction-descriptor>
+        <enable-call-by-reference>True</enable-call-by-reference>
+        <run-as-principal-name>
+     	fxitrunas
+		</run-as-principal-name>
+        <jndi-name>ca.gc.cra.fxit.xmlt.batch.BatchInitiatorHome</jndi-name>
+    </weblogic-enterprise-bean>
+        
+</weblogic-ejb-jar>

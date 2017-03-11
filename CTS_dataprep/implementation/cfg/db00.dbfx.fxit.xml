@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE domain-properties SYSTEM "environment.dtd">
+
+<!-- DB environment file. -->
+<domain-properties>
+
+ <!-- Default -->
+ <domain name="default"
+         description="Named after the domain you wish to configure">
+   <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="fxmt">
+             <property name="environment" value="U"
+                       description="Database environment"/>
+             <property name="database" value="#1"
+                       description="Database id"/>
+             <property name="pool" value="ca.gc.cra.fxit.ca2us.jdbc.fxmtDataSource"
+                       description="Database connection pool name"/>
+             <property name="prettyname" value="Pretty Name"
+                       description="database pretty name"/>
+             <property name="log-to-screen" value="false"
+                        description="true or false (default) to log to the screen in addition of the log file (reserve this for development)"/>
+             <property name="should-log" value="true"
+                       description="Set to true if you wish to log the SQL"/>
+             <property name="log-file-name" value="fxitdatabase.log"
+                       description="File to log to for sql and data access"/>
+             <property name="log-level" value="1"
+                       description="Debug, Info,..."/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+ </domain>
+ <!-- end of Default-->
+  <!--  Local Host domain-->
+  <domain name="fxit"
+      description="Local Host configuration.">
+    <context name="ca">
+      <context name="gc">
+        <context name="cra">
+         <context name="db">
+           <context name="fxmt">
+             <property name="environment" value="U"
+                       description="Database environment"/>
+             <property name="database" value="#1"
+                       description="Database id"/>
+             <property name="log-to-screen" value="true"
+                        description="true or false (default) to log to the screen in addition of the log file (reserve this for development)"/>
+
+           </context>
+          </context> <!-- db -->
+        </context> <!-- cra -->
+      </context> <!-- gc -->
+    </context> <!-- ca -->
+  </domain>
+  <!-- end of local host configuration-->
+
+  <!-- u-domain01 -->
+  <domain name="u-domain01" description="UT">
+    <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="fxmt">
+             <property name="environment" value="U"
+                       description="Database environment"/>
+             <property name="database" value="#1"
+                       description="Database id"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of u-domain01-->
+
+  <!-- u2-domain01 -->
+  <domain name="u2-domain01" description="UT2">
+    <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="fxmt">
+             <property name="environment" value="U"
+                       description="Database environment"/>
+             <property name="database" value="#2"
+                       description="Database id"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of u-domain02-->
+
+
+  <!-- s-domain01 -->
+  <domain name="s-domain01" description="SI">
+    <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="fxmt">
+             <property name="environment" value="S"
+                       description="Database environment"/>
+             <property name="database" value="#1"
+                       description="Database id"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of s-domain01-->
+
+
+  <!-- s2-domain01 -->
+  <domain name="s2-domain01" description="SI2">
+    <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="fxmt">
+             <property name="environment" value="S"
+                       description="Database environment"/>
+             <property name="database" value="#2"
+                       description="Database id"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of s-domain02-->
+
+  <!-- a-domain01 -->
+  <domain name="a-domain01" description="UA">
+    <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="fxmt">
+             <property name="environment" value="A"
+                       description="Database environment"/>
+             <property name="database" value="#1"
+                       description="Database id"/>
+             <property name="should-log" value="false"
+                       description="Set to false so that there is log"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of a-domain01-->
+
+
+  <!-- a2-domain01 -->
+  <domain name="a2-domain01" description="UA2">
+    <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="fxmt">
+             <property name="environment" value="A"
+                       description="Database environment"/>
+             <property name="database" value="#2"
+                       description="Database id"/>
+             <property name="should-log" value="false"
+                       description="Set to false so that there is log"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of a-domain02-->
+
+
+  <!-- o-domain01 -->
+  <domain name="o-domain01" description="OT">
+    <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="fxmt">
+             <property name="environment" value="O"
+                       description="Database environment"/>
+             <property name="database" value="#1"
+                       description="Database id"/>
+             <property name="should-log" value="false"
+                       description="Set to false so that there is log"/>
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of o-domain01-->
+
+  <!-- f-domain01 -->
+  <domain name="f-domain01" description="EF">
+   <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="fxmt">
+             <property name="environment" value="U"
+                       description="Database environment"/>
+             <property name="database" value="#1"
+                       description="Database id"/>
+             <property name="should-log" value="false"
+                       description="Set to false so that there is log"/>
+           </context> 
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of f-domain01-->
+
+  <!-- p-domain01 -->
+  <domain name="p-domain01" description="PR">
+    <context name="ca">
+     <context name="gc">
+       <context name="cra">
+         <context name="db">
+           <context name="fxmt">
+             <property name="environment" value="P"
+                       description="Database environment"/>
+             <property name="database" value="#1"
+                       description="Database id"/>
+             <property name="should-log" value="false"
+                       description="Set to false so that there is no SQL log in PR"/>
+             <property name="log-to-screen" value="false"
+                        description="true or false (default) to log to the screen in addition of the log file (reserve this for development)"/>
+
+           </context>
+         </context>
+       </context>
+     </context>
+   </context>
+  </domain>
+  <!-- end of p-domain01-->
+
+
+</domain-properties>

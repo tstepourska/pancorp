@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ejb-jar version="3.0" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/ejb-jar_3_0.xsd">  
+
+    <enterprise-beans>
+      <session>
+            <display-name>FXIT XMLT batch process</display-name>
+            <ejb-name>BatchInitiatorBeanOutbound</ejb-name>
+            <home>ca.gc.ccra.rccr.batch.integration.BatchProcessHome</home>
+            <remote>ca.gc.ccra.rccr.batch.integration.BatchProcess</remote>
+            <ejb-class>ca.gc.cra.fxit.xmlt.batch.BatchInitiatorBeanOutbound</ejb-class>
+            <session-type>Stateless</session-type>
+            <transaction-type>Container</transaction-type>
+            <security-identity>
+                <description>Run as fxitrunas user</description>
+                <run-as>
+                    <role-name>fxitrunas</role-name>
+                </run-as>
+            </security-identity>
+        </session>
+    </enterprise-beans>
+
+    <assembly-descriptor>
+     <security-role>
+            <description>fxitrunas user role</description>
+            <role-name>fxitrunas</role-name>
+        </security-role>
+        <container-transaction>
+            <method>
+                <ejb-name>BatchInitiatorBeanOutbound</ejb-name>
+                <method-name>*</method-name>
+            </method>
+            <trans-attribute>Required</trans-attribute>
+        </container-transaction>    
+    </assembly-descriptor>
+</ejb-jar>

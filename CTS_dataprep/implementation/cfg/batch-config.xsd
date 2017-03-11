@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : batch-config.xsd
+    Created on : June 24, 2005, 2:46 PM
+    Author     : Development Centre
+    Description:
+        Schema used for batch configuration documents.  Documents of
+        this type are used by the batch controller utility for invoking batch
+        jobs on eBCI.  
+        
+        The RCCR batch initiator component (MDB) simply parses the passed
+        batch xml stream and extracts the jndi-name to be used to lookup
+        the batch application component.  Additional configuration elements
+        can be specified (after the jndi-name) to be used by the called
+        batch process.
+-->
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://www.cra-arc.gc.ca"
+           xmlns="http://www.cra-arc.gc.ca"
+           elementFormDefault="qualified">
+             
+  <xs:element name="batch-config">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="jndi-name" type="xs:string" />
+        <xs:any minOccurs="0" processContents="lax" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>       
+           
+</xs:schema>

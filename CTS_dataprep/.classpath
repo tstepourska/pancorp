@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="implementation/src"/>
+	<classpathentry kind="src" path="test/junit"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="implementation/lib/log4j.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/rccr.ccr.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/commons-io-2.2.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/dbfx.jdal.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/dbfxclient.jdal.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/dbfxsource.jdal.jar"/>
+	<classpathentry kind="lib" path="C:/Oracle/Middleware/Oracle_Home/wlserver/server/lib/weblogic.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/db00.jdaf.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/db00source.jdaf.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/commons-net-ftp-2.0.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/rccr.batchcntl.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/commons-logging.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/jaxb-api.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/jaxb-core.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/jaxb-impl.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/jaxb-jxc.jar"/>
+	<classpathentry kind="lib" path="implementation/lib/jaxb-xjc.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

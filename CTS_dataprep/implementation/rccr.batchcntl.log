@@ -1,0 +1,35 @@
+2017-03-07 11:21:22,857 main ERROR batch.BatchController - Unable to establish connection with target server.
+javax.naming.CommunicationException [Root exception is java.net.ConnectException: t3://localhost:7001: Destination 127.0.0.1, 7001 unreachable; nested exception is: 
+	java.net.ConnectException: Connection refused: connect; No available router to destination]
+	at weblogic.jndi.internal.ExceptionTranslator.toNamingException(ExceptionTranslator.java:40)
+	at weblogic.jndi.WLInitialContextFactoryDelegate.toNamingException(WLInitialContextFactoryDelegate.java:808)
+	at weblogic.jndi.WLInitialContextFactoryDelegate.getInitialContext(WLInitialContextFactoryDelegate.java:363)
+	at weblogic.jndi.Environment.getContext(Environment.java:319)
+	at weblogic.jndi.Environment.getContext(Environment.java:288)
+	at weblogic.jndi.WLInitialContextFactory.getInitialContext(WLInitialContextFactory.java:117)
+	at javax.naming.spi.NamingManager.getInitialContext(NamingManager.java:684)
+	at javax.naming.InitialContext.getDefaultInitCtx(InitialContext.java:307)
+	at javax.naming.InitialContext.init(InitialContext.java:242)
+	at javax.naming.InitialContext.<init>(InitialContext.java:216)
+	at ca.gc.ccra.rccr.batch.BatchController.getServerConnection(BatchController.java:173)
+	at ca.gc.ccra.rccr.batch.BatchController.<init>(BatchController.java:85)
+	at ca.gc.ccra.rccr.batch.BatchController.main(BatchController.java:256)
+Caused by: java.net.ConnectException: t3://localhost:7001: Destination 127.0.0.1, 7001 unreachable; nested exception is: 
+	java.net.ConnectException: Connection refused: connect; No available router to destination
+	at weblogic.rjvm.RJVMFinder.findOrCreateInternal(RJVMFinder.java:216)
+	at weblogic.rjvm.RJVMFinder.findOrCreate(RJVMFinder.java:169)
+	at weblogic.rjvm.ServerURL.findOrCreateRJVM(ServerURL.java:165)
+	at weblogic.jndi.WLInitialContextFactoryDelegate$1.run(WLInitialContextFactoryDelegate.java:342)
+	at weblogic.security.acl.internal.AuthenticatedSubject.doAs(AuthenticatedSubject.java:363)
+	at weblogic.security.service.SecurityManager.runAs(SecurityManager.java:146)
+	at weblogic.jndi.WLInitialContextFactoryDelegate.getInitialContext(WLInitialContextFactoryDelegate.java:337)
+	... 10 more
+Caused by: java.rmi.ConnectException: Destination 127.0.0.1, 7001 unreachable; nested exception is: 
+	java.net.ConnectException: Connection refused: connect; No available router to destination
+	at weblogic.rjvm.ConnectionManager.bootstrap(ConnectionManager.java:490)
+	at weblogic.rjvm.ConnectionManager.bootstrap(ConnectionManager.java:328)
+	at weblogic.rjvm.RJVMManager.findOrCreateRemoteInternal(RJVMManager.java:267)
+	at weblogic.rjvm.RJVMManager.findOrCreate(RJVMManager.java:204)
+	at weblogic.rjvm.RJVMFinder.findOrCreateRemoteServer(RJVMFinder.java:238)
+	at weblogic.rjvm.RJVMFinder.findOrCreateInternal(RJVMFinder.java:200)
+	... 16 more

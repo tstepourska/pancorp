@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!-- <weblogic-application xmlns="http://www.bea.com/ns/weblogic/90" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">-->
+<weblogic-application xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://xmlns.oracle.com/weblogic/weblogic-application http://xmlns.oracle.com/weblogic/weblogic-application/1.5/weblogic-application.xsd" 
+xmlns="http://xmlns.oracle.com/weblogic/weblogic-application">    
+    
+ <!--   <classloader-structure> 
+ 	<module-ref> 
+      	<module-uri>fxit.xmlt.jar</module-uri> 
+   	</module-ref>
+	</classloader-structure>-->
+
+    <prefer-application-packages>
+         <package-name>org.apache.commons.logging.*</package-name>
+    	<package-name>org.apache.log4j.*</package-name>
+    	<package-name>javax.xml.bind.*</package-name>
+     <package-name>com.sun.xml.bind.*</package-name>
+    </prefer-application-packages>  
+	
+</weblogic-application>

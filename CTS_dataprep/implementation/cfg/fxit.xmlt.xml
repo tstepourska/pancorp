@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE domain-properties SYSTEM "environment.dtd">
+
+<!--
+  Environment configuration file for the fxit.xmlt.ear
+-->
+
+<domain-properties>
+	<domain name="default" description="Properties that apply accross all domains.">
+		<context name="ca">
+			<context name="gc">
+				<context name="cra">
+					<context name="fxit">
+						<context name = "mail">
+							<property name="sendFlag" value="true" />
+							<property name="FromAddress" value="ITTIIAS2G@cra-arc.gc.ca" />
+							<!-- <property name="ToAddressList" value="IT-TI-Dist_ITB_Infodec-IRMS@cra-arc.gc.ca, ITTIIAS2G@cra-arc.gc.ca" />-->
+							<property name="ToAddressList" value="Tatiana.Stepourska@cra-arc.gc.ca" />
+							<property name="SenderAddressList" value="casd@cra-arc.gc.ca" />
+						</context>
+						<context name="xmlt">
+							<context name="env">
+								<property name="basedir" value="/disk/data/weblogic/domains/wls-domain/applications/data/fxit/xmlt/" description="location of files"/>								
+								<property name="docTypeIndicEnv" value="T" description="Test or Prod environment"/>
+								<property name="log_level" value="debug" description="log level; options - debug, info, error"/>
+							</context>
+						</context>
+					</context>
+				</context>
+			</context>
+		</context>
+	</domain>
+	<domain name="d-domain01" description="Developer's workstation config.">
+		<context name="ca">
+			<context name="gc">
+				<context name="cra">
+					<context name="fxit">
+						<context name = "mail">
+							<property name="sendFlag" value="true" />
+							<property name="FromAddress" value="ITTIIAS2G@cra-arc.gc.ca" />
+							<!-- <property name="ToAddressList" value="ITTIIAS2G@cra-arc.gc.ca" />-->
+							<property name="ToAddressList" value="Tatiana.Stepourska@cra-arc.gc.ca" />
+							<property name="SenderAddressList" value="casd@cra-arc.gc.ca" />
+						</context>
+						<context name="xmlt">
+							<context name="env">
+								<property name="basedir" value="C:/run/xmlt/" description="location of files"/>								
+								<property name="docTypeIndicEnv" value="T" description="Test or Prod environment"/>
+								<property name="log_level" value="debug" description="log level; options - debug, info, error"/>													
+							</context>
+						</context>
+					</context>
+				</context>
+			</context>
+		</context>
+	</domain>
+	<domain name="u-domain04" description="EBCI UT Domain">
+		<context name="ca">
+			<context name="gc">
+				<context name="cra">
+					<context name="fxit">
+						<context name="xmlt">
+							<context name="env">
+								<property name="basedir" value="/disk/data/weblogic/domains/wls-domain/applications/data/fxit/xmlt/" description="location of files"/>								
+								<property name="docTypeIndicEnv" value="T" description="Test or Prod environment"/>
+								<property name="log_level" value="debug" description="log level; options - debug, info, error"/>					
+							</context>
+						</context>
+					</context>
+				</context>
+			</context>
+		</context>
+	</domain>
+	<domain name="a-domain04" description="EBCI UA Domain">
+		<context name="ca">
+			<context name="gc">
+				<context name="cra">
+					<context name="fxit">
+						<context name="ca2us">
+							<context name="env">
+								<property name="basedir" value="/disk/data/weblogic/domains/wls-domain/applications/data/fxit/xmlt/" description="location of files"/>								
+								<property name="docTypeIndicEnv" value="T" description="Test or Prod environment"/>
+								<property name="log_level" value="debug" description="log level; options - debug, info, error"/>					
+							</context>
+						</context>
+					</context>
+				</context>
+			</context>
+		</context>
+	</domain>
+	<domain name="o-domain04" description="EBCI OT Domain">
+		<context name="ca">
+			<context name="gc">
+				<context name="cra">
+					<context name="fxit">
+						<context name="ca2us">
+							<context name="env">
+								<property name="basedir" value="/disk/data/weblogic/domains/wls-domain/applications/data/fxit/xmlt/" description="location of files"/>								
+								<property name="docTypeIndicEnv" value="T" description="Test or Prod environment"/>
+								<property name="log_level" value="debug" description="log level; options - debug, info, error"/>						
+							</context>
+						</context>
+					</context>
+				</context>
+			</context>
+		</context>
+	</domain>
+	<domain name="p-domain04" description="EBCI PR Domain">
+		<context name="ca">
+			<context name="gc">
+				<context name="cra">
+					<context name="fxit">
+						<context name="ca2us">
+							<context name="env">
+								<property name="basedir" value="/disk/data/weblogic/domains/wls-domain/applications/data/fxit/xmlt/" description="location of files"/>								
+								<property name="docTypeIndicEnv" value="P" description="Test or Prod environment"/>
+								<property name="log_level" value="info" description="log level; options - debug, info, error"/>					
+							</context>
+						</context>
+					</context>
+				</context>
+			</context>
+		</context>
+	</domain>
+	<domain name="f-domain04" description="EBCI EF Domain">
+		<context name="ca">
+			<context name="gc">
+				<context name="cra">
+					<context name="fxit">
+						<context name="ca2us">
+							<context name="env">
+								<property name="basedir" value="/disk/data/weblogic/domains/wls-domain/applications/data/fxit/xmlt/" description="location of files"/>								
+								<property name="docTypeIndicEnv" value="T" description="Test or Prod environment"/>
+								<property name="log_level" value="debug" description="log level; options - debug, info, error"/>						
+							</context>
+						</context>
+					</context>
+				</context>
+			</context>
+		</context>
+	</domain>
+
+</domain-properties>
