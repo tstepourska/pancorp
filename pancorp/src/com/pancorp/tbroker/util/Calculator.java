@@ -573,8 +573,11 @@ public class Calculator {
     		
     		if(tr3>tr2)
     			value = tr3;
+    		
     		//put back popped candle
-    		cc.addFirst(tmp);
+    		cc.push(tmp);
+    		
+    		lg.trace("TrueRange: " + value);
     		
     		return value; 
     	}

@@ -44,7 +44,7 @@ public class RequestBars
 		//Thread.sleep(1000);
 		
 		//start eReader and runner thread
-		int localClientId = this.m_clientId;
+		final int localClientId = this.m_clientId;
 		//! [ereader]a
 		final EReader reader = new EReader(m_client, m_signal);        
 		reader.setName("Reader_" + this.m_clientId);

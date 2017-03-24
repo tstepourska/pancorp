@@ -1,6 +1,7 @@
 package com.pancorp.tbroker.main;
 
 import java.io.FileOutputStream;
+import java.util.HashMap;
 import java.util.LinkedList;
 
 import org.apache.logging.log4j.LogManager;
@@ -14,12 +15,16 @@ import com.ib.client.EReaderSignal;
 import com.ib.client.EWrapper;
 import com.ib.client.Order;
 import com.ib.client.OrderState;
-import com.ib.controller.Bar;
+//import com.ib.controller.Bar;
+import com.ib.client.TickType;
 import com.pancorp.tbroker.adapter.AbstractMarketScannerEWrapperAdapter;
 //import com.pancorp.tbroker.data.MarketScanDataFactory;
 //import com.pancorp.tbroker.data.MarketScanDataFactory.ScannerLine;
 import com.pancorp.tbroker.day.DataFactory;
-import com.pancorp.tbroker.model.Candle;
+import com.pancorp.tbroker.model.DataTick;
+import com.pancorp.tbroker.util.Constants;
+//import com.pancorp.tbroker.day.*;
+//import com.pancorp.tbroker.model.*;
 import com.pancorp.tbroker.util.Globals;
 import com.pancorp.tbroker.util.Utils;
 
@@ -37,7 +42,10 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 	private BrokerManager manager;
 	//private LinkedList<ScannerLine> queue;
 	//private LinkedList<Bar> barQueue;
-	private LinkedList<Contract> conList = null;
+	//private LinkedList<Contract> conList = null;
+	private HashMap<Integer,Contract> conList = null;
+	
+	private DataTick tick = null;
 	//! [socket_declare]
 	
 	//! [socket_init]
@@ -45,10 +53,8 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 		readerSignal = new EJavaSignal();
 		clientSocket = new EClientSocket(this, readerSignal);
 		try {
-		dfac = new DataFactory(this);
-		
-		//dFac.start();
-		
+		dfac = new DataFactory();	
+		//dFac.start();		
 		manager = mgr;
 		//queue = new LinkedList<ScannerLine>();
 		
@@ -58,6 +64,8 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 			Utils.logError(lg, e);
 			throw e;
 		}	
+		
+		lg.trace("Wrapper created");
 	}
 	//! [socket_init]
 	public EClientSocket getClient() {
@@ -68,9 +76,10 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 		return readerSignal;
 	}
 	
-	/*public MarketScanDataFactory getDataFactory() {
-		return this.dFac;
+	public DataFactory getDataFactory() {
+		return this.dfac;
 	}
+	/*
 	public void setDataFactory(MarketScanDataFactory f) {
 		this.dFac = f;
 	}*/
@@ -78,13 +87,14 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 	/**
 	 * @return the symbols
 	 */
-	public LinkedList<Contract> getConList() {
+	//public LinkedList<Contract> getConList() {
+	public HashMap<Integer,Contract> getConList() {
 		return conList;
 	}
 	/**
 	 * @param symbols the symbols to set
 	 */
-	public void setConList(LinkedList<Contract> li) {
+	public void setConList(HashMap<Integer,Contract> li) {
 		this.conList = li;
 	}
 	public int getCurrentOrderId() {
@@ -97,13 +107,10 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 	@Override
 	public void realtimeBar(int reqId, long time, double open, double high,
 				double low, double close, long volume, double wap, int count) {
-			lg.info("RealTimeBars. " + reqId + " - Time: " + time + ", Open: " + open + ", High: " + high + ", Low: " + low + ", Close: " + close + ", Volume: " + volume + ", Count: " + count + ", WAP: " + wap);
-			
-			//barQueue.addLast(new Bar(time, high, low, open, close, wap, volume, count));
-			//if(barQueue.size()>50){
-				//dFac.loadBars(barQueue);
-				//barQueue.clear();
-			//}
+		if(lg.isTraceEnabled())
+			lg.trace("RealTimeBars. " + reqId + " - Time: " + time + ", Open: " + open + ", High: " + high + ", Low: " + low + ", Close: " + close + ", Volume: " + volume + ", Count: " + count + ", WAP: " + wap);
+
+		dfac.recordTick(reqId, time, open, high, low, close, volume, wap, count);
 	}
 	
 	//! [orderstatus]
@@ -329,9 +336,26 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 		if(id==-1){
 			//not actually an error but a message
 			lg.info("Code: " + errorCode + ", Msg: " + errorMsg);
+			switch(errorCode){
+			case 507:
+				this.clientSocket.eDisconnect();
+				System.exit(507);
+				break;
+				default:
+			}
 		}
-		else
+		else{
 		lg.error("Error. Id: " + id + ", Code: " + errorCode + ", Msg: " + errorMsg + "\n");
+		switch(errorCode){
+		case 200:
+			if(!this.conList.isEmpty()){
+				this.manager.nextSnapshot(this.clientSocket,this.conList);
+			}
+			break;
+			default:
+				
+		}
+		}
 	}
 	//! [error]
 	@Override
@@ -347,24 +371,55 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 			clientSocket.startAPI();
 		}
 	}
+	
+	
+	@Override
+    public void tickSize(int tickerId, int field, int size) {
+		lg.info("Tick Size. Ticker Id:" + tickerId + ", Field: " + field + ", Size: " + size);
+		
+    }
+	
+	@Override
+    public void tickString(int tickerId, int tickType, String value) {
+		lg.info("Tick string. Ticker Id:" + tickerId +", Type: " + tickType + ", Value: " + value);
+    }
+	
+	@Override
+    public void tickGeneric(int tickerId, int tickType, double value) {
+		lg.info("Tick Generic. Ticker Id:" + tickerId + ", Field: " + TickType.getField(tickType) + ", Value: " + value);
+		
+		if(TickType.getField(tickType)=="halted"){
+			if(this.tick==null)
+				tick = new DataTick(tickerId);
+			
+			tick.setHalted(value);
+		}
+    }
+	
 	@Override
 	public void tickPrice(int tickerId, int field, double price, int canAutoExecute) {
-		// TODO Auto-generated method stub
+		lg.info("Tick Price. Ticker Id:"+tickerId+", Field: "+field+", Price: "+price+", CanAutoExecute: "+ canAutoExecute);
+		//if(price > Globals.MAX_STK_PRICE || price < Globals.MIN_STK_PRICE)
+		//	this.cMap.remove(tickerId);
 		
+		if(field==9){
+			if(this.tick==null)
+				tick = new DataTick(tickerId-Constants.REQ_ID_SNAPSHOT);
+			
+			tick.setClose(price);
+		}
 	}
-	@Override
-	public void tickSize(int tickerId, int field, int size) {
-		// TODO Auto-generated method stub
-		
-	}
-	@Override
-	public void tickGeneric(int tickerId, int tickType, double value) {
-		// TODO Auto-generated method stub
-		
-	}
-	@Override
-	public void tickString(int tickerId, int tickType, String value) {
-		// TODO Auto-generated method stub
-		
-	}
+	
+	 public void tickSnapshotEnd(int tickerId)
+     {
+         lg.info("TickSnapshotEnd: "+tickerId + ", updating..");
+         dfac.updateSnapshot(this.tick);
+         this.tick = null;
+         
+         if(this.conList.isEmpty())
+        	 this.manager.startTheDay();
+         else
+        	 this.manager.nextSnapshot(this.clientSocket,this.conList);
+     }
+
 }

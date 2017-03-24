@@ -1,6 +1,7 @@
 package com.pancorp.tbroker.data;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -23,6 +24,7 @@ import com.pancorp.tbroker.model.Candle;
 import com.pancorp.tbroker.model.Bar;
 //import com.ib.client.EClientSocket;
 import com.pancorp.tbroker.model.Scan;
+import com.pancorp.tbroker.util.Constants;
 import com.pancorp.tbroker.util.Utils;
 
 public class MarketScanDataFactory extends Thread {
@@ -162,12 +164,15 @@ public class MarketScanDataFactory extends Thread {
 		
 	}
 	
-	public int insertHistoricalBar(Bar bar, int reqId,Contract contr){
+	public int insertHistoricalBar(//Bar bar, int reqId,Contract contr){
+			int reqId, String date, double open,
+            double high, double low, double close, int volume, int count,
+            double WAP, boolean hasGaps, Contract contr) {
 			//Connection con=null;
-			PreparedStatement ps = null;
+			PreparedStatement psh = null;
 			//Data d = new Data();
 			int updated = -1;
-			double open = bar.open();
+		/*	double open = bar.open();
 			double close = bar.close();
 			
 			double high = bar.high();
@@ -176,9 +181,9 @@ public class MarketScanDataFactory extends Thread {
 			//bar.formattedTime();
 			long time = bar.time();
 			long volume = bar.volume();
-			double wap = bar.wap();
-			
-			Candle c = new Candle(bar);
+			double wap = bar.wap();*/
+			long time = Date.valueOf(date).getTime();
+			Candle c = new Candle(reqId,  time,high, low,  open, close, WAP, volume, count);
 			
 			//double amp = c.getAmp();
 			double bl = c.getBody_len();
@@ -190,28 +195,29 @@ public class MarketScanDataFactory extends Thread {
 				//Class.forName(DBConstants.db_driver);  
 				//con=DriverManager.getConnection(DBConstants.db_url,DBConstants.db_user,DBConstants.db_password);  
 		
-				String sql = "INSERT INTO tbl_candle (symbol, exchange, open, close, high, low, count,c_datetime, volume, wap, body_len, up_shadow_len,low_shadow_len, direction) "+
-							"VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-				try{
-					ps.close();
-				}catch(Exception e){}
-				ps = con.prepareStatement(sql);
-				ps.setString(1, contr.symbol());
-				ps.setString(2, contr.primaryExch());
-				ps.setDouble(3, open);
-				ps.setDouble(4, close);
-				ps.setDouble(5, high);
-				ps.setDouble(6, low);
-				ps.setInt(7, count);
-				ps.setTimestamp(8, new Timestamp(time));
-				ps.setLong(9, volume);
-				ps.setDouble(10, wap);
-				ps.setDouble(11, bl);
-				ps.setDouble(12, usl);
-				ps.setDouble(13, lsl);
-				ps.setInt(14, dir);
+				String sql = "INSERT INTO tbl_candle (open, close, high, low, count,c_datetime, volume, wap, body_len, up_shadow_len,low_shadow_len, direction, symbol_id) "+
+							"VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+				/*try{
+					psh.close();
+				}catch(Exception e){}*/
+				psh = con.prepareStatement(sql);
 				
-				updated =ps.executeUpdate();  
+				
+				psh.setDouble(1, open);
+				psh.setDouble(2, close);
+				psh.setDouble(3, high);
+				psh.setDouble(4, low);
+				psh.setInt(5, count);
+				psh.setTimestamp(6, new Timestamp(time));
+				psh.setLong(7, volume);
+				psh.setDouble(8, WAP);
+				psh.setDouble(9, bl);
+				psh.setDouble(10, usl);
+				psh.setDouble(11, lsl);
+				psh.setInt(12, dir);
+				psh.setInt(13, reqId);
+				
+				updated =psh.executeUpdate();  
 				lg.info("inserted " + updated + " record");
 			/*	
 				Thread.sleep(1000);
@@ -240,7 +246,7 @@ public class MarketScanDataFactory extends Thread {
 			}  
 			finally {
 				try {
-				//con.close();
+				psh.close();
 				}
 				catch(Exception e){
 					
@@ -291,16 +297,18 @@ public class MarketScanDataFactory extends Thread {
 		return status;
 	}
 	
-	public ArrayList<Contract> loadList() throws SQLException, Exception {
+	public HashMap<Integer,Contract> loadList() throws SQLException, Exception {
 		//String sql3 = "SELECT DISTINCT symbol,scan_instrument, currency FROM tbl_market_scan WHERE scan_date_time > curdate()- INTERVAL 1 HOUR ORDER BY RANK";
 		//String sql3 = "SELECT DISTINCT symbol,scan_instrument, currency FROM tbl_market_scan WHERE scan_date_time > curdate()- INTERVAL 1 HOUR";
-		String sql3 = "select c.symbol, type, currency from tbl_contract c join tbl_sec_type s on c.sec_type=s.id join tbl_exchange e on c.primary_exchange=e.id LIMIT 10";
+		String sql3 = "select c.id, c.symbol, type, currency from tbl_contract c join tbl_sec_type s on c.sec_type=s.id join tbl_exchange e on c.primary_exchange=e.id";  //LIMIT 10
 		
 		ps2 = con.prepareStatement(sql3);
 		rs = ps2.executeQuery();
 		Contract c;
-		ArrayList<Contract> list = new ArrayList<>();
+		//ArrayList<Contract> list = new ArrayList<>();
+		HashMap<Integer,Contract> map = new HashMap<>();
 		while(rs.next()){
+			Integer id = rs.getInt("ID") + Constants.REQ_ID_HISTORICAL;
 			String sym = rs.getString("SYMBOL");
 			String instr = rs.getString("TYPE"); //"scan_instrument");
 			String currency = rs.getString("CURRENCY");
@@ -314,11 +322,39 @@ public class MarketScanDataFactory extends Thread {
 			//Specify the Primary Exchange attribute to avoid contract ambiguity
 			c.primaryExch("ISLAND");
 			
-			list.add(c);
+			//list.add(c);
+			map.put(id, c);
 		}
 		
 		ps2.close();
 		rs.close();
+		
+		return map; //list;
+	}
+
+	public ArrayList<Integer> callbackRunSelectionQuery(HashMap<Integer,Contract> map){
+		//TODO run calculations
+		ArrayList<Integer> list = null;
+		String sql4 = "SELECT distinct symbol_id FROM tbl_candle WHERE low > 10 AND high < 100"; //, Max(high) as Max_price,Min(low) AS min_price
+		try {
+		ps2 = con.prepareStatement(sql4);
+		rs = ps2.executeQuery();
+		
+		list = new ArrayList<>();
+	//	HashMap<Integer,Contract> map = new HashMap<>();
+		while(rs.next()){
+			Integer id = rs.getInt("Symbol_ID");
+			
+			list.add(id);
+			//map.put(id, c);
+		}
+		
+		ps2.close();
+		rs.close();
+		}
+		catch(Exception e){
+			
+		}
 		
 		return list;
 	}
@@ -356,13 +392,13 @@ public class MarketScanDataFactory extends Thread {
 		this.barQueue.addAll(q);
 		lg.info("loadBars: done: " + this.barQueue.size());
 	}
-	
+	/*
 	public void loadHistoricalBars(LinkedList<Bar> q){
 		if(q==null||q.isEmpty())
 			return;
 		this.barQueue.addAll(q);
 		lg.info("loadBars: done: " + this.barQueue.size());
-	}
+	}*/
 	
 	public class ScannerLine {
 		int reqId; 

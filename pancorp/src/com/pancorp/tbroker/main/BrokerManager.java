@@ -3,8 +3,10 @@ package com.pancorp.tbroker.main;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -36,6 +38,10 @@ public class BrokerManager {
 	private volatile boolean orderPlaced;
 	private EClientSocket client;
 	private BrokerManagerEWrapperImpl wrapper;
+	HashMap<Integer,Broker> tMap;
+	DataFactory dfac;	
+	public static boolean working = true;
+	int workingStatus = Constants.WORKING_STATUS_IDLE;  //0 - IDLE, 1-ACTIVE
 	
 	public static void main(String[] args) {
 		try {
@@ -53,7 +59,7 @@ public class BrokerManager {
 	}
 	
 
-	public void invoke(String[] args) throws InterruptedException, Exception {
+	public void invoke(String[] __args) throws InterruptedException, Exception {
 		wrapper = new BrokerManagerEWrapperImpl(this);		
 		//final EClientSocket m_client = wrapper.getClient();
 		client = wrapper.getClient();
@@ -99,42 +105,149 @@ public class BrokerManager {
         //accountOperations(wrapper.getClient());
         //marketScanners(wrapper.getClient());
         
-        //load the list of stocks to monitor and start broker threads
-        HashMap<Integer,String> stocks = DataFactory.loadDayList();
+
+        dfac = this.wrapper.getDataFactory();
         
-        HashMap<String,Broker> tMap = new HashMap<>();
-        Iterator<Integer> keys = stocks.keySet().iterator();
-        int key;
-        Broker t;
-        String sym;
-        Contract contract;
-        //TODO setup pooled database connection to accommodate up to 100 contracts
-        DataFactory df = new DataFactory(this.wrapper);
-       // String sym;
-        while(keys.hasNext()){
-        	key = keys.next();
-        	sym = stocks.get(key);
-        	contract = new Contract();
-    		contract.symbol(sym);
-    		contract.secType("STK");
-    		contract.currency("USD");
-    		contract.exchange("SMART");
-    		//Specify the Primary Exchange attribute to avoid contract ambiguity
-    		contract.primaryExch("ISLAND");
-    		
-        	t = new Broker(contract,key,df,Constants.TFU_MIN, wrapper, this);
-        	
-        	//t.start();
-        	tMap.put(sym, t);
-        	realTimeBars(wrapper.getClient(), key, stocks.get(key));
-        }
-		
+        //first reload market data
+        //HashMap<Integer,Contract> cMap = dfac.loadFullList();	    
+        //LinkedList<Contract> cMap = dfac.loadFullList();	
+       // this.wrapper.setConList(cMap);
+
+        //lg.debug("requesting market data for id " + rid + "::" + cMap.get(rid));
+       // nextSnapshot(wrapper.getClient(),cMap);
+     
+       	startTheDay();
+        
+        //to reset manually
+        /*for(int i=1;i<30;i++){
+        this.cancelRealTimeBars(client, i);
+        }*/
+        		
 		//Thread.sleep(10000);
 		//m_client.eDisconnect();
 		//lg.trace("disconnected");
 		
 	}
+	
+	
+	public void startTheDay(){
+		lg.trace("Starting the day...");
+		//! [connect]
+		if(!client.isConnected()){
+			lg.trace("Client is not connected, connecting...");
+			client.eConnect(Globals.host, Globals.port, Globals.paperClientId);//TWS		
+		//m_client.eConnect("127.0.0.1", 4001, 0);  //IB Gateway
+		}
+		lg.trace("Connected");
+	
+		//initialize brokers
+        tMap = new HashMap<>();
+        lg.info("Brokers map initialized");
+ 
+		lg.trace("Loading stock list");   
+        //load the list of stocks to monitor and start broker threads
+        HashMap<Integer,Contract> stocks = dfac.loadDayList();
+        lg.trace("loaded stock list: " + stocks.size());
+				
+        Iterator<Integer> keys = stocks.keySet().iterator();
+        int key;
+        Broker t;
+        //String sym;
+        Contract contract;
+       int i=0;
+       // String sym;
+        while(keys.hasNext()){
+        	key = keys.next();
+        	contract = stocks.get(key);
+ 	
+        	t = new Broker(contract,key,dfac,Constants.TFU_MIN, wrapper, this);
+        	t.setName("Broker_"+contract.symbol());
+        	//lg.trace("created Broker for id " + key);
+        	
+        	tMap.put(key, t);
+        	lg.trace("requesting real time bars for id " + key);
+        	
+        	try {
+        		t.start();
+            	//t.join();
+            	realTimeBars(wrapper.getClient(), key, contract);
+        	}
+        	catch(InterruptedException ie){
+        		lg.error("Caught Interrupted Exception while trying to request real  time bars!");
+        	}
+        	i++;
+        	try {
+        	Thread.sleep(2000);
+        	}
+        	catch(InterruptedException e){}
+        }
+        
+        this.workingStatus = Constants.WORKING_STATUS_ACTIVE;
+        
+       // if(lg.isTraceEnabled())
+        //	lg.trace(dfac.printCache());
+	}
 
+	private void wrapTheDayUp(){
+		lg.trace("Wrapping up the day. tMap: " + tMap);
+		 Iterator<Integer> it = tMap.keySet().iterator();
+		 lg.trace("Got keys iterator");
+		Broker t;
+		 Integer key;
+		 while(it.hasNext()){
+			 lg.trace("it: " + it);
+			key = it.next();
+			 lg.trace("key: " + key);
+			 t = tMap.get(key);
+			//! [cancelrealtimebars]
+		     client.cancelRealTimeBars(key);
+		     if(lg.isTraceEnabled())
+		     lg.trace("Cancelled real time bars");
+			 		 
+			 //unsubscribe broker from data 
+			 dfac.unsubscribe(key);
+			 if(lg.isTraceEnabled())
+			     lg.trace("Unsubscribed from data factory");
+			 
+			 //tMap.remove(key);
+			// if(lg.isTraceEnabled())
+			 //    lg.trace("Removed broker from the map");
+		 }
+		 
+		 tMap.clear();
+		 if(lg.isTraceEnabled())
+			  lg.trace("Cleared the map");
+		 
+		 try {
+		Thread.sleep(5000);
+		 }
+		 catch(InterruptedException ie){lg.error("Caught Interrupted Exception");}
+		wrapper.getClient().eDisconnect();
+		lg.trace("Client disconnected");
+		
+		this.workingStatus = Constants.WORKING_STATUS_IDLE;
+	}
+	
+	public void nextSnapshot(EClientSocket client, HashMap<Integer,Contract> list){
+		if(list==null || list.isEmpty())
+			return;
+		Iterator<Integer> rids = list.keySet().iterator();
+		if(rids.hasNext()){
+			int rid = rids.next();
+			Contract c = list.remove(rid); // list.removeLast();
+			//int id = c.conid();
+			client.reqMktData(rid, c, "", true, null);  
+		}
+	}
+	
+	public void endOfSnapshots(){
+		startTheDay();
+	}
+	
+	public void cancelRealTimeBars(EClientSocket client, int reqId){
+		//! [cancelrealtimebars]
+	     client.cancelRealTimeBars(reqId);
+	}
 	
 	public synchronized boolean isOrderPlaced(){
 		return this.orderPlaced;
@@ -310,18 +423,11 @@ public class BrokerManager {
 		
 	}
 	
-	private static void realTimeBars(EClientSocket client, int id, String sym) throws InterruptedException {
-		
-		Contract contract = new Contract();
-		contract.symbol(sym);
-		contract.secType("STK");
-		contract.currency("USD");
-		contract.exchange("SMART");
-		//Specify the Primary Exchange attribute to avoid contract ambiguity
-		contract.primaryExch("ISLAND");
+	private static void realTimeBars(EClientSocket client, int id, Contract contract) throws InterruptedException {
+		lg.trace("realTimeBars");
 		/*** Requesting real time bars ***/
         //! [reqrealtimebars]
-        client.reqRealTimeBars(id, contract, Constants.BAR_SIZE, Constants.BAR_WHAT_TO_SHOW_TRADES, true, null);
+        client.reqRealTimeBars(id, contract, 0, Constants.BAR_WHAT_TO_SHOW_TRADES, false, null); //Constants.BAR_SIZE
         //! [reqrealtimebars]
         //Thread.sleep(5000);
         /*** Canceling real time bars will happen on callback ***/

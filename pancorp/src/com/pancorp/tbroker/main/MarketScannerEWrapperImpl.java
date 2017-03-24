@@ -21,6 +21,7 @@ import com.pancorp.tbroker.data.MarketScanDataFactory;
 import com.pancorp.tbroker.data.MarketScanDataFactory.ScannerLine;
 import com.pancorp.tbroker.model.Bar;
 import com.pancorp.tbroker.model.Candle;
+import com.pancorp.tbroker.util.Constants;
 import com.pancorp.tbroker.util.Globals;
 import com.pancorp.tbroker.util.Utils;
 
@@ -38,6 +39,7 @@ public class MarketScannerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 	private LinkedList<ScannerLine> queue;
 	private LinkedList<Bar> barQueue;
 	private HashMap<Integer,Contract> cMap = null;
+	private HashMap<Integer,Contract> historicalCacheMap = null;
 	//! [socket_declare]
 	
 	//! [socket_init]
@@ -55,6 +57,8 @@ public class MarketScannerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 			Utils.logError(lg, e);
 			throw e;
 		}	
+		
+		historicalCacheMap = new HashMap<>();
 	}
 	
 	public void clearBarCache(){
@@ -195,12 +199,18 @@ public class MarketScannerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 			}
 	}
 	
+	 public void tickSnapshotEnd(int tickerId)
+     {
+         lg.info("TickSnapshotEnd: "+tickerId);
+     }
+	
 	@Override
     public void historicalData(int reqId, String date, double open,
             double high, double low, double close, int volume, int count,
             double WAP, boolean hasGaps) {
         lg.info("HistoricalData. "+reqId+" - Date: "+date+", Open: "+open+", High: "+high+", Low: "+low+", Close: "+close+", Volume: "+volume+", Count: "+count+", WAP: "+WAP+", HasGaps: "+hasGaps);
-       	dFac.insertHistoricalBar(new Bar(0, high, low, open, close, WAP, volume, count), reqId, cMap.get(reqId));
+       //	dFac.insertHistoricalBar(new Bar(0, high, low, open, close, WAP, volume, count), reqId, cMap.get(reqId));
+       	dFac.insertHistoricalBar(reqId, date, open, high, low, close, volume, count, WAP, hasGaps, cMap.get(reqId-Constants.REQ_ID_HISTORICAL));
 		/*if(barQueue.size()>50){
 			dFac.loadHistoricalBars(barQueue);
 			barQueue.clear();
@@ -213,6 +223,13 @@ public class MarketScannerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
         
        // dFac.loadHistoricalBars(barQueue);
 		//barQueue.clear();
+        
+        if(!cMap.isEmpty())
+        historicalCacheMap.put(reqId-Constants.REQ_ID_HISTORICAL, this.cMap.get(reqId));
+        
+        if(cMap.isEmpty()){
+        	dFac.callbackRunSelectionQuery(historicalCacheMap);
+        }
     }
 
 	@Override

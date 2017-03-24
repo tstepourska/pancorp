@@ -33,6 +33,7 @@ import com.pancorp.tbroker.util.Globals;
 
 public class MarketScanner {
 	private static Logger lg = LogManager.getLogger(MarketScanner.class);
+	
 	public static void main(String[] args) throws InterruptedException, Exception {
 		MarketScannerEWrapperImpl wrapper = new MarketScannerEWrapperImpl();		
 		final EClientSocket m_client = wrapper.getClient();
@@ -72,17 +73,37 @@ public class MarketScanner {
 		Thread.sleep(4000);
 
 		//realTimeBars(wrapper.getClient(), conList);
-		ArrayList<Contract> list = factory.loadList();
-		int reqId = 4000;
-		HashMap<Integer,Contract> cMap = new HashMap<>();
-		for(Contract c : list){
-			reqId++;
-			cMap.put(reqId, c);
-			lg.info("reqId: " + reqId + ", sym: " + c.symbol());
-		}
+		//ArrayList<Contract> list= factory.loadList();
+		//int reqId = 4000;
+		//load list of all stocks
+		HashMap<Integer,Contract> cMap = factory.loadList();	
 		wrapper.setCMap(cMap);
-		//requestHistoricalData(wrapper.getClient(), wrapper, list);
-		requestMarketData(wrapper.getClient(), wrapper, cMap);
+		
+		Iterator<Integer> it = cMap.keySet().iterator();
+		int key;
+		while(it.hasNext()){
+		//for(Contract c : list){
+			key = it.next();
+			
+			//for each item get historical data for the previous day
+			//requestHistoricalData(wrapper.getClient(), key, cMap.get(key));
+		String sym = "AAPL";
+		String instr = "STK"; //"scan_instrument");
+		String currency = "USD";
+		
+		//create contract
+		Contract c = new Contract();
+		c.secType(instr);
+		c.symbol(sym);
+		c.currency(currency);
+		c.exchange("SMART");
+		//Specify the Primary Exchange attribute to avoid contract ambiguity
+		c.primaryExch("ISLAND");
+			requestSnapshots(wrapper.getClient(),459, c); //cMap.get(key));
+		}
+		
+		
+		//requestMarketData(wrapper.getClient(), wrapper, cMap);
 		
 		Thread.sleep(4000);
 		//factory.working = false;
@@ -93,16 +114,20 @@ public class MarketScanner {
 			lg.info("disconnected");
 			
 		}
-		
+		/*
 		if(lg.isTraceEnabled()){
 			Iterator<Integer> it = cMap.keySet().iterator();
 			while(it.hasNext()){
 				int k = it.next();
 				lg.trace("key: " + k + ", value: " + cMap.get(k).symbol());
 			}
-		}
+		}*/
 		
 		lg.info("DONE");
+	}
+	
+	private static void requestSnapshots(EClientSocket client, int reqId,Contract c){
+		 client.reqMktData(reqId, c, "", true, null);  
 	}
 	
 	private static void requestMarketData(EClientSocket client, MarketScannerEWrapperImpl wr, HashMap<Integer,Contract> map){
@@ -192,18 +217,23 @@ public class MarketScanner {
         } 
 	}
 	
-	private static void requestHistoricalData(EClientSocket client, MarketScannerEWrapperImpl wr, ArrayList<Contract> list){
+	private static void requestHistoricalData(EClientSocket client, int rid, Contract c ) { //MarketScannerEWrapperImpl wr, ArrayList<Contract> list){
 		Calendar cal = Calendar.getInstance();
         cal.add(Calendar.MONTH, -6);
         SimpleDateFormat form = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
         String formatted = form.format(cal.getTime());
-        int rid = 4000;
-        wr.clearBarCache();
+       // int rid = 4000;
+       // wr.clearBarCache();
         
-        for(Contract c : list){
-        	rid++;
-        	client.reqHistoricalData(rid, c, formatted, "1 M", "1 day", Constants.BAR_WHAT_TO_SHOW_TRADES, 1, 1, null);
-        }
+       // for(Contract c : list){
+        //	rid++;																						  RTH only
+        	client.reqHistoricalData(rid, c, formatted, "1 D", "5 secs", Constants.BAR_WHAT_TO_SHOW_TRADES, 1, 			1, null);
+        	
+        	try {
+        	Thread.sleep(1500);
+        	}
+        	catch(InterruptedException ie){}
+       // }
 	}
 	
 	/**

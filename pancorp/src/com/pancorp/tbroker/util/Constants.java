@@ -1,6 +1,7 @@
 package com.pancorp.tbroker.util;
 
 import java.util.GregorianCalendar;
+import java.util.LinkedList;
 import java.util.TimeZone;
 
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -23,6 +24,10 @@ public enum Constants {
 	
 	public static final String ACTION_BUY					= "BUY";
 	public static final String ACTION_SELL					= "SELL";
+	
+	public static final int REQ_ID_HISTORICAL				= 10000;
+	public static final int REQ_ID_MARKET					= 100000;
+	public static final int REQ_ID_SNAPSHOT					= 20000;
 	
 	/** Values for candlestick direction */
 	public static final int DIR_BLACK 	= -1;
@@ -63,6 +68,8 @@ public enum Constants {
 	public static final int EMA_TYPE_ADX_FACTOR		= 3;
 	
 	public static final int DEFAULT_QUANTITY		= 100;
+	
+
 	
 	/**
 	 * Percent of total account amount, that I can afford to lose, 
@@ -120,9 +127,25 @@ public enum Constants {
 	 */
 	//public static final double FAVOUR_POINTS	 = 0.3;  //TODO to determine
 
-	public static final String endOfDay = "16:45:00";
+	public static final String startRTH = "9:15";
+	public static final String endRTH = "19:45";
+	
+	public static final int WORKING_STATUS_IDLE		= 0;
+	public static final int WORKING_STATUS_ACTIVE		= 1;
 	//public static  XMLGregorianCalendar endOfDayC =Datatype. GregorianCalendar.getInstance(TimeZone.getDefault())
 	
+
+//Halted		Value	Description
+//-1	Halted status not available. Usually returned with frozen data.
+//0	Not halted. This value will only be returned if the contract is in a TWS watchlist.
+//1	General halt. Trading halt is imposed for purely regulatory reasons with/without volatility halt.
+//2	Volatility halt. Trading halt is imposed by the exchange to protect against extreme volatility.
+	
+	//Shortable
+	//Range					Description
+	//Value higher than 2.5	There are at least 1000 shares available for short selling.
+	//Value higher than 1.5	This contract will be available for short selling if shares can be located.
+	//1.5 or less			Contract is not available for short selling.
 	////////////////////////////////////////////////////////////////////////
 	// 			END OF CONSTANTS
 	////////////////////////////////////////////////////////////////////////

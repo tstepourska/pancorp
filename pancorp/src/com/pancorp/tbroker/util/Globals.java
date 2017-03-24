@@ -1,13 +1,15 @@
 package com.pancorp.tbroker.util;
 
+import java.util.LinkedList;
+
 public enum Globals {
 
 	GLOBALS;
 	
 	///////// IB CONNECTION PROPERTIES ////////////////////
 	//public static int port				 = 7496;	//real trading
-	public static int port				 = 7497;	//paper trading
-	//public static int port				 = 4002;	//IB Gateway
+	//public static int port				 = 7497;	//paper trading
+	public static int port				 = 4002;	//IB Gateway
 	public static String host            = "127.0.0.1";
 	public static int masterClientId	 = 19640509;
 	public static int paperClientId		 = 19980331;
@@ -150,5 +152,10 @@ public enum Globals {
 	//		END OF STRATEGIES GLOBAL VARIABLES
 	////////////////////////////////////////////////////////////////////////////////////
 
+	public static String[] names = 	{"VLAD","GEORGE","TAMARA","ANNA","NIK","TEODOR","NINA","EPHIM","RAISA","ZOYA"};
+	
+	private Globals(){
+		
+	}
 
 }

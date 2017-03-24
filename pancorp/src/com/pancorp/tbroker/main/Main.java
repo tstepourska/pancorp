@@ -77,7 +77,7 @@ public class Main {
         //marketScanners(wrapper.getClient());
         
         //load the list of stocks to monitor
-        HashMap<Integer,String> stocks = DataFactory.loadDayList();
+        HashMap<Integer,String> stocks = new DataFactory().loadDayList();
         Iterator<Integer> keys = stocks.keySet().iterator();
         int key;
        // String sym;

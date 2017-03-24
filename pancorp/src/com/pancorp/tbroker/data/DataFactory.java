@@ -20,7 +20,7 @@ import com.pancorp.tbroker.model.Candle;
 //import com.pancorp.tbroker.model.Data;
 import com.pancorp.tbroker.util.Utils;
 
-public class DataFactory {
+public class DataFactory extends DBFactory{
 
 	private static org.apache.logging.log4j.Logger lg = LogManager.getLogger(DataFactory.class);
 	
@@ -49,8 +49,9 @@ public class DataFactory {
 		int dir = c.getDirection();
 		
 		try{  
-			Class.forName(DBConstants.db_driver);  
-			con=DriverManager.getConnection(DBConstants.db_url,DBConstants.db_user,DBConstants.db_password);  
+			//Class.forName(DBConstants.db_driver);  
+			//con=DriverManager.getConnection(DBConstants.db_url,DBConstants.db_user,DBConstants.db_password);  
+			con = getDataSource().getConnection();
 	
 			String sql = "INSERT INTO tbl_candle (symbol, exchange, open, close, high, low, count,c_datetime, volume, wap, body_len, up_shadow_len,low_shadow_len, direction) "+
 						"VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
@@ -115,7 +116,12 @@ public class DataFactory {
 		return cache;
 	}*/
 	
-	public static HashMap<Integer,String> loadDayList(){
+	public void insertHistoricData(){
+		
+	}
+	
+
+	public HashMap<Integer,String> loadDayList(){
 		HashMap<Integer,String> map = new HashMap<>();
 		String sqlStockList = "SELECT id, symbol FROM tbl_contract WHERE active=1 LIMIT 100";
 		
@@ -126,9 +132,9 @@ public class DataFactory {
 		Integer n = -1;
 		
 		try{  
-			Class.forName(DBConstants.db_driver);  
-			con=DriverManager.getConnection(DBConstants.db_url,DBConstants.db_user,DBConstants.db_password);  
-	
+			//Class.forName(DBConstants.db_driver);  
+			//con=DriverManager.getConnection(DBConstants.db_url,DBConstants.db_user,DBConstants.db_password);  
+			con = getDataSource().getConnection();
 			ps = con.prepareStatement(sqlStockList);		
 			rs = ps.executeQuery();  
 			
