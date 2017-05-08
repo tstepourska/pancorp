@@ -89,6 +89,6 @@ public class LinearRegression {
     }
     
     public static void main(String[] args){
-    	LinearRegression.calculateLinearRegressionSlope(Utils.fillTheQueue(72, Constants.TFU_MIN, 10, 27.8), new Candle(0L, 28.5, 28.4, 28.3, 28.5,28.6,300000L,0));
+    	LinearRegression.calculateLinearRegressionSlope(Utils.fillCache(72, Constants.TFU_MIN, 10, 27.8), new Candle(0L, 28.5, 28.4, 28.3, 28.5,28.6,300000L,0));
     }
 }

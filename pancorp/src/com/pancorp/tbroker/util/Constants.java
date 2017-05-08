@@ -14,6 +14,9 @@ public enum Constants {
 	///////////////////////////////////////////////////////////////
 	//		CONSTANTS
 	///////////////////////////////////////////////////////////////
+	
+	public static final String PAPER_ACCT		= "DU570827";
+	
 	/** The only supported bar size - 5 seconds */
 	public static final int BAR_SIZE	= 5;
 	
@@ -24,6 +27,7 @@ public enum Constants {
 	
 	public static final String ACTION_BUY					= "BUY";
 	public static final String ACTION_SELL					= "SELL";
+	public static final String ACTION_SSHORT				= "SSHORT";
 	
 	public static final int REQ_ID_HISTORICAL				= 10000;
 	public static final int REQ_ID_MARKET					= 100000;
@@ -63,13 +67,17 @@ public enum Constants {
 	public static final int TRIGGER_ACTION_OPEN_POSITION			= 1;
 	
 	public static final int EMA_TYPE_CLOSE			= 0;
-	public static final int EMA_TYPE_PLUS_DMI		= 1;
-	public static final int EMA_TYPE_MINUS_DMI		= 2;
+	public static final int EMA_TYPE_PLUS_DM		= 1;
+	public static final int EMA_TYPE_MINUS_DM		= 2;
 	public static final int EMA_TYPE_ADX_FACTOR		= 3;
+	public static final int EMA_TYPE_PLUS_DI		= 4;
+	public static final int EMA_TYPE_MINUS_DI		= 5;
+	public static final int EMA_TYPE_TRUE_RANGE	    = 6;
 	
 	public static final int DEFAULT_QUANTITY		= 100;
+	public static final int DEFAULT_FOREX_QUANTITY		= 20000;
 	
-
+	public static final String WORKING_FILE			= "bin/brokermanager.work";
 	
 	/**
 	 * Percent of total account amount, that I can afford to lose, 

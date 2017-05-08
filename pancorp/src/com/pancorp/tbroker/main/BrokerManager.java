@@ -1,5 +1,8 @@
 package com.pancorp.tbroker.main;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -27,7 +30,7 @@ import com.ib.client.Order;
 import com.ib.client.Types.FADataType;
 import com.ib.controller.AccountSummaryTag;
 import com.pancorp.tbroker.day.DataFactory;
-import com.pancorp.tbroker.day.Broker;
+import com.pancorp.tbroker.day.ForexBroker;
 import com.pancorp.tbroker.util.Constants;
 import com.pancorp.tbroker.util.Globals;
 import com.pancorp.tbroker.util.Utils;
@@ -38,13 +41,18 @@ public class BrokerManager {
 	private volatile boolean orderPlaced;
 	private EClientSocket client;
 	private BrokerManagerEWrapperImpl wrapper;
-	HashMap<Integer,Broker> tMap;
+	HashMap<Integer,ForexBroker> tMap;
 	DataFactory dfac;	
-	public static boolean working = true;
+	public boolean working = true;
+	public boolean toCloseAllPositions = false;
+	public boolean snapshotInProgress = false;
 	int workingStatus = Constants.WORKING_STATUS_IDLE;  //0 - IDLE, 1-ACTIVE
+	
+	private List<Order> openOrderList;
 	
 	public static void main(String[] args) {
 		try {
+			resetWorkingFile();
 			new BrokerManager().invoke(args);
 		}
 		catch(InterruptedException e){
@@ -57,7 +65,6 @@ public class BrokerManager {
 			
 		}
 	}
-	
 
 	public void invoke(String[] __args) throws InterruptedException, Exception {
 		wrapper = new BrokerManagerEWrapperImpl(this);		
@@ -117,11 +124,17 @@ public class BrokerManager {
        // nextSnapshot(wrapper.getClient(),cMap);
      
        	startTheDay();
+       	
+       	while(working()){
+       		if(!working)
+       			break;
+       		
+       		try {
+       			Thread.sleep(3000);
+       		}catch(InterruptedException ie){} 		
+       	}
         
-        //to reset manually
-        /*for(int i=1;i<30;i++){
-        this.cancelRealTimeBars(client, i);
-        }*/
+        endTheDay();
         		
 		//Thread.sleep(10000);
 		//m_client.eDisconnect();
@@ -129,6 +142,13 @@ public class BrokerManager {
 		
 	}
 	
+	/**
+	 * Designed for a single ForexBroker instance
+	 */
+	public void resetBrokerMode(){
+		Iterator<Integer> it = this.tMap.keySet().iterator();
+		tMap.get(it.next()).setMode(Constants.MODE_OPENING);
+	}
 	
 	public void startTheDay(){
 		lg.trace("Starting the day...");
@@ -144,14 +164,14 @@ public class BrokerManager {
         tMap = new HashMap<>();
         lg.info("Brokers map initialized");
  
-		lg.trace("Loading stock list");   
+		lg.trace("Loading contracts");   
         //load the list of stocks to monitor and start broker threads
         HashMap<Integer,Contract> stocks = dfac.loadDayList();
-        lg.trace("loaded stock list: " + stocks.size());
+        lg.trace("loaded contract list: " + stocks.size());
 				
         Iterator<Integer> keys = stocks.keySet().iterator();
         int key;
-        Broker t;
+        ForexBroker t;
         //String sym;
         Contract contract;
        int i=0;
@@ -160,26 +180,36 @@ public class BrokerManager {
         	key = keys.next();
         	contract = stocks.get(key);
  	
-        	t = new Broker(contract,key,dfac,Constants.TFU_MIN, wrapper, this);
-        	t.setName("Broker_"+contract.symbol());
-        	//lg.trace("created Broker for id " + key);
-        	
-        	tMap.put(key, t);
-        	lg.trace("requesting real time bars for id " + key);
-        	
         	try {
+        		t = new ForexBroker(contract,key,dfac,Constants.TFU_MIN, wrapper, this);
+        		t.setName("Broker_"+contract.symbol());
+        		//lg.trace("created Broker for id " + key);
+        	
+        		tMap.put(key, t);
+        		//lg.trace("requesting real time bars for id " + key);
+        	
+        		try {
         		t.start();
-            	//t.join();
-            	realTimeBars(wrapper.getClient(), key, contract);
-        	}
-        	catch(InterruptedException ie){
+            	
+            	//realTimeBars(wrapper.getClient(), key, contract);
+        		//historicalDataRequests(wrapper.getClient(), key, contract);
+        		this.setupBacktestCache(key);
+        		
+            	//for testing only:
+            	//nextSnapshot(wrapper.getClient(),key, contract);
+        		}
+        		catch(Exception ie){ //Interrupted for realTimeBars
         		lg.error("Caught Interrupted Exception while trying to request real  time bars!");
+        		}
+        		i++;
+        		try {
+        			Thread.sleep(3000);
+        		}
+        		catch(InterruptedException e){}
         	}
-        	i++;
-        	try {
-        	Thread.sleep(2000);
+        	catch(Exception e){
+        		lg.error("Could not start Broker " + i + ": " + e.getMessage());
         	}
-        	catch(InterruptedException e){}
         }
         
         this.workingStatus = Constants.WORKING_STATUS_ACTIVE;
@@ -187,45 +217,67 @@ public class BrokerManager {
        // if(lg.isTraceEnabled())
         //	lg.trace(dfac.printCache());
 	}
+	
+	private void setupBacktestCache(int rid){
+		this.dfac.fillUpTestCache(rid);
+	}
 
-	private void wrapTheDayUp(){
+	private void endTheDay(){
 		lg.trace("Wrapping up the day. tMap: " + tMap);
+		
+		//request all open orders to cancel
+		client.reqGlobalCancel();
+		
+		//request all open positions to close (see callback method in wrapper)
+		toCloseAllPositions = true;
+		this.client.reqPositions();
+		
 		 Iterator<Integer> it = tMap.keySet().iterator();
-		 lg.trace("Got keys iterator");
-		Broker t;
+		 if(lg.isTraceEnabled())
+		 lg.trace("endTheDay: for each running Broker: ");
+		ForexBroker t;
 		 Integer key;
 		 while(it.hasNext()){
-			 lg.trace("it: " + it);
 			key = it.next();
 			 lg.trace("key: " + key);
 			 t = tMap.get(key);
 			//! [cancelrealtimebars]
 		     client.cancelRealTimeBars(key);
 		     if(lg.isTraceEnabled())
-		     lg.trace("Cancelled real time bars");
+		    	 lg.trace("--Cancelled real time bars");
 			 		 
 			 //unsubscribe broker from data 
 			 dfac.unsubscribe(key);
 			 if(lg.isTraceEnabled())
-			     lg.trace("Unsubscribed from data factory");
+			     lg.trace("--Unsubscribed from data factory");
 			 
-			 //tMap.remove(key);
-			// if(lg.isTraceEnabled())
-			 //    lg.trace("Removed broker from the map");
+			 //shut it down
+			 tMap.get(key).setWorking(false);
+			 if(lg.isTraceEnabled())
+			     lg.trace("--Shut it down");
 		 }
 		 
+		 try {
+			 //waiting for all to shut down
+				Thread.sleep(7000);
+				 }
+				 catch(InterruptedException ie){lg.error("Caught Interrupted Exception");}
+		 
+		 dfac.cleanUp();
+		 if(lg.isTraceEnabled())
+			  lg.trace("Closed data factory");
 		 tMap.clear();
 		 if(lg.isTraceEnabled())
 			  lg.trace("Cleared the map");
-		 
-		 try {
-		Thread.sleep(5000);
-		 }
-		 catch(InterruptedException ie){lg.error("Caught Interrupted Exception");}
-		wrapper.getClient().eDisconnect();
-		lg.trace("Client disconnected");
-		
+			
 		this.workingStatus = Constants.WORKING_STATUS_IDLE;
+	}
+	
+	public void canExit(){
+		//wrapper.getClient().eDisconnect();
+		//lg.trace("Client disconnected");
+		
+		//System.exit(0);
 	}
 	
 	public void nextSnapshot(EClientSocket client, HashMap<Integer,Contract> list){
@@ -236,8 +288,13 @@ public class BrokerManager {
 			int rid = rids.next();
 			Contract c = list.remove(rid); // list.removeLast();
 			//int id = c.conid();
-			client.reqMktData(rid, c, "", true, null);  
+			nextSnapshot(client, rid, c);  
 		}
+	}
+	
+	public void nextSnapshot(EClientSocket client, int rid, Contract c){
+		snapshotInProgress = true;
+		client.reqMktData(rid, c, "", true, null);  
 	}
 	
 	public void endOfSnapshots(){
@@ -249,6 +306,20 @@ public class BrokerManager {
 	     client.cancelRealTimeBars(reqId);
 	}
 	
+	/**
+	 * @return the openOrderList
+	 */
+	public List<Order> getOpenOrderList() {
+		return openOrderList;
+	}
+
+	/**
+	 * @param openOrderList the openOrderList to set
+	 */
+	public void setOpenOrderList(List<Order> openOrderList) {
+		this.openOrderList = openOrderList;
+	}
+
 	public synchronized boolean isOrderPlaced(){
 		return this.orderPlaced;
 	}
@@ -405,9 +476,26 @@ public class BrokerManager {
 		
 	}
 	
-	private static void historicalDataRequests(EClientSocket client) throws InterruptedException {
+	private static void historicalDataRequests(EClientSocket client, int id, Contract contract) throws InterruptedException {
 		
 		/*** Requesting historical data ***/
+        //! [reqhistoricaldata]
+		Calendar cal = Calendar.getInstance();
+		cal.add(Calendar.MONTH, -6);
+		SimpleDateFormat form = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
+		String formatted = form.format(cal.getTime());
+		client.reqHistoricalData(id, contract, formatted, "1 M", "1 min", "MIDPOINT", 1, 1, null);
+		//Thread.sleep(10000);
+		/*** Canceling historical data requests ***/
+		//client.cancelHistoricalData(id);
+
+		//! [reqhistoricaldata]
+		
+	}
+	/*
+	private static void historicalDataRequests(EClientSocket client) throws InterruptedException {
+		
+		///Requesting historical data 
         //! [reqhistoricaldata]
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.MONTH, -6);
@@ -416,21 +504,21 @@ public class BrokerManager {
 		client.reqHistoricalData(4001, ContractSamples.EurGbpFx(), formatted, "1 M", "1 day", "MIDPOINT", 1, 1, null);
 		client.reqHistoricalData(4002, ContractSamples.EuropeanStock(), formatted, "10 D", "1 min", "TRADES", 1, 1, null);
 		Thread.sleep(2000);
-		/*** Canceling historical data requests ***/
+		/// Canceling historical data requests 
 		client.cancelHistoricalData(4001);
         client.cancelHistoricalData(4002);
 		//! [reqhistoricaldata]
 		
 	}
-	
+	*/
 	private static void realTimeBars(EClientSocket client, int id, Contract contract) throws InterruptedException {
 		lg.trace("realTimeBars");
-		/*** Requesting real time bars ***/
+		//Requesting real time bars 
         //! [reqrealtimebars]
-        client.reqRealTimeBars(id, contract, 0, Constants.BAR_WHAT_TO_SHOW_TRADES, false, null); //Constants.BAR_SIZE
+        client.reqRealTimeBars(id, contract, 5, Constants.BAR_WHAT_TO_SHOW_MIDPOINT, false, null); //Constants.BAR_SIZE  //0
         //! [reqrealtimebars]
         //Thread.sleep(5000);
-        /*** Canceling real time bars will happen on callback ***/
+        // Canceling real time bars will happen on callback 
         //! [cancelrealtimebars]
         //client.cancelRealTimeBars(3001);
         //! [cancelrealtimebars]
@@ -714,40 +802,6 @@ public class BrokerManager {
 		
 	}
 	
-	private static void financialAdvisorOperations(EClientSocket client) {
-		
-		/*** Requesting FA information ***/
-		//! [requestfaaliases]
-		client.requestFA(FADataType.ALIASES.ordinal());
-		//! [requestfaaliases]
-		
-		//! [requestfagroups]
-		client.requestFA(FADataType.GROUPS.ordinal());
-		//! [requestfagroups]
-		
-		//! [requestfaprofiles]
-		client.requestFA(FADataType.PROFILES.ordinal());
-		//! [requestfaprofiles]
-		
-		/*** Replacing FA information - Fill in with the appropriate XML string. ***/
-		//! [replacefaonegroup]
-		client.replaceFA(FADataType.GROUPS.ordinal(), FAMethodSamples.FaOneGroup);
-		//! [replacefaonegroup]
-		
-		//! [replacefatwogroups]
-		client.replaceFA(FADataType.GROUPS.ordinal(), FAMethodSamples.FaTwoGroups);
-		//! [replacefatwogroups]
-		
-		//! [replacefaoneprofile]
-		client.replaceFA(FADataType.PROFILES.ordinal(), FAMethodSamples.FaOneProfile);
-		//! [replacefaoneprofile]
-		
-		//! [replacefatwoprofiles]
-		client.replaceFA(FADataType.PROFILES.ordinal(), FAMethodSamples.FaTwoProfiles);
-		//! [replacefatwoprofiles]
-		
-	}
-	
 	private static void testDisplayGroups(EClientSocket client) throws InterruptedException {
 		
 		//! [querydisplaygroups]
@@ -783,30 +837,54 @@ public class BrokerManager {
 		
 	}
 	
-	private static void optionsOperations(EClientSocket client) {
+	public boolean working(){
+		BufferedReader r =null;
+		int i = 1;
 		
-		//! [reqsecdefoptparams]
-		client.reqSecDefOptParams(0, "IBM", "", "STK", 8314);
-		//! [reqsecdefoptparams]
+		try{
+			r = new BufferedReader( new FileReader(Globals.BASEDIR + Constants.WORKING_FILE));
+			String line = r.readLine();
+			//if(lg.isTraceEnabled())
+			//	lg.trace("working file line: " + line);
+			
+			try {
+				i = Integer.parseInt(line);
+				if(i==0){
+					if(lg.isTraceEnabled())
+						lg.trace("working is 0, setting flag to false");
+					working = false;
+				}
+			}
+			catch(Exception e){
+				lg.error("Error parsing working line: " + e.getMessage());
+			}
+		}
+		catch(Exception e){
+			Utils.logError(lg, e);
+		}
+		finally{
+			try {
+				r.close();
+			}catch(Exception e){}
+		}
 		
-		//! [calculateimpliedvolatility]
-		client.calculateImpliedVolatility(5001, ContractSamples.OptionAtBOX(), 5, 85);
-		//! [calculateimpliedvolatility]
-		
-		//** Canceling implied volatility ***
-		client.cancelCalculateImpliedVolatility(5001);
-		
-		//! [calculateoptionprice]
-		client.calculateOptionPrice(5002, ContractSamples.OptionAtBOX(), 0.22, 85);
-		//! [calculateoptionprice]
-		
-		//** Canceling option's price calculation ***
-		client.cancelCalculateOptionPrice(5002);
-		
-		//! [exercise_options]
-		//** Exercising options ***
-		client.exerciseOptions(5003, ContractSamples.OptionWithTradingClass(), 1, 1, "", 1);
-		//! [exercise_options]
+		return working;
 	}
 	
+	public static void resetWorkingFile(){
+		FileWriter w =null;
+		try{
+			w = new FileWriter(Globals.BASEDIR + Constants.WORKING_FILE,false);
+			w.write("1");
+		}
+		catch(Exception e){
+			Utils.logError(lg, e);
+		}
+		finally{
+			try {
+				w.flush();
+				w.close();
+			}catch(Exception e){}
+		}
+	}
 }

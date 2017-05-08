@@ -84,12 +84,20 @@ public class DataFactory extends DBFactory
 	}
 	
 	
-	public int insertOrder(int clientId, int orderId, Contract contract, Order order, OrderState orderState){
-		int sqlStatus = -1;
+	public int insertOrder(int clientId, //int orderId, 
+			Contract contract, 
+			Order order, 
+			OrderState orderState){
+		int orderId = -1;
 		Connection con = null;
 		PreparedStatement ps = null;
+		PreparedStatement ps2 = null;
+		ResultSet rs = null;
+		
 		//TODO
-		String sql = "INSERT INTO tbl_order_paper (order_Id, client_Id, status, perm_Id, parent_order_id, symbol, quantity, action, active_Start_Time, active_Stop_Time, acct) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
+		String sql = "INSERT INTO tbl_order (client_Id, status, perm_Id, parent_order_id, symbol, quantity, action, acct) VALUES (?,?,?,?,?,?,?,?)";
+		String sqlMax = "SELECT MAX(order_id) FROM tbl_order";
+		//SELECT LAST_INSERT_ID(); returns id inserted by this client
 		
 		try{  
 			con = getDataSource().getConnection();
@@ -97,36 +105,47 @@ public class DataFactory extends DBFactory
 				lg.trace("insertOrder: gotConnection: " + con);
 			ps = con.prepareStatement(sql);
 			
-			ps.setInt(1, orderId);
-			ps.setInt(2, clientId);
-			ps.setString(3, orderState.status().name());
+			//ps.setInt(1, orderId);
+			ps.setInt(1, clientId);
+			if(orderState==null)
+				ps.setString(2, "Submitted");
+			else
+				ps.setString(2, orderState.status().name());
 			//ps.setDouble(4, filled);
 			//ps.setDouble(5, remaining);
 			//ps.setDouble(6, avgFillPrice);
-			ps.setLong(4, order.permId());
-			ps.setInt(5, order.parentId());
+			ps.setLong(3, order.permId());
+			ps.setInt(4, order.parentId());
 
-			ps.setString(6, contract.symbol());
-			ps.setDouble(7, order.totalQuantity());
-			ps.setString(8, order.getAction());
-			ps.setString(9, order.activeStartTime());
-			ps.setString(10, order.activeStopTime());
+			ps.setString(5, contract.symbol());
+			ps.setDouble(6, order.totalQuantity());
+			ps.setString(7, order.getAction());
+			//ps.setString(8, order.activeStartTime());
+			//ps.setString(9, order.activeStopTime());
 			//TODO date
 			//ps.setTimestamp(9, new Timestamp(System.currentTimeMillis())); //order.activeStartTime());// active_start_time);
 			//ps.setDate(14, order.activeStopTime());// active_stop_time);
-			ps.setString(11, order.account());
+			ps.setString(8, order.account());
 			//last_update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			//ps.setString(16, whyHeld);
 			
-			sqlStatus = ps.executeUpdate(); 
+			int sqlStatus = ps.executeUpdate(); 
+			
+			if(sqlStatus==1){
+				ps2 = con.prepareStatement(sqlMax);
+				rs = ps2.executeQuery();
+				if(rs.next())
+					orderId = rs.getInt(1);
+			}
+			lg.info("insertOrder: id: " + orderId);
 			
 		}
 		catch(SQLException sqle){
-			sqlStatus = sqle.getErrorCode();
-			lg.error("SQLException: code: " + sqlStatus+ ", msg: " + sqle.getMessage());
+			//sqlStatus = sqle.getErrorCode();
+			lg.error("SQLException: code: " + sqle.getErrorCode()+ ", msg: " + sqle.getMessage());
 		}
 		catch(Exception e){
-			sqlStatus = Constants.STATUS_ERROR;
+			//sqlStatus = Constants.STATUS_ERROR;
 			Utils.logError(lg, e);
 		}  
 		finally {
@@ -138,7 +157,7 @@ public class DataFactory extends DBFactory
 			}catch(Exception e){}
 		}
 		
-		return sqlStatus;
+		return orderId;
 	}
 	
 	public int updateOrder(int orderId, String status, double filled, double remaining, double avgFillPrice, int permId, int parentId, double lastFillPrice, int clientId, String whyHeld) {
@@ -150,7 +169,7 @@ public class DataFactory extends DBFactory
 		StringBuilder sb = new StringBuilder();
 		
 		try {	
-		sb.append("UPDATE tbl_order_paper SET (");
+		sb.append("UPDATE tbl_order SET (");
 		
 		if(status!=null && status.length()>0){
 			sb.append("status=?");
@@ -196,23 +215,25 @@ public class DataFactory extends DBFactory
 			lg.trace("insertOrder: gotConnection: " + con);
 		ps = con.prepareStatement(sql);
 		
+		int c = 0;
+		
 		if(status!=null && status.length()>0)
-			ps.setString(parameterIndex , status);
+			ps.setString(++c, status);
 		
 		if(filled>0)
-			ps.setDouble(parameterIndex , filled);
+			ps.setDouble(++c, filled);
 		
 		if(remaining>0)
-			ps.setDouble(parameterIndex , remaining);
+			ps.setDouble(++c, remaining);
 		
 		if(avgFillPrice>0)
-			ps.setDouble(parameterIndex , avgFillPrice);
+			ps.setDouble(++c, avgFillPrice);
 		
 		if(lastFillPrice>0)
-			ps.setDouble(parameterIndex , lastFillPrice);
+			ps.setDouble(++c, lastFillPrice);
 		
 		if(whyHeld!=null&&whyHeld.length()>0)
-			ps.setString(parameterIndex , whyHeld);
+			ps.setString(++c, whyHeld);
 
 			sqlStatus = ps.executeUpdate(); 
 		}
@@ -343,9 +364,11 @@ public class DataFactory extends DBFactory
 	    		contract.symbol(sym);
 	    		contract.secType(type);
 	    		contract.currency("USD");
-	    		contract.exchange("SMART");
+	    		//contract.exchange("SMART");
+	    		contract.exchange("IDEALPRO");
 	    		//Specify the Primary Exchange attribute to avoid contract ambiguity
-	    		contract.primaryExch("ISLAND");
+	    		//contract.primaryExch("ISLAND");
+	    	//	contract.primaryExch("IDEALPRO");
 	    		lg.trace("created contract for id " +n + " symbol " + sym);
 	    		
 				map.put(n,contract);
@@ -537,4 +560,103 @@ public class DataFactory extends DBFactory
 				}
 		}
 	}*/
+	
+	public void cleanUp(){
+		try {
+		this.persistentStatement.close();
+		}
+		catch(Exception e){}
+		try {
+		this.persistentStmtUpdateSnapshot.close();
+		}
+		catch(Exception e){}
+		try{
+		this.persistentConnection.close();
+		}
+		catch(Exception e){}
+	}
+	
+	public void fillUpTestCache(int rid){
+		//int rid = 2117;
+		String sqlSelect = "SELECT symbol_id, time, high, low, open ,close ,wap ,volume, count FROM tbl_bar WHERE symbol_id=? ORDER BY create_timestamp";
+		Connection con=null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		int symbol_id =0; 
+		long time=0;
+		double high =0;
+		double low =0;
+		double open=0;
+		double close=0;
+		double wap=0;
+		long volume=0;
+		int count=0;
+		ArrayDeque<Bar> arr = new ArrayDeque<>();
+		
+		if(!this.barCache.containsKey(rid))
+			this.barCache.put(rid, new ArrayDeque<Bar>());
+		
+		try{  
+			//Class.forName(DBConstants.db_driver);  
+			//con=DriverManager.getConnection(DBConstants.db_url,DBConstants.db_user,DBConstants.db_password);  
+			con = this.getDataSource().getConnection();
+			ps = con.prepareStatement(sqlSelect);		
+			ps.setInt(1, rid);
+			rs = ps.executeQuery();  
+			Bar b = null;
+			while(rs.next())  {
+				symbol_id = rs.getInt("SYMBOL_ID");
+				time = rs.getLong("TIME");
+				high = rs.getDouble("HIGH");
+				low = rs.getDouble("LOW");
+				open = rs.getDouble("OPEN");
+				close = rs.getDouble("CLOSE");
+				wap = rs.getDouble("WAP");
+				volume = rs.getLong("VOLUME");
+				count = rs.getInt("COUNT");
+				//lg.debug("ID: " + n + ", sym: " + sym + ", sec_type: " + sec_type);
+				
+				b = new Bar(time, high, low, open, close, wap,volume,count);
+	    		//Specify the Primary Exchange attribute to avoid contract ambiguity
+	    		//contract.primaryExch("ISLAND");
+	    		
+				arr.add(b);
+				
+				if(arr.size()>100){
+					this.barCache.get(rid).addAll(arr);
+					arr.clear();
+				}
+			}
+			//this.barCache.put(rid, arr);
+			this.barCache.get(rid).addAll(arr);
+			arr.clear();
+		}
+		catch(SQLException sqle){
+			lg.error("SQLException: code: " + sqle.getErrorCode() + ", msg: " + sqle.getMessage());
+		}
+		catch(Exception e){
+			Utils.logError(lg, e);
+		}  
+		finally {
+			try {
+			con.close();
+			}
+			catch(Exception e){
+				
+			}
+			try {
+				ps.close();
+				}
+				catch(Exception e){
+					
+				}
+			try {
+				rs.close();
+				}
+				catch(Exception e){
+					
+				}
+		}
+		
+	}
 }

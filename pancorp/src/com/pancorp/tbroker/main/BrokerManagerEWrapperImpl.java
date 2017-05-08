@@ -1,8 +1,10 @@
 package com.pancorp.tbroker.main;
 
 import java.io.FileOutputStream;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -97,10 +99,25 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 	public void setConList(HashMap<Integer,Contract> li) {
 		this.conList = li;
 	}
-	public int getCurrentOrderId() {
-		return currentOrderId;
+	//public int getCurrentOrderId() {
+	//	return currentOrderId;
+	//}
+
+	@Override
+	public void position(String account, Contract contract, double pos, double avgCost) {
+		 lg.info("Position. "+account+" - Symbol: "+contract.symbol()+", SecType: "+contract.secType()+", Currency: "+contract.currency()+", Position: "+pos+", Avg cost: "+avgCost);		
+	
+		 //TODO code to close each position
+		 if(this.manager.toCloseAllPositions){
+			 //create order to close this position
+		 }
 	}
 
+	@Override
+	public void positionEnd() {
+		lg.info("position end");
+		this.clientSocket.cancelPositions(); //request to stop position data coming this way
+	}
 	
 	
 	//! [realtimebar]
@@ -123,7 +140,7 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
                 ", ClientId: "+clientId+", WhyHeld: "+whyHeld);
 		
 		int sqlStatus = dfac.updateOrder(orderId, status, filled, remaining, avgFillPrice, permId, parentId, lastFillPrice, clientId, whyHeld);
-		
+		lg.info("orderStatus: database updated: " + sqlStatus);
 		//TODO
 		switch(status){
 		case "PreSubmitted":
@@ -133,7 +150,7 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 			manager.setOrderFilled(orderId, parentId, clientId);
 			break;
 		case "Cancelled":
-			//TODO this one?
+			manager.setOrderPlaced(false);
 			break;
 		case "ApiPending":
 			break;
@@ -179,8 +196,9 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 		"\nactiveStartDate: " + order.activeStartTime()
 		);
 		
-		int sqlStatus = dfac.insertOrder(Globals.paperClientId, orderId, contract, order, orderState);
-		lg.info("openOrder: inserted: " + sqlStatus);
+		//TODO update order
+		//int sqlStatus = dfac.insertOrder(Globals.paperClientId, orderId, contract, order, orderState);
+		//lg.info("openOrder: inserted: " + sqlStatus);
 		
 		/*
 		order.account();
@@ -317,6 +335,8 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 	@Override
 	public void openOrderEnd() {
 		lg.info("OpenOrderEnd");
+		
+		
 	}
 	//! [openorderend]
 
@@ -352,6 +372,37 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 				this.manager.nextSnapshot(this.clientSocket,this.conList);
 			}
 			break;
+		case 110:  //The price does not conform to the minimum price variation for this contract.
+			List<Order> ol = this.manager.getOpenOrderList();
+			for(Order o : ol){
+				if(id==o.orderId()){
+					//update order status in database
+					this.dfac.updateOrder(id, "Error", 0, 0, 0, 0, 0, 0, Globals.paperClientId, null);
+					//remove order from the list
+					manager.getOpenOrderList().remove(o);
+					
+					//reset mode to opening to allow open new position
+					if(manager.getOpenOrderList().isEmpty())
+						manager.resetBrokerMode();
+					break;
+				}
+			}
+			break;
+		case 135:  //Can't find order with id = <>  - (parent order does not exist)
+			List<Order> ol2 = this.manager.getOpenOrderList();
+			for(Order o : ol2){
+				if(id==o.orderId()){
+					//update order status in database
+					this.dfac.updateOrder(id, "Error", 0, 0, 0, 0, 0, 0, Globals.paperClientId, null);
+					//remove order from the list
+					manager.getOpenOrderList().remove(o);
+					
+					//reset mode to opening to allow open new position
+					if(manager.getOpenOrderList().isEmpty())
+						manager.resetBrokerMode();
+					break;
+				}
+			}
 			default:
 				
 		}
@@ -402,11 +453,14 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 		//if(price > Globals.MAX_STK_PRICE || price < Globals.MIN_STK_PRICE)
 		//	this.cMap.remove(tickerId);
 		
+		//for the snapshot request; how to determine that?
+		if(this.manager.snapshotInProgress){
 		if(field==9){
 			if(this.tick==null)
 				tick = new DataTick(tickerId-Constants.REQ_ID_SNAPSHOT);
 			
 			tick.setClose(price);
+		}
 		}
 	}
 	
@@ -416,10 +470,38 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
          dfac.updateSnapshot(this.tick);
          this.tick = null;
          
+         this.manager.snapshotInProgress = false;
+         
          if(this.conList.isEmpty())
         	 this.manager.startTheDay();
          else
         	 this.manager.nextSnapshot(this.clientSocket,this.conList);
      }
+	 
+	 @Override
+	 public void historicalData(int reqId, String date, double open,
+	            double high, double low, double close, int volume, int count,
+	            double wap, boolean hasGaps) {
+	        lg.info("HistoricalData. "+reqId+" - Date: "+date+", Open: "+open+", High: "+high+", Low: "+low+", Close: "+close+", Volume: "+volume+", Count: "+count+", wap: "+wap+", HasGaps: "+hasGaps);
+	
+	        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
+	        long time = 0;
+	        
+	        try {
+	        java.util.Date parsedDate = formatter.parse(date);
+	        	time = parsedDate.getTime();
+	        }
+	        catch(Exception e){
+	        	lg.error("historicalData: caought exception getting tick: " + e.getMessage());
+	        }        
+	        
+	        dfac.recordTick(reqId, time, open, high, low, close, volume, wap, count);
+	        
+	 }
+
+	 //   @Override
+	  //  public void historicalDataEnd(int reqId, String startDateStr, String endDateStr) {
+	 //       lg.info("HistoricalDataEnd. "+reqId+" - Start Date: "+startDateStr+", End Date: "+endDateStr);
+	//    }
 
 }

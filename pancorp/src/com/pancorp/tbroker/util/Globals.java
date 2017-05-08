@@ -7,12 +7,14 @@ public enum Globals {
 	GLOBALS;
 	
 	///////// IB CONNECTION PROPERTIES ////////////////////
-	//public static int port				 = 7496;	//real trading
-	//public static int port				 = 7497;	//paper trading
-	public static int port				 = 4002;	//IB Gateway
+	//public static int port				 = 7496;	//real trading TWS
+	//public static int port				 = 7497;	//paper trading TWS
+	public static int port				 = 4002;	//IB Gateway paper
 	public static String host            = "127.0.0.1";
 	public static int masterClientId	 = 19640509;
 	public static int paperClientId		 = 19980331;
+	
+	
 	
 	///////// END OF IB CONNECTION PROPERTIES /////////////
 	
@@ -33,17 +35,20 @@ public enum Globals {
 	
 	//for calculation averages: difference between MIN and MAX must be > 1
 	public static int MIN_CALC_CANDLES = 1;
-	public static int MAX_CALC_CANDLES = 50;
+	//public static int MAX_CALC_CANDLES = 50;
 	
 	public static int MIN_TREND_CANDLES = 3;
-	public static int MAX_TREND_CANDLES = 5;
+	//public static int MAX_TREND_CANDLES = 5;
 	/** For calculation of body and shadows length to determine 'small' (< 1/3 len) and 'large' (> 3 len) */
 	public static int CANDLE_TYPE_FACTOR	 				= 3;
 	/** Helps to define concept of approximate the same, or close; taken out of candle body length */
 	public static final double DEVIATION_FACTOR					= 0.05;
 	public static int MAX_PATTERN_CONFIRMATION_COUNT		 = 1;
 	
-	public static int ATR_PERIOD		= 14;
+	public static int NUMBER_OF_PERIODS		= 9;
+	public static int TICK_CACHE_SIZE = 200;	
+	//public static int CANDLE_CACHE_SIZE = 5;
+	public static int MAX_CALIBRATION_COUNT = 3;
 	
 	public static double MIN_TRENDING_SLOPE		= 2.5;
 	

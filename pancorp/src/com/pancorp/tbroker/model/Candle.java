@@ -3,6 +3,8 @@
  */
 package com.pancorp.tbroker.model;
 
+import java.io.Serializable;
+
 //import com.ib.controller.Bar;
 import com.pancorp.tbroker.util.Constants;
 
@@ -14,7 +16,34 @@ import com.pancorp.tbroker.util.Constants;
  * @author pankstep
  *
  */
-public class Candle extends Bar implements IBar {
+public class Candle extends Bar implements IBar, Serializable {
+	private static final long serialVersionUID = -3989756641989895490L;
+	
+	private double stochasticK;
+	private double stochasticD;
+	
+	private double plusDM;
+	private double minusDM;
+	
+	//directional index
+	private double plusDI;
+	private double minusDI;
+	
+	//private double adxFactor;
+	private double dx;
+	private double minusDIEma;
+	private double plusDIEma;
+	private double trueRange;
+	private double atr;
+	private double adx;
+	
+	private double smaMinusDI;
+	private double smaPlusDI;
+	private double smaPlusDM;
+	private double smaMinusDM;
+	private double smaClose;
+	
+	private boolean firstInCache = false;
 	
 	//public enum LENGTH_TYPE  {LONG, SHORT, AVERAGE};
 	
@@ -25,6 +54,12 @@ public class Candle extends Bar implements IBar {
 	
 	private int direction;
 	
+	private double trueRangeEma;
+	private double minusDMEma;
+	private double plusDMEma;
+	private double smaTrueRange;
+	
+	private double closeEma;
 	private double emaShort = 0;
 	private double emaLong = 0;
 	//private double smaShort = 0;
@@ -32,8 +67,7 @@ public class Candle extends Bar implements IBar {
 	//private double slope = 0;
 	
 	private double williamsR = 0;
-	
-	private double trueRange = 0;
+/*
 	private double ATR = 0;  //average true range
 	private double plusDMI;
 	private double plusDMIEma;
@@ -41,8 +75,7 @@ public class Candle extends Bar implements IBar {
 	private double minusDMIEma;
 	private double adxFactor;
 	private double adxFactorEma;
-	private double adx;
-	
+	*/
 	private double avgBodyLen;
 	private double avgUpperShadowLen;
 	private double avgLowerShadowLen;
@@ -65,6 +98,180 @@ public class Candle extends Bar implements IBar {
 
 		calcProperties();
 	}
+	public Candle(){
+		super();
+	}
+	
+
+	@Override
+	public String toString(){
+		StringBuilder sb = new StringBuilder();
+		
+		sb
+	//	.append("\nsymbol="+this.symbol())	
+		.append("\nopen="+this.open())
+		.append("\nclose="+this.close())
+		.append("\nhigh="+this.high())
+		.append("\nlow="+this.low())
+		//.append("\ntime")
+		//.append("\nvolume")		
+		.append("\ntrueRange=" + this.trueRange)
+		.append("\nplusDM="+this.plusDM)
+		.append("\nminusDM="+this.minusDM)
+		
+		.append("\n atr="+this.atr)
+		
+		.append("\nsmaMinusDI="+this.smaMinusDI)
+		.append("\nsmaPlusDI="+this.smaPlusDI)
+		//.append("\nsmaClose="+this.smaClose)
+		
+		.append("\ndx="+this.dx)
+		/*
+		.append("\nminusDIEma="+this.minusDIEma)
+		.append("\nplusDIEma="+this.plusDIEma)
+		.append("\ntrueRange="+this.trueRange)
+		*/
+		
+		.append("\nadx="+this.adx)
+		
+	
+		;
+		
+		return sb.toString();
+	}
+	
+	public void closeEma(double d){
+		this.closeEma = d;
+	}
+	
+	public double closeEma(){
+		return this.closeEma;
+	}
+	
+	public void plusDMEma(double d){
+		this.plusDMEma = d;
+	}
+	
+	public double plusDMEma(){
+		return this.plusDMEma;
+	}
+	
+	public void minusDMEma(double d){
+		this.minusDMEma = d;
+	}
+	
+	public double minusDMEma(){
+		return this.minusDMEma;
+	}
+	
+	public void trueRangeEma(double d){
+		this.trueRangeEma = d;
+	}
+	
+	public double trueRangeEma(){
+		return this.trueRangeEma;
+	}
+
+	public void plusDM(double d) {
+		this.plusDM = d;
+	}
+
+	public void minusDM(double d) {
+		this.minusDM = d;
+	}
+	
+	public double plusDM() {
+		return this.plusDM;
+	}
+
+	public double minusDM() {
+		return this.minusDM;
+	}
+	
+	public double plusDI() {
+		return this.plusDI;
+	}
+
+	public double minusDI() {
+		return this.minusDI;
+	}
+	
+	public void plusDI(double d) {
+		this.plusDI = d;
+	}
+
+	public void minusDI(double d) {
+		this.minusDI = d;
+	}
+
+	public void smaMinusDI(double d) {
+		this.smaMinusDI = d;
+	}
+	
+	public void smaPlusDI(double d) {
+		this.smaPlusDI = d;
+	}
+	
+	public double smaPlusDI() {
+		return this.smaPlusDI;
+	}
+	
+	public double smaMinusDI() {
+		return this.smaMinusDI;
+	}
+	
+	public void smaMinusDM(double d) {
+		this.smaMinusDM = d;
+	}
+	
+	public void smaPlusDM(double d) {
+		this.smaPlusDM = d;
+	}
+	
+	public double smaPlusDM() {
+		return this.smaPlusDM;
+	}
+	
+	public double smaMinusDM() {
+		return this.smaMinusDM;
+	}
+	
+	public double smaClose(){
+		return this.smaClose;
+	}
+	public void smaClose(double d){
+		this.smaClose = d;
+	}
+	
+	public void smaTrueRange(double d){
+		this.smaTrueRange = d;
+	}
+	
+	public double smaTrueRange(){
+		return this.smaTrueRange;
+	}
+
+	public void dx(double d){
+		this.dx = d;
+	}
+	public double dx(){
+		return this.dx;
+	}
+	public double minusDIEma() {
+		return minusDIEma;
+	}
+
+	public double plusDIEma() {
+		return plusDIEma;
+	}
+
+	public boolean isFirstInCache() {
+		return firstInCache;
+	}
+	public void setFirstInCache(boolean firstInCache) {
+		this.firstInCache = firstInCache;
+	}
+
 /*
 	public PatternEnum getSimplePattern(){
 		return this.simplePattern;
@@ -254,56 +461,14 @@ public class Candle extends Bar implements IBar {
 	 * @return the aTR
 	 */
 	public double ATR() {
-		return ATR;
+		return atr;
 	}
 
 	/**
 	 * @param aTR the aTR to set
 	 */
-	public void ATR(double atr) {
-		ATR = atr;
-	}
-
-	/**
-	 * @return the plusDMI
-	 */
-	public double plusDMI() {
-		return plusDMI;
-	}
-
-	/**
-	 * @param plusDMI the plusDMI to set
-	 */
-	public void plusDMI(double plusDMI) {
-		this.plusDMI = plusDMI;
-	}
-
-	/**
-	 * @return the minusDMI
-	 */
-	public double minusDMI() {
-		return minusDMI;
-	}
-
-	/**
-	 * @param minusDMI the minusDMI to set
-	 */
-	public void minusDMI(double minusDMI) {
-		this.minusDMI = minusDMI;
-	}
-
-	/**
-	 * @return the adxFactor
-	 */
-	public double adxFactor() {
-		return adxFactor;
-	}
-
-	/**
-	 * @param adxFactor the adxFactor to set
-	 */
-	public void adxFactor(double adxFactor) {
-		this.adxFactor = adxFactor;
+	public void ATR(double d) {
+		atr = d;
 	}
 
 	/**
@@ -318,48 +483,6 @@ public class Candle extends Bar implements IBar {
 	 */
 	public void adx(double adx) {
 		this.adx = adx;
-	}
-
-	/**
-	 * @return the plusDMIEma
-	 */
-	public double plusDMIEma() {
-		return plusDMIEma;
-	}
-
-	/**
-	 * @param plusDMIEma the plusDMIEma to set
-	 */
-	public void plusDMIEma(double plusDMIEma) {
-		this.plusDMIEma = plusDMIEma;
-	}
-
-	/**
-	 * @return the minusDMIEma
-	 */
-	public double minusDMIEma() {
-		return minusDMIEma;
-	}
-
-	/**
-	 * @param minusDMIEma the minusDMIEma to set
-	 */
-	public void minusDMIEma(double minusDMIEma) {
-		this.minusDMIEma = minusDMIEma;
-	}
-
-	/**
-	 * @return the adxFactorEma
-	 */
-	public double adxFactorEma() {
-		return adxFactorEma;
-	}
-
-	/**
-	 * @param adxFactorEma the adxFactorEma to set
-	 */
-	public void adxFactorEma(double adxFactorEma) {
-		this.adxFactorEma = adxFactorEma;
 	}
 
 	/**
@@ -430,6 +553,34 @@ public class Candle extends Bar implements IBar {
 	 */
 	public void setAvgLowerShadowLen(double avgLowerShadowLen) {
 		this.avgLowerShadowLen = avgLowerShadowLen;
+	}
+
+	/**
+	 * @return the stochasticK
+	 */
+	public double stochasticK() {
+		return stochasticK;
+	}
+
+	/**
+	 * @param stochasticK the stochasticK to set
+	 */
+	public void stochasticK(double stochasticK) {
+		this.stochasticK = stochasticK;
+	}
+
+	/**
+	 * @return the stochasticD
+	 */
+	public double stochasticD() {
+		return stochasticD;
+	}
+
+	/**
+	 * @param stochasticD the stochasticD to set
+	 */
+	public void stochasticD(double stochasticD) {
+		this.stochasticD = stochasticD;
 	}
 
 	/**

@@ -13,6 +13,7 @@ import com.pancorp.tbroker.main.BrokerManagerEWrapperImpl;
 //import com.pancorp.tbroker.adapter.TopMktDataAdapter;
 import com.pancorp.tbroker.util.Constants;
 import com.pancorp.tbroker.util.Globals;
+import com.pancorp.tbroker.util.Utils;
 
 //import samples.testbed.contracts.ContractSamples;
 //import samples.testbed.orders.OrderSamples;
@@ -51,7 +52,8 @@ public class PlaceOrderBracketT extends Thread //ConnectionHandlerAdapter implem
 	//private String m_symbol;
 	private double m_limitPrice;
 	private long quantity;
-	private int nextOrderId=-1;
+	//private int nextOrderId=-1;
+	DataFactory datafactory;
 	private String action;
 	//private double m_position;
 	//private double m_bid;
@@ -60,26 +62,27 @@ public class PlaceOrderBracketT extends Thread //ConnectionHandlerAdapter implem
 	//final private int m_clientId = Globals.paperClientId;
 	
 	
-	public PlaceOrderBracketT(int orderId, 
+	public PlaceOrderBracketT(//int orderId, 
 			Contract c, 
 			double limPr, 
 			int q, 
 			String a, 
 			BrokerManagerEWrapperImpl wr,
-			BrokerManager mgr
+			BrokerManager mgr,
+			DataFactory df
 			) throws Exception{
 		//this.m_symbol = sym;
 		m_contract = c;
 		this.m_limitPrice = limPr;
 		this.quantity = q;
-		this.nextOrderId = orderId;
+		//this.nextOrderId = orderId;
 		this.action = a;
 		
 		wrapper = wr; //new PlaceOrderEWrapperImpl(this);	
 		m_client = wrapper.getClient();
 		//m_signal = wrapper.getSignal();
 		manager = mgr;
-	
+		this.datafactory = df;
 		//this.m_clientId = cid;
 	}
 	
@@ -93,25 +96,33 @@ public class PlaceOrderBracketT extends Thread //ConnectionHandlerAdapter implem
 		//Specify the Primary Exchange attribute to avoid contract ambiguity
 		m_contract.primaryExch("ISLAND");*/
 		
-		if(nextOrderId>0){
-			double stopLoss = (double)Math.round(m_limitPrice*Constants.STOP_LOSS_PERCENT_FACTOR* 100d) / 100d;
-			double takeProfit = (double)Math.round(m_limitPrice*Constants.TAKE_PROFIT_PERCENT_FACTOR* 10d) / 10d;
-			//this.m_limitPrice*Constants.TAKE_PROFIT_PERCENT_FACTOR;
-			lg.info("limit: " + this.m_limitPrice+ ", takeProfit: " + takeProfit + ", stopLoss: " + stopLoss);
+		try {
+			//int nextOrderId = datafactory.getNextOrderId
+			//if(nextOrderId>0){
+				double stopLoss = (double)Math.round(m_limitPrice*Constants.STOP_LOSS_PERCENT_FACTOR* 100d) / 100d;
+				double takeProfit = (double)Math.round(m_limitPrice*Constants.TAKE_PROFIT_PERCENT_FACTOR* 10d) / 10d;
+				//this.m_limitPrice*Constants.TAKE_PROFIT_PERCENT_FACTOR;
+				lg.info("limit: " + this.m_limitPrice+ ", takeProfit: " + takeProfit + ", stopLoss: " + stopLoss);
 			
-			List<Order> bracketOrder = createBracketOrder(nextOrderId, action, quantity, this.m_limitPrice, takeProfit, stopLoss);
-			lg.info("bracketOrder created, submitting order");
+				List<Order> bracketOrder = createBracketOrder(//nextOrderId, 
+						action, quantity, this.m_limitPrice, takeProfit, stopLoss);
+				lg.info("bracketOrder created, submitting order");
 			
-			try {
-				bracketSubmit(wrapper.getClient(), bracketOrder, m_contract);
-			}
-			catch(InterruptedException ie){
-				lg.error("setNextOrder: caught InterruptedException while placing the order: " + ie.getMessage());
-			}
+				bracketSubmit(wrapper.getClient(), bracketOrder, m_contract);	
+				
+				//in the wrapper
+				//this.wrapper.getDataFactory().insertOrder(clientId, orderId, contract, order, orderState);
+			//}
+			//else{
+				//lg.info("orderId is invalid; can't place the order ");
+				//manager.setOrderPlaced(false); //release the flag
+			//}
 		}
-		else{
-			lg.info("orderId is invalid; can't place the order ");
-			manager.setOrderPlaced(false); //release the flag
+		catch(InterruptedException ie){
+			lg.error("setNextOrder: caught InterruptedException while placing the order: " + ie.getMessage());
+		}
+		catch(Exception e){
+			Utils.logError(lg, e);
 		}
 		
 		lg.info("run: done");
@@ -129,26 +140,59 @@ public class PlaceOrderBracketT extends Thread //ConnectionHandlerAdapter implem
 	 * @param contract
 	 * @throws InterruptedException
 	 */
-	private static void bracketSubmit(EClientSocket client, List<Order> bracket, Contract contract ) throws InterruptedException {
+	private void bracketSubmit(EClientSocket client, List<Order> bracket, Contract contract ) throws InterruptedException,Exception {
 		String fp = "bracketSubmit: ";
+		int parentOrderId = 0;
+		int cnt = 0;
+		
 		//BRACKET ORDER
         //! [bracketsubmit]
 		//List<Order> bracket = OrderSamples.BracketOrder(nextOrderId++, "BUY", 100, 30, 40, 20);
+		
+		for(Order o : bracket) {
+			int orderId = datafactory.insertOrder(Globals.paperClientId, 
+					//orderId, 
+					contract, 
+					o,    // order
+					null  //orderState
+					);
+			lg.info(fp + "orderId: " + orderId);
+			o.orderId(orderId);
+			if(cnt==0){
+				parentOrderId = orderId;
+			}
+			else
+				o.parentId(parentOrderId);
+			cnt++;
+		}
+		
 		for(Order o : bracket) {
 			//client.placeOrder(o.orderId(), ContractSamples.EuropeanStock(), o);
 			client.placeOrder(o.orderId(), contract, o);
-			lg.info(fp + "order " + o.orderId() + " placed");
+			lg.info(fp + "order " + o.orderId() + " with  parent order id " + o.parentId() + " placed");
 		}
 		//! [bracketsubmit]	
+		
+		this.manager.setOpenOrderList(bracket);
 	}
 
-	
-	private List<Order> createBracketOrder(int parentOrderId, String action, double quantity, double limit, double takeProfitLimitPrice, double stopLossPrice){
+	/**
+	 * Creates bracket order structure. No order Ids are set in this method!
+	 * 
+	 * @param action
+	 * @param quantity
+	 * @param limit
+	 * @param takeProfitLimitPrice
+	 * @param stopLossPrice
+	 * @return
+	 */
+	private List<Order> createBracketOrder(//int parentOrderId, 
+			String action, double quantity, double limit, double takeProfitLimitPrice, double stopLossPrice){
 		//String fp = "createOrder: ";
 		
 		//This will be our main or "parent" order
 		Order parent = new Order();
-		parent.orderId(parentOrderId);
+		//parent.orderId(parentOrderId);
 		parent.action(action);
 		parent.totalQuantity(quantity);
 		
@@ -159,6 +203,7 @@ public class PlaceOrderBracketT extends Thread //ConnectionHandlerAdapter implem
 		 */
 		parent.orderType(OrderType.LMT);// limit
 		parent.lmtPrice(limit);
+		parent.account(Constants.PAPER_ACCT);
 		
 		/*
 		 * (MIT) is an order to buy (or sell) a contract below (or above) the market. 
@@ -180,16 +225,17 @@ public class PlaceOrderBracketT extends Thread //ConnectionHandlerAdapter implem
 		parent.transmit(false);
 		
 		Order takeProfit = new Order();
-		takeProfit.orderId(parent.orderId() + 1);
+		//takeProfit.orderId(parent.orderId() + 1);
 		takeProfit.action(action.equals("BUY") ? "SELL" : "BUY");
 		takeProfit.orderType(OrderType.LMT);//"LMT");
 		takeProfit.totalQuantity(quantity);
 		takeProfit.lmtPrice(takeProfitLimitPrice);
-		takeProfit.parentId(parentOrderId);
+		//takeProfit.parentId(parentOrderId);
+		takeProfit.account(Constants.PAPER_ACCT);
 		takeProfit.transmit(false);
 		
 		Order stopLoss = new Order();
-		stopLoss.orderId(parent.orderId() + 2);
+		//stopLoss.orderId(parent.orderId() + 2);
 		stopLoss.action(action.equals("BUY") ? "SELL" : "BUY");
 		
 		/*
@@ -206,7 +252,8 @@ public class PlaceOrderBracketT extends Thread //ConnectionHandlerAdapter implem
 		//Stop trigger price
 		stopLoss.auxPrice(stopLossPrice);
 		stopLoss.totalQuantity(quantity);
-		stopLoss.parentId(parentOrderId);
+		//stopLoss.parentId(parentOrderId);
+		stopLoss.account(Constants.PAPER_ACCT);
 		//In this case, the low side order will be the last child being sent. Therefore, it needs to set this attribute to true 
         //to activate all its predecessors
 		stopLoss.transmit(true);
@@ -221,7 +268,7 @@ public class PlaceOrderBracketT extends Thread //ConnectionHandlerAdapter implem
 	
 
 	
-	public int getNextOrderId(){
-		return this.nextOrderId;
-	}
+	//public int getNextOrderId(){
+	//	return this.nextOrderId;
+	//}
 }

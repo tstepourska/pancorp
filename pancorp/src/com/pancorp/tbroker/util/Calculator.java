@@ -1,30 +1,39 @@
 package com.pancorp.tbroker.util;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayDeque;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Random;
 import java.util.Stack;
 
+import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
-import com.pancorp.tbroker.math.LinearRegression;
-import com.pancorp.tbroker.model.Bar;
+import com.ib.client.Contract;
+
+//import org.apache.log4j.Logger;
+//import org.apache.log4j.LogManager;
+
+import com.pancorp.tbroker.event.NotEnoughDataException;
+import com.pancorp.tbroker.indicators.oscillators.StochasticOscillatorKIndicator;
+//import com.pancorp.tbroker.math.LinearRegression;
+//import com.ts.test.model.Bar;
 import com.pancorp.tbroker.model.Candle;
 import com.pancorp.tbroker.model.IBar;
  
 public class Calculator {
-	private static org.apache.logging.log4j.Logger lg = LogManager.getLogger(Calculator.class);
+	private static Logger lg = LogManager.getLogger(Calculator.class);
     public static long tfFactor = 0;
-   // private static ArrayDeque<Candle> queue;
+    
+    public boolean calibrated = false;
+    private int calibrationCount = 0;
 
-      
-/*     public void setQueue(LinkedList<Bar> q){
-              this.queue = q;
-       }
-       */
-      
        public Calculator(int periodSh, int periodLg, int timeframeSize, String timeframeUnit, long tfFactor2) {
-		// TODO Auto-generated constructor stub
+
        }
        
        public Calculator(){
@@ -195,8 +204,8 @@ public class Calculator {
     	}
     	
     	public double minLow(ArrayDeque<IBar> cc){
-			double min = 0;
-			double t= 0;
+			double min = 10000; //some arbitrary number to ensure there will be tick with the low price less than it
+			double t = 0;
 			for(IBar c : cc){
 				t = c.low();
 				if(t<min)
@@ -215,14 +224,305 @@ public class Calculator {
 			return sum;
 		}
     	
-    	public double linearRegressionSlope(ArrayDeque<Candle> cc,Candle c){
+    	/*
+    	////////////////////////////////////////////////////////
+    	//  Stochastic
+    	//
+    	// The indicator consists of two lines:
+    	//
+    	//%K compares the latest closing price to the recent trading range.
+    	//%D is a signal line calculated by smoothing %K.
+    	 * 
+    	//The number of periods used in the indicator can be varied according to the purpose for which the Stochastic Oscillator is used:
+    	//
+    	//Purpose:						%K Periods		%D Periods	Overbought level	Oversold level	Comments:
+    	//Combine with trend indicator	5 to 10 days	3 days		80%					20%				Very sensitive
+    	//Stand-alone or trade 			14 or 21 days	3 days		70%					30%				Only shows important turning points
+    	//longer cycles
+    	 * 
+    	 * If the Stochastic Oscillator hovers near 100 it signals accumulation (overbought). 
+    	 * Stochastic lurking near zero indicates distribution (oversold).
+    	 * 
+    	 * Ranging Markets
+
+Signals are listed in order of their importance:
+
+Go long on bullish divergence (on %D) where the first trough is below the Oversold level.
+Go long when %K or %D falls below the Oversold level and rises back above it.
+Go long when %K crosses to above %D.
+
+
+Short signals:
+
+Go short on bearish divergence (on %D) where the first peak is above the Overbought level.
+Go short when %K or %D rises above the Overbought level then falls back below it.
+Go short when %K crosses to below %D.
+Place stop-losses below the most recent minor Low when going long (or above the most recent minor High when going short).
+
+%K and %D lines pointed in the same direction are used to confirm the direction of the short-term trend.
+
+Lane also used Classic Divergences, a type of triple divergence.
+
+
+Trending Markets
+
+Only take signals in the direction of the trend and never go long when the Stochastic Oscillator is overbought, nor short when oversold.
+
+Use trailing buy- and sell-stops to enter trades and protect yourself with stop-losses.
+
+Long:
+
+If %K or %D falls below the Oversold line, place a trailing buy-stop. When you are stopped in, place a stop loss below the Low of the recent down-trend (the lowest Low since the signal day).
+
+Short:
+
+If Stochastic Oscillator rises above the Overbought line, place a trailing sell-stop. When you are stopped in, place a stop loss above the High of the recent up-trend (the highest High since the signal day).
+
+Exit:
+
+Use a trend indicator to exit.
+    	*/
+    	public void calcStochastic(ArrayDeque<Candle> cc,int kPeriod, int dPeriod) throws NotEnoughDataException {  //Candle c, 
+    		if(cc==null || cc.size()<kPeriod)
+    			throw new NotEnoughDataException("calcStochastic: size is less than " + kPeriod);
+    		
+    		/*
+    		 * Stochastic Oscillator Formula
+
+				To calculate the Stochastic Oscillator:
+
+				1) decide on the number of periods (%K Periods) to be included in the calculation. 
+				The norm is 5 days, but this should be based on the time frame that you are analyzing.
+				
+				2) Then calculate %K, by comparing the latest Closing price to the range traded over the selected period: 
+           			CL = Close [today] - Lowest Low [in %K Periods] 
+           			HL =Highest High [in %K Periods] - Lowest Low [in %K Periods] 
+           			%K = CL / HL *100
+
+				3) Calculate %D by smoothing %K as a 3 period simple moving average.
+				
+				=================================
+				
+				%K = (Current Close - Lowest Low)/(Highest High - Lowest Low) * 100
+				%D = 3-day SMA of %K
+
+				Lowest Low = lowest low for the look-back period
+				Highest High = highest high for the look-back period
+				%K is multiplied by 100 to move the decimal point two places
+    		 */
+    		//latest candle just added
+    		//Candle c = cc.peekFirst();
+    		
+    		//kPeriod: 5
+    		ArrayDeque<IBar> kStack = new ArrayDeque<>();
+    		for(int i=0;i<kPeriod;i++){
+    			kStack.push(cc.pop());
+    		}
+    		lg.debug("calcStochastic: kStack.size: "+ kStack.size());
+    		
+    		StochasticOscillatorKIndicator stochasticK = new StochasticOscillatorKIndicator(kStack, kPeriod);
+    		double K = stochasticK.calculate();
+    		
+    		// 2)
+    		/*double kLowestLow = this.minLow(kStack);
+    		lg.debug("calcStochastic: kLowestLow: " + kLowestLow);
+    		double kHighestHigh = this.maxHigh(kStack);
+    		lg.debug("calcStochastic: kHighestHigh: " + kHighestHigh);
+    		double close = kStack.peek().close();
+    		
+    		//CL = Close [today] - Lowest Low [in %K Periods] 
+    		double CL = close - kLowestLow;
+    		lg.debug("calcStochastic: CL: " + CL);
+    		
+    		//HL =Highest High [in %K Periods] - Lowest Low [in %K Periods] 
+    		double HL = kHighestHigh - kLowestLow;
+    		lg.debug("calcStochastic: HL: " + HL);
+    		
+    		double K = CL / HL * 100;
+    		lg.debug("calcStochastic: K:" + K);*/
+    		
+    		//((Candle)kStack.peek()).stochasticK(K);
+    		
+    		// 3) 
+    		// put all back
+    		while(!kStack.isEmpty())   		
+    			cc.push((Candle)kStack.pop());
+    		
+    		// ! assign newly calculated K value to the latest candle!
+    		cc.peek().stochasticK(K);  		
+    		
+    		//D period: 3
+    		double kSum = 0;
+    		//move dPeriod candles from deque to stack while summing K values
+    		while(kStack.size()<=dPeriod){
+    			Candle can = (Candle)cc.pop();
+    			double sk = can.stochasticK();
+    			//if prev candle did not have K value, throw NotEnoughData and wait for a next candle
+    			if(sk==0){
+    				//sk = K;
+    				//can.stochasticK(K);
+    				throw new NotEnoughDataException("No stochasticK value for previous candle, waiting for the next one.");
+    			}
+    			kSum+= sk;
+    			//put in stack
+    			kStack.push(can);
+    		}
+    		//calculate D
+    		double D = kSum / dPeriod;
+    		lg.debug("calcStochastic: D: " + D);
+    		
+    		//put back into deque
+    		while(!kStack.isEmpty())
+    			cc.push((Candle)kStack.pop());
+    		
+    		//assign newly calculated D value to the latest candle
+    		cc.peek().stochasticD(D);
+    		
+    	}
+    	
+  /*  	public double linearRegressionSlope(ArrayDeque<Candle> cc,Candle c){
     		//y = mx + b  - we are finding b
-    		double b = LinearRegression.calculateLinearRegressionSlope(cc,c);
+    		//double b = LinearRegression.calculateLinearRegressionSlope(cc,c);
     		if(lg.isDebugEnabled())
     		lg.debug("slope: " + b);
     		
     		return b;
+    	}*/
+    	
+    	////////////////////////////////////////////////////////////////////////////////////////
+    	//
+    	// The ADX/DMI is represented by three lines +DM, -DM and ADX.
+    	////////////////////////////////////////////////////////////////////////
+
+    	public void calcADX_DMI(int period, ArrayDeque<Candle> cc) throws Exception{
+    		String fp = "calcADX_DMI: ";
+    		Candle curr = cc.pop();
+    		Candle prev = null;
+    		
+    		lg.debug(fp + "period: " + period);
+    		
+    		// 1. Calculate True Range, and Directional Movement (+DM and -DM) for each period
+    		double tr = TrueRange(curr,cc.peekFirst());
+    		if(lg.isTraceEnabled())
+        		lg.trace(fp+"current TrueRange: " + tr);
+        		
+    		try{
+    			prev = cc.peekFirst();
+    		}catch(Exception e){ lg.error("Error getting prev:" + e.getMessage()); }
+    		
+    		//The Directional movement
+    		plusMinusDM(curr,prev);
+    		//if(lg.isTraceEnabled())
+        	//	lg.trace(fp+"current plusDI: " + curr.plusDI() + ", curr minusDI: " + curr.minusDI());
+    		
+    		//2. Smooth these periodic values using the Wilder's smoothing techniques. 
+    		//--starts as a simple moving average (SMA) of each: true range, plusDI and minusDI
+    		//	Moving average of +DM, -DM and True Range		
+    		//�TRMA = exponential moving average of True Range
+    		double trma = EMA(period,Constants.EMA_TYPE_TRUE_RANGE, cc, curr);
+    		if(lg.isTraceEnabled())
+        		lg.trace(fp + "current TRMA: " + trma);
+    		//�+DMMA = exponential moving average of +DM
+    		double emaPlusDM  = EMA(period, Constants.EMA_TYPE_PLUS_DM,cc,curr);
+    		if(lg.isTraceEnabled())
+    			lg.trace("current +DMMA: " + emaPlusDM);
+    		//�-DMMA = exponential moving average of -DM
+    		double emaMinusDM = EMA(period, Constants.EMA_TYPE_MINUS_DM,cc,curr);
+    		if(lg.isTraceEnabled())
+        		lg.trace("current -DMMA: " + emaMinusDM);
+
+    		//The Directional Indicators
+    		double plusDI = 0;
+    		double minusDI = 0;
+    
+    		if(trma!=0){
+    		//3. Divide the 14-day smoothed Plus Directional Movement (ema +DM) by the 14-day smoothed True Range 
+    		//to find the 14-day Plus Directional Indicator (+DI14). 
+    		//Multiply by 100 to move the decimal point two places. 
+    		//This +DI14 is the Plus Directional Indicator (green line) that is plotted along with ADX. 
+    		//--divide the smoothed +DI by the smoothed TrueRange
+    		//�+DI = +DMMA / TRMA
+    		plusDI = emaPlusDM / trma;
+    		if(lg.isTraceEnabled())
+        		lg.trace("current +DI = emaPlusDM / trma = " + plusDI);
+    		curr.plusDI(plusDI);
+    		
+    		//4. Divide the 14-day smoothed Minus Directional Movement (-DM) by the 14-day smoothed True Range 
+    		//to find the 14-day Minus Directional Indicator (-DI14). 
+    		//Multiply by 100 to move the decimal point two places. 
+    		//This -DI14 is the Minus Directional Indicator (red line) that is plotted along with ADX. 
+    		//--divide the smoothed -DI by the smoothed TrueRange
+    		//double smoothedMinusDI = (smaMinusDI / atr) *100;
+    		//if(lg.isTraceEnabled())
+        	//	lg.trace("current smoothedMinusDI: " + smoothedMinusDI);
+    		//�-DI = -DMMA / TRMA
+    		minusDI = emaMinusDM / trma;
+    		if(lg.isTraceEnabled())
+        		lg.trace("current -DI = emaMinusDM / trma = " + minusDI);
+    		curr.minusDI(minusDI);
+    		}
+	
+    		//double smoothedPlusDI = (smaPlusDI / atr) *100;
+    		//if(lg.isTraceEnabled())
+        	//	lg.trace("current smoothedPlusDI: " + smoothedPlusDI);
+        		
+    		//Directional Index
+    		double DX = 0;
+    		//�DX = |(+DI - (-DI))| / (+DI + (-DI))
+    		if((plusDI + minusDI)!=0){
+    		//5. The Directional Movement Index (DX) equals the absolute value of +DI14 less - DI14 divided 
+    		//by the sum of +DI14 and - DI14. Multiply the result by 100 to move the decimal point over two places. 
+    		// calculate Directional Movement Index which equals:
+    		//((absolute value of the smoothed +DI - smoothed -DI) / (sum of the smoothed plusDI and smoothed -DI)) * 100
+    		DX = (Math.abs(plusDI - minusDI))/(plusDI + minusDI) * 100;
+    		if(lg.isTraceEnabled())
+        		lg.trace("current DX = (Math.abs(plusDI - minusDI))/(plusDI + minusDI) = " + DX);
+    		curr.dx(DX);
+    		}
+    		
+    		//The Average Directional Movement Index
+    		//�ADX = the exponential moving average of DX
+    		//�ADX = SUM[(+DI-(-DI))/(+DI+(-DI)), N]/N
+    		//Where:
+    		//	N � the number of periods used in the calculation
+    		//6. After all these steps, it is time to calculate the Average Directional Index (ADX). 
+    		//The first ADX value is simply a 14-day average of DX. 
+    		//Subsequent ADX values are smoothed by multiplying the previous 14-day ADX value by 13, 
+    		//adding the most recent DX value and dividing this total by 14. 
+    		double ADX;
+    		
+    		if(cc.size()==0){
+    			ADX = curr.dx();
+    		}
+    		else {
+    			//check if 1st 
+    			ADX = (prev.adx()*(period-1) + curr.dx()) /period;
+    		}
+    		lg.info("current ADX: " + ADX);
+    		
+    		/////////////////////////////////////
+    		if(prev!=null){
+    			if(!calibrated && ADX>prev.adx()){
+    				if(calibrationCount<Globals.MAX_CALIBRATION_COUNT){
+    					calibrationCount++;
+    					lg.info(fp + "calibration count incremented: " + calibrationCount);
+    				}
+    				else{
+    				calibrated = true;
+    				lg.info(fp + "Calculator calibration completed.");
+    				}
+    			}
+    		}
+    		/////////////////////////////////////
+    		curr.adx(ADX);
+    		
+    		//lg.info(fp + "curr candle: " + curr);
+    		//put it back
+    		cc.push(curr);
     	}
+    	/*
+		
+		*/
     	
     	/**
     	 * ADX - Average Directional Index - is a number between 0 and 100 which is used to quantify 
@@ -305,7 +605,7 @@ public class Calculator {
     	 * @param cc
     	 * @return
     	 */
-    	public double ADX(int period, ArrayDeque<Candle> cc) throws Exception {
+    /* 	public double ADX(int period, ArrayDeque<Candle> cc) throws Exception {
     		double adx = 0;
     		// first determine the + and - directional movement indicators, or DMI
     		//The +DM and -DM are found by calculating the "upmove," or current high minus the previous high, 
@@ -326,7 +626,7 @@ public class Calculator {
     		adx = 100 * EMA(period,Constants.EMA_TYPE_ADX_FACTOR, cc);
 
     		return adx;
-    	}
+    	}*/
     	
     	/**
     	 * Absolute value of (+DI minus -DI) divided by (+DI plus -DI)
@@ -336,7 +636,7 @@ public class Calculator {
     	 * @param c
     	 * @return
     	 */
-    	public double adxFactor(int period, ArrayDeque<Candle> cc) throws Exception {
+  /*  	public double adxFactor(int period, ArrayDeque<Candle> cc) throws Exception {
     		double plusDMI 		= plusDMI(period,cc); 		
     		double minusDMI 	= minusDMI(period,cc);  
     		//If the upmove is greater than the downmove and greater than zero, the +DM equals the upmove; 
@@ -373,7 +673,7 @@ public class Calculator {
     		cc.peekFirst().adxFactor(adxFactor);
     		
     		return adxFactor;
-    	}
+    	}*/
     	
     	/**
     	 * The positive directional indicator, or +DI, equals 100 times the exponential moving average (EMA) 
@@ -387,111 +687,495 @@ public class Calculator {
     	 * @param cc
     	 * @return
     	 */
-    	private double plusDMI(int period, ArrayDeque<Candle> cc) throws Exception {
+ /*   	private double plusDMI(int period, ArrayDeque<Candle> cc) throws Exception {
+    		double atr = AverageTrueRange(period, cc);
+    		lg.debug("plusDMI: atr: "+atr);
+    		if(atr==0)
+    			throw new Exception("Invalid ATR, division by zero!");
     		
-    		
-    		double plusDMI = 100 * EMA(period, Constants.EMA_TYPE_PLUS_DMI, cc) / AverageTrueRange(period, cc);
+    		double plusDMI = 100 * EMA(period, Constants.EMA_TYPE_PLUS_DMI, cc) / atr;
     		return plusDMI;
-    	}
+    	}*/
     	
     	/**
-    	 * The negative directional indicator, or -DI, equals 100 times the exponential moving average 
+    	 * Positive directional indicator shows the difference between today's high price and yesterday's high price.
+    	 * These values are added up from the past <N> (14) days / periods and plotted.
+    	 * 
+    	 *  If the upmove is greater than the downmove and greater than zero, the +DM equals the upmove; 
+    	 * otherwise, it equals zero.
+    	 * 
+    	 * @param period
+    	 * @param cc
+    	 * @return
+    	 */
+ /*   	private double plusDMI(Candle curr, Candle prev) throws Exception {
+    		double plusDMI = curr.high() - prev.high();
+    		if(plusDMI>0){
+    			curr.plusDMI(plusDMI);
+    			
+    		}
+    		else{
+    			curr.plusDMI(0);
+    			plusDMI = 0;
+    		}
+    		lg.debug("plusDMI:" + plusDMI);
+    		return plusDMI;
+    	}*/
+    	
+    	/**
+    	 *The negative directional indicator, or -DI, equals 100 times the exponential moving average 
     	 * of -DM divided by the average true range (ATR).
     	 * 
     	 * If the downmove is greater than the upmove and greater than zero, the -DM equals the downmove; 
     	 * otherwise, it equals zero. It is calculated in the adxFactor method, so calculation is not 
     	 * completed here, that is why  this method is private.
     	 * 
+    	 * Negative directional indicator shows the difference between today's low price and yesterday's low price.
+    	 * These values are added up from the past <N> (14) days / periods and plotted.
+    	 * 
     	 * @param period
     	 * @param cc
     	 * @return
     	 */
-    	private double minusDMI(int period, ArrayDeque<Candle> cc) throws Exception {
-    		double minusDMI = 100 * EMA(period, Constants.EMA_TYPE_MINUS_DMI,cc) / AverageTrueRange(period,cc);
+  /*  	private double minusDMI(int period, ArrayDeque<Candle> cc) throws Exception {
+    		double atr = AverageTrueRange(period, cc);
+    		lg.debug("plusDMI: atr: "+atr);
+    		if(atr==0)
+    			throw new Exception("Invalid ATR, division by zero!");
+    		
+    		double minusDMI = 100 * EMA(period, Constants.EMA_TYPE_MINUS_DMI,cc) / atr;
     		return minusDMI;
-    	}  	
+    	}  	*/
     	
-        public double SMA(int smaPeriod, int emaType, ArrayDeque<Candle> cc) throws Exception {
-     	   	double sma = 0;
-     	   	double total = 0;
-     	   	double value;
-     	   		
+    	/**
+    	 * Negative directional indicator shows the difference between today's low price and yesterday's low price.
+    	 * These values are added up from the past <N> (14) days / periods and plotted.
+    	 * 
+    	 * If the downmove is greater than the upmove and greater than zero, the -DM equals the downmove; 
+    	 * otherwise, it equals zero. 
+    	 * 
+    	 * @param period
+    	 * @param cc
+    	 * @return
+    	 */
+    /*	private double minusDMI(Candle curr, Candle prev) throws Exception {
+    		double minusDMI = curr.low() - prev.low();   		
+    		lg.debug("minusDMI:" +minusDMI);
+    		return minusDMI;
+    	}  	*/
+    	
+    	/**
+    	 * 
+    	 * @param curr
+    	 * @param prev
+    	 */
+    	private void plusMinusDM(Candle curr,Candle prev) throws Exception {
+    		double prevLow = 0;
+    		double prevHigh = 0;
+    		/*if(prev==null){
+    			curr.setFirstInCache(true);
+    		}*/
+    		double minusDM = 0;				
+    		double plusDM = 0;
+    		
+    		try{
+    			prevLow = prev.low() ;
+    			prevHigh = prev.high();
+    		}
+    		catch(Exception e){
+    			lg.error("plusMinusDM: error getting prev data: " + e.getMessage());
+    		}
+    		
+    		minusDM = prevLow - curr.low();   
+    		plusDM = curr.high() - prevHigh;  
+    		if(lg.isTraceEnabled())
+    		lg.trace("plusMinusDM: calculated: minusDM=" + minusDM + ", plusDM="+plusDM);
+    		
+    		//if both are negative, then both equal to 0
+    		if(minusDM <= 0 && plusDM <= 0){
+    			curr.minusDM(0);
+    			curr.plusDM(0);
+    			return;
+    		}
+    		
+    		//if +DM is greater -DM
+    		if(plusDM > minusDM){
+    			if(plusDM>0)
+    				curr.plusDM(plusDM);	
+    			else
+    				curr.plusDM(0);
+    			
+    			curr.minusDM(0);
+    		}
+    		//-DM is greater +DM
+    		else {
+    			if(minusDM > 0)
+    				curr.minusDM(minusDM);
+    			else
+    				curr.minusDM(0);
+    			
+    			curr.plusDM(0);
+    		}
+    	}
+    	
+        public double SMA(int period, int emaType, ArrayDeque<Candle> cc, Candle curr) throws Exception {
+        	String fp = "SMA: ";
+        	double value;
+        	double sma = 0;
+        	double total = 0;
+        	String type = "";
+        	
+        	if(cc==null){
+        		lg.info("SMA: cc is null: "+cc);
+        		return sma;
+        	}
+        	else if(cc.size()<=0){
+        		//int tot = 0;
+        		//empty cache, current candle is the only element
+        		switch(emaType){		
+     	   		case Constants.EMA_TYPE_CLOSE:
+     	   			type = "close ";
+     	   			//lg.debug(fp + "calculating SMA close for single candle");
+     	   			value = curr.close();	 
+     	   			curr.smaClose(value);
+     	   			//lg.debug(fp + "value of close=" + value);
+     	   			break;
+     	   		case Constants.EMA_TYPE_PLUS_DM:
+     	   			type = "+DM ";
+     	   			//lg.debug(fp + "calculating SMA +DMI  for single candle");
+     	   			value = curr.plusDM();
+     	   			curr.smaPlusDM(value);
+     	   			//lg.debug(fp + "value of +dmi=" + value);
+     	   			break;
+     	   		case Constants.EMA_TYPE_MINUS_DM:
+     	   			type = "-DM ";
+     	   			//lg.debug(fp + "calculating SMA -DMI  for single candle");
+     	   			value = curr.minusDM();
+     	   			curr.smaMinusDM(value);
+     	   			//lg.debug(fp + "value of -dmi=" + value);
+     	   			break;
+     	  /* 	case Constants.EMA_TYPE_PLUS_DI:
+ 	   			type = "+DI ";
+ 	   			//lg.debug(fp + "calculating SMA +DMI  for single candle");
+ 	   			value = curr.plusDI();
+ 	   			curr.smaPlusDI(value);
+ 	   			//lg.debug(fp + "value of +dmi=" + value);
+ 	   			break;
+ 	   		case Constants.EMA_TYPE_MINUS_DI:
+ 	   			type = "-DI ";
+ 	   			//lg.debug(fp + "calculating SMA -DMI  for single candle");
+ 	   			value = curr.minusDI();
+ 	   			curr.smaMinusDI(value);
+ 	   			//lg.debug(fp + "value of -dmi=" + value);
+ 	   			break;*/
+ 	   	case Constants.EMA_TYPE_TRUE_RANGE:
+			type = "TrueRange ";
+   			//lg.debug(fp + "calculating EMA for True Range");
+   			value = curr.trueRange();
+   			curr.trueRangeEma(value);
+   			break;
+     	   		default:
+     			   throw new Exception("Unsupported SMA type!");
+     	   		}	
+        		
+        		lg.debug(fp + "SMA " + type + ": " + value);
+        		return value;
+        	}
+        	else if(cc.size()==1){
+        		lg.info("SMA: cc has 1 candle: "+cc);
+        		Candle prev = cc.peekFirst();
+        		
+        		switch(emaType){		
+     	   		case Constants.EMA_TYPE_CLOSE:
+     	   			type = "close ";
+     	   			//lg.debug(fp + "calculating SMA close for single candle");
+     	   			value = curr.close();	   		
+     	   			total = prev.smaClose() + value;
+     	   			//lg.debug(fp + "value of close=" + value);
+     	   			
+     	   		sma = total / 2d;
+        		lg.debug(fp + "SMA " + type + " = " + sma);
+        		curr.smaClose(sma);
+     	   			break;
+     	   	/*	case Constants.EMA_TYPE_PLUS_DI:
+     	   			type = "+DI ";
+     	   			//lg.debug(fp + "calculating SMA +DMI  for single candle");
+     	   			value = curr.plusDI();
+     	   			total = prev.smaPlusDI() + value;
+     	   			//lg.debug(fp + "value of +dmi=" + value);
+     	   		sma = total / 2;
+        		lg.debug(fp + "SMA " + type + " = " + sma);
+        		curr.smaPlusDI(sma);
+     	   			break;
+     	   		case Constants.EMA_TYPE_MINUS_DI:
+     	   			type= "-DI ";
+     	   			//lg.debug(fp + "calculating SMA -DMI  for single candle");
+     	   			value = curr.minusDI();
+     	   			total = prev.smaMinusDI() + value;
+     	   			//lg.debug(fp + "value of -dmi=" + value);
+     	   			
+     	   		sma = total / 2;
+        		lg.debug(fp + "SMA " + type + " = " + sma);
+        		curr.smaMinusDI(sma);
+     	   			break;*/
+     	   	case Constants.EMA_TYPE_PLUS_DM:
+ 	   			type = "+DM ";
+ 	   			//lg.debug(fp + "calculating SMA +DMI  for single candle");
+ 	   			value = curr.plusDM();
+ 	   			total = prev.smaPlusDM() + value;
+ 	   			//lg.debug(fp + "value of +dmi=" + value);
+ 	   			
+ 	   		sma = total / 2d;
+    		lg.debug(fp + "SMA " + type + " = " + sma);
+    		curr.smaPlusDM(sma);
+ 	   			break;
+ 	   		case Constants.EMA_TYPE_MINUS_DM:
+ 	   			type= "-DM ";
+ 	   			//lg.debug(fp + "calculating SMA -DMI  for single candle");
+ 	   			value = curr.minusDM();
+ 	   			total = prev.smaMinusDM() + value;
+ 	   			//lg.debug(fp + "value of -dmi=" + value);
+ 	   			
+ 	   		sma = total / 2d;
+    		lg.debug(fp + "SMA " + type + " = " + sma);
+    		curr.smaMinusDM(sma);
+ 	   			break;
+     	   	case Constants.EMA_TYPE_TRUE_RANGE:
+				type = "TrueRange ";
+       			//lg.debug(fp + "calculating SMA for True Range");
+       			value = curr.trueRange();
+       			total = prev.trueRangeEma() + value;
+       			
+       			sma = total / 2d;
+        		lg.debug(fp + "SMA " + type + " = " + sma);
+        		curr.smaTrueRange(sma);
+       			break;
+     	   		default:
+     			   throw new Exception("Unsupported SMA type!");
+     	   		}		
+        		
+        		
+        		return sma;
+        	}
+
+        	//more than 1 candle in cache		TODO
      	   	Iterator<Candle> it = cc.descendingIterator();
      	   	int i=1;
      	   	while(it.hasNext()){
      	   		switch(emaType){		
      	   		case Constants.EMA_TYPE_CLOSE:
-     	   			value = it.next().close();	   			
+     	   			type = "close ";
+     	   			//lg.debug(fp + "calculating SMA close");
+     	   			value = it.next().close();	   		
+     	   			//lg.debug(fp + "value of close=" + value);
      	   			break;
-     	   		case Constants.EMA_TYPE_PLUS_DMI:
-     	   			value = it.next().plusDMI();
+     	   		case Constants.EMA_TYPE_PLUS_DI:
+     	   			type = "+DI ";
+     	   			//lg.debug(fp + "calculating SMA +DI");
+     	   			value = it.next().plusDI();
+     	   			//lg.debug(fp + "value of +di=" + value);
      	   			break;
-     	   		case Constants.EMA_TYPE_MINUS_DMI:
-     	   			value = it.next().minusDMI();
+     	   		case Constants.EMA_TYPE_MINUS_DI:
+     	   			type = "-DI ";
+     	   			//lg.debug(fp + "calculating SMA -DI");
+     	   			value = it.next().minusDI();
+     	   			//lg.debug(fp + "value of -di=" + value);
      	   			break;
-     	   		case Constants.EMA_TYPE_ADX_FACTOR:
-     	   			value = it.next().adxFactor();
-     	   			break;
+     	   	case Constants.EMA_TYPE_PLUS_DM:
+ 	   			type = "+DM ";
+ 	   			//lg.debug(fp + "calculating SMA +DM");
+ 	   			value = it.next().plusDM();
+ 	   			//lg.debug(fp + "value of +dm=" + value);
+ 	   			break;
+ 	   		case Constants.EMA_TYPE_MINUS_DM:
+ 	   			type = "-DM ";
+ 	   			//lg.debug(fp + "calculating SMA -DM");
+ 	   			value = it.next().minusDM();
+ 	   			//lg.debug(fp + "value of -dm=" + value);
+ 	   			break;
+     	   	case Constants.EMA_TYPE_TRUE_RANGE:
+				type = "TrueRange ";
+       			//lg.debug(fp + "calculating SMA for True Range");
+       			value =  it.next().trueRange();    			
+       			break;
      	   		default:
-     			   throw new Exception("Unsupported EMA type!");
+     			   throw new Exception("Unsupported SMA type: " + emaType);
      	   		}		
-     	   		total+=value;
-     	   		if(i==smaPeriod)
+     	   		
+     	   		
+     	   	total=total + value;
+ 	   		//lg.debug(fp + "total value = " + total);
+     	   	
+     	   		if(i==(period-1))
      	   			break;
      	   		i++;
      	   	}
-
-     	   	sma = total/smaPeriod;   	   		
+     	   	
+     	   	if(i<(period-1))
+     	   		sma = total/(double)((double)i+1d);
+     	   	else
+     	   		sma = total/(double)period;   	
+     	   	  	
+     	    lg.debug(fp + "SMA " + type + " = " + sma);
+     	    
+ 	   		switch(emaType){		
+ 	   		case Constants.EMA_TYPE_CLOSE:
+ 	   			curr.smaClose(sma);
+ 	   			break;
+ 	   		/*
+			case Constants.EMA_TYPE_PLUS_DI:
+ 	   			curr.smaPlusDI(sma);
+ 	   			break;
+ 	   		case Constants.EMA_TYPE_MINUS_DI:
+ 	   			curr.smaMinusDI(sma);
+ 	   			break;*/
+ 	   		case Constants.EMA_TYPE_PLUS_DM:
+	   			curr.smaPlusDM(sma);
+	   			break;
+	   		case Constants.EMA_TYPE_MINUS_DM:
+	   			curr.smaMinusDM(sma);
+	   			break;
+	   		case Constants.EMA_TYPE_TRUE_RANGE:
+	   			curr.smaTrueRange(sma);
+	   			break;
+ 	   		default:
+ 			   throw new Exception("Unsupported SMA type: " + emaType);
+ 	   		}	
      	   	return sma;
      	}
       	
-       	public double EMA(int emaPeriod, int emaType, ArrayDeque<Candle> cc) throws Exception {
-       		String fp = "EMAadxFactor: ";
+        /**
+         * EMA: {<value_to_calc_EMA> - EMA(previous day)} x multiplier + EMA(previous day).
+         * 
+         * @param period
+         * @param emaType
+         * @param cc
+         * @param curr
+         * @return
+         * @throws Exception
+         */
+       	public double EMA(int period, int emaType, ArrayDeque<Candle> cc, Candle curr) throws Exception {
+       		String fp = "EMA: ";
        		double result = 0;
        		double ema0 = 0;
        		double value = 0;
+       		String type = "";
+       		
+       		lg.debug(fp + "period: " + period);
        		
        		//Step 1. Calculate SMA
-       		double sma = SMA(emaPeriod,emaType,cc);
+       		double sma = SMA(period,emaType,cc, curr);
        		if(lg.isDebugEnabled())
        			lg.debug(fp + "sma: " + sma);
        		
        		//Step 2. Calculating the weighting multiplier
-       		double multiplier = 2/emaPeriod + 1;
+       		double multiplier = 2d/(period + 1d); 
        		if(lg.isDebugEnabled())
        			lg.debug(fp + "multiplier: " + multiplier);
        		
        		//Step 3: Calculate EMA
        		//get the ema for previous (second last) timeframe unit
-       		Candle tmp = cc.pop();
+       		//Candle tmp = cc.pop();
+       		//lg.debug(fp + "popped last candle: " + tmp);
+       		Candle prev = cc.peekFirst();
+       		lg.debug(fp + "peeked previous last candle: " + prev);
        		switch(emaType){
-       		case Constants.EMA_TYPE_MINUS_DMI:
-       			ema0 = cc.peekFirst().minusDMIEma();
-       			value = tmp.minusDMI();
+       	/*	case Constants.EMA_TYPE_MINUS_DI:
+       			type = "-DI ";
+       			lg.debug(fp + "calculating EMA for -DI");
+       			value = curr.minusDI();
+       			if(prev!=null)
+       				ema0 = prev.minusDIEma();
+       			else
+       				ema0 = value;    
+       			
+       			lg.debug(fp + "ema0 " + type+ ":" + ema0 + ", curr value: " + value);
+           		result = (value - ema0)*multiplier+ema0;
+           		lg.debug(fp + "result of "+type+"(value - ema0)*multiplier+ema0 = " + result);
+           		
+           		curr.minusDIEma(result);
        			break;
-       		case Constants.EMA_TYPE_PLUS_DMI:
-       			ema0 = cc.peekFirst().plusDMIEma();
-       			value = tmp.plusDMI();
+       		case Constants.EMA_TYPE_PLUS_DI:   	
+       			type = "+DI ";
+       			lg.debug(fp + "calculating EMA for +DI");
+       			value = curr.plusDI();
+       			if(prev!=null)
+       				ema0 = prev.plusDIEma();
+       			else
+       				ema0 = value;
+       			
+       			lg.debug(fp + "ema0 " + type+ ":" + ema0 + ", curr value: " + value);
+           		result = (value - ema0)*multiplier+ema0;
+           		lg.debug(fp + "result of "+type+"(value - ema0)*multiplier+ema0 = " + result);
+           		
+           		curr.plusDIEma(result);
+       			break;*/
+       		case Constants.EMA_TYPE_MINUS_DM:
+       			type = "-DM ";
+       			lg.debug(fp + "calculating EMA for -DM");
+       			value = curr.minusDM();
+       			if(prev!=null)
+       				ema0 = prev.minusDMEma();
+       			else
+       				ema0 = value;
+       			
+       			lg.debug(fp + "ema0 " + type+ ":" + ema0 + ", curr value: " + value);
+           		result = (value - ema0)*multiplier+ema0;
+           		lg.debug(fp + "result of "+type+"(value - ema0)*multiplier+ema0 = " + result);
+           		
+           		curr.minusDMEma(result);
        			break;
-       		case Constants.EMA_TYPE_ADX_FACTOR:
-       			ema0 = cc.peekFirst().adxFactorEma();
-       			value = tmp.adxFactorEma();
+       		case Constants.EMA_TYPE_PLUS_DM:   		
+       			type = "+DM ";
+       			lg.debug(fp + "calculating EMA for +DM");
+       			value = curr.plusDM();
+       			if(prev!=null)
+       				ema0 = prev.plusDMEma();
+       			else
+       				ema0 = value;
+       			
+       			lg.debug(fp + "ema0 " + type+ ":" + ema0 + ", curr value: " + value);
+           		result = (value - ema0)*multiplier+ema0;
+           		lg.debug(fp + "result of "+type+"(value - ema0)*multiplier+ema0=" + result);
+           		
+           		curr.plusDMEma(result);
+       			break;
+			case Constants.EMA_TYPE_TRUE_RANGE:
+				type = "TrueRange ";
+       			lg.debug(fp + "calculating EMA for True Range");
+       			value = curr.trueRange();
+       			if(prev!=null)
+       				ema0 = prev.trueRangeEma();
+       			else
+       				ema0 = value;
+       			
+       			lg.debug(fp + "ema0 " + type+ ":" + ema0 + ", curr value: " + value);
+           		result = (value - ema0)*multiplier+ema0;
+           		lg.debug(fp + "result of "+type+"(value - ema0)*multiplier+ema0=" + result);
+           		
+           		curr.trueRangeEma(result);
        			break;
        		case Constants.EMA_TYPE_CLOSE:
-       			ema0 = cc.peekFirst().emaShort();
-       			value = tmp.close();
+       			lg.debug(fp + "calculating EMA for closing price");
+       			ema0 = prev.emaShort();
+       			value = curr.close();
+       			lg.debug(fp + "ema0 " + type+ ":" + ema0 + ", curr value: " + value);
+           		result = (value - ema0)*multiplier+ema0;
+           		lg.debug(fp + "result of "+type+"(value - ema0)*multiplier+ema0=" + result);
+           		
+           		curr.closeEma(result);
        			break;
        			default:
        			 throw new Exception("Unsupported EMA type!");   		
        		}     		
-       		result = (value - ema0)*multiplier+ema0;
+       		
        		
        		//put back popped candle
-       		cc.addFirst(tmp);
-       		
+       		//cc.push(tmp);
+       		//lg.debug(fp + "pushed back last candle");
        		return result;
        	}
-       	
+     	
  
        	/**
     	 * First start with the True Range indicator which is the greatest of the following: 
@@ -522,62 +1206,140 @@ public class Calculator {
     	 * 
     	 * @return
     	 */
-    	public double AverageTrueRange(int period, ArrayDeque<Candle> cc) throws Exception {
-    		double value = 0;
-    		//only 1 candle in a deque
-    		if(cc.size()==1)
-    			return cc.peekFirst().trueRange();
+   /* 	public double ATR(int period, ArrayDeque<Candle> cc, Candle curr) throws Exception {    		
+    		double atr = 0; 	
+    		//if cache size is less than period, calculate ATR for available candles   		
+    		double totalTR = 0;		
+    		//Candle tmp = cc.pop();
+    		Candle prev = null;
+    		
+    		//cache has only one candle - current, which is passed separately
+    		if(cc.size()<=0){
+    			atr = curr.trueRange();
+    			curr.ATR(curr.trueRange());
+    			return atr;
+    		}
+    	
+    		//	else cc.size() without last candle > 0
+    		prev = cc.peekFirst();
+    		
+    		// get true range for the current candle
+    		double currentTR = TrueRange(curr, prev);
+    		//lg.trace("AverageTrueRange: currentTR: " + currentTR);
 
-    		Candle tmp = cc.pop();
-    		double priorATR = cc.peekFirst().ATR();
-    		double currentTR = tmp.trueRange();
+    		//1 or more candle(s) in a cache after popped last one out
+    		    		
+    		//loop
+    		int count = 0;
+    		Candle c;
+    		Iterator<Candle> it = cc.descendingIterator();
+    		//Stack<Candle> stack = new Stack<>();
+    		LinkedList<Candle> queue = new LinkedList<Candle>();
+    		while(it.hasNext()){			
+    			queue.addFirst(it.next());
+    			count++;
+    			
+    			if(count>=(period-1)) //one candle is popped!
+    				break;
+    		}
+    		//lg.trace("AverageTrueRange: put " + count + " candles in the stack: " + stack.size());
+    	
+    		//add currentTR from the newest candle
+    		totalTR = totalTR + currentTR;
+    		prev = null;  //reset
+    		while(!queue.isEmpty()){
+    			c = queue.removeLast(); //starting from newest candle
+    			currentTR = c.trueRange();
+    			//lg.trace("AverageTrueRange: currentTR from candle: " + currentTR);
+    			if(currentTR==0){
+    				//for some reason true range was not calculated
+    				currentTR = TrueRange(c,prev);
+    				//	lg.trace("AverageTrueRange: freshly calculated currentTR: " + currentTR);
+    			}
+    			totalTR = totalTR + currentTR;
+    			//lg.trace("AverageTrueRange: totalTR: " + totalTR);
+    			prev = c;
+    		}
+    		
+    		atr = totalTR / (count + 1);
+    	//	lg.trace("AverageTrueRange: atr=" + atr);
+    		curr.ATR(atr);	//set value to the current candle
+    		
+    		
+    		//double priorATR = cc.peekFirst().ATR();
     		
     		//- Multiply the previous 14-day ATR by 13.
 			//  - Add the most recent day's TR value.
 			//  - Divide the total by 14
-    		value = ((priorATR * (period - 1)) + currentTR) / period;
-	
+    		//atr = ((priorATR * (period - 1)) + currentTR) / period;
+    		
+    		//lg.debug("AverageTrueRange: " + atr);
     		//put back popped candle
-    		cc.addFirst(tmp);
-    		return value;
+    		//cc.push(tmp);
+    		return atr;	//cannot be 0 !!
     	}
+*/
     	
     	/**
     	 * True Range is the greatest of the following: 
-    	 * 		current high less the current low, 
-    	 * 		the absolute value of the current high less the previous close and 
-    	 * 		the absolute value of the current low less the previous close. 
+    	 * 		current high minus (-) the current low, 
+    	 * 		the absolute value of the current high minus (-)  the previous close and 
+    	 * 		the absolute value of the current low minus (-) the previous close. 
     	 * 
     	 * @param period
     	 * @param cc
     	 * @return
     	 */
-    	public double TrueRange(int period, ArrayDeque<Candle> cc){
+    	//private double TrueRange(ArrayDeque<Candle> cc){
+    	private double TrueRange(Candle curr, Candle prev) throws Exception {
     		double value = 0;
-    		Candle tmp = cc.pop();
+    		double tr1 = 0;
+    		double tr2 = 0;
+    		double tr3 = 0;
+    		//Candle tmp = cc.pop();
     		
-    		double currHigh = tmp.high();// this.maxHigh(cc);
-    		double currLow =  tmp.low(); //this.minLow(cc);
-    		double prevClose = cc.peekFirst().close();
-    		//current high less the current low, 
-    		double tr1 = currHigh - currLow;
-       	 	//the absolute value of the current high less the previous close 
-    		double tr2 = Math.abs(currHigh - prevClose);
-       	 	//the absolute value of the current low less the previous close. 
-    		double tr3 = Math.abs(currLow - prevClose);
+    		double currHigh = curr.high();
+    		double currLow =  curr.low(); 
+    		double prevClose = 0;
     		
+    		try {
+    			prevClose = prev.close();
+    		}
+    		catch(Exception e){
+    			lg.error("TrueRange: failed to get prevClose: " + e.getMessage());
+    		}
+    		//current high minus current low, 
+    		tr1 = currHigh - currLow;
+    		//if(lg.isTraceEnabled())
+    		//	lg.trace("TrueRange: currHigh - currLow = " + tr1);
     		value = tr1;
     		
-    		if(tr2>tr1)
-    			value = tr2;
+    		//if prevClose available for calculation
+    		if(prevClose > 0){
+       	 	//the absolute value of the current high minus previous close 
+    			tr2 = Math.abs(currHigh - prevClose);
+    			//if(lg.isTraceEnabled())
+    			//	lg.trace("TrueRange: currHigh - prevClose = " + tr2);
     		
-    		if(tr3>tr2)
-    			value = tr3;
+       	 		//the absolute value of the current low minus previous close. 
+    			tr3 = Math.abs(currLow - prevClose);
+    			//if(lg.isTraceEnabled())
+    			//	lg.trace("TrueRange: currLow - prevClose = " + tr3);
+    			
+    			if(tr2>value)
+        			value = tr2;
+        		
+        		if(tr3>value)
+        			value = tr3;
+    		}
     		
+    		//set true range value to candle
+    		curr.trueRange(value);
     		//put back popped candle
-    		cc.push(tmp);
+    		//cc.push(tmp);
     		
-    		lg.trace("TrueRange: " + value);
+    		//if(lg.isTraceEnabled())
+    		//lg.trace("TrueRange: " + value);
     		
     		return value; 
     	}
@@ -592,11 +1354,11 @@ public class Calculator {
     	}*/
     	
     	public void support(ArrayDeque<IBar> lows){
-    		
+    		//TODO
     	}
     	
     	public void resistance(ArrayDeque<IBar> highs){
-    		
+    		//TODO
     	}
     	
     	/**
@@ -607,6 +1369,7 @@ public class Calculator {
     	 * @return
     	 */
     	public void calcAvgLengths(int period, ArrayDeque<Candle> cc){
+    		String fp = "calcAvgLengths: ";
     		double resultBottom = 0;
     		double resultTop = 0;
     		double resultBody = 0;
@@ -615,113 +1378,258 @@ public class Calculator {
     		double top = 0;
     		double body = 0;
     		
-    		Stack<Candle> ts = new Stack<>();
-    		//take out the latest candle
-    		ts.push(cc.pop());
+    		Stack<Candle> stack = new Stack<>();
+    		if(lg.isTraceEnabled())
+    			lg.trace(fp + "created stack");
     		
-    		for(int i=0;i<period;i++){
+    		//take out the latest candle
+    		Candle last = cc.pop();
+    		if(lg.isTraceEnabled())
+    			lg.trace(fp + "popped the latest candle: " + last);
+    		stack.push(last);
+    		if(lg.isTraceEnabled())
+    			lg.trace(fp + "pushed the latest candle in the stack");
+    		
+    		int i=0;
+    		for(i=0;i<period;i++){
+    			if(cc.isEmpty())
+    				break;
     			//get the wick len
     			low = low + cc.peek().getLower_shadow_len();
-    			top = top + cc.peek().getUpper_shadow_len();
+    			top = top + cc.peek().getLower_shadow_len();
     			body = body + cc.peek().getBody_len();
     			//take candle out and save it in a temporary stack
-    			ts.push(cc.pop());
+    			stack.push(cc.pop());
     		}
+    		if(i>0 && i<(period-1)){
+    			resultBottom = low/i;
+        		resultTop = top/i;
+        		resultBody = body/i;
+    		}
+    		else{
     		//calculate result
     		resultBottom = low/period;
     		resultTop = top/period;
     		resultBody = body/period;
+    		}
+    		lg.debug(fp + "avg body: " + resultBody + ", avg top shadow: " + resultTop + ", avg bottom shadow: " + resultBottom);
     		
     		//put back all candles
-    		while(!ts.isEmpty()){
-    			cc.push(ts.pop());
+    		while(!stack.isEmpty()){
+    			cc.push(stack.pop());
     		}
     		
-    		cc.peek().setAvgBodyLen(resultBody);
-    		cc.peek().setAvgUpperShadowLen(resultTop);
-    		cc.peek().setAvgLowerShadowLen(resultBottom);
+    		last.setAvgBodyLen(resultBody);
+    		last.setAvgUpperShadowLen(resultTop);
+    		last.setAvgLowerShadowLen(resultBottom);
+    		cc.push(last);  //put back last
     	}
        
-       public static class NotEnoughDataException extends Exception {
-              private static final long serialVersionUID = -1908829006025105879L;
-              public NotEnoughDataException(){}
-       }
+    	/**
+    	 * Calculates position size for the case when account denomination is the same as the 
+    	 * counter (quote) currency
+    	 * 
+    	 * @param acctEquity
+    	 * @param contract
+    	 * @param riskPercent
+    	 * @param stopLossPips
+    	 * @param xRates
+    	 * @return
+    	 */
+    	public double calcForexPositionSizeAcctInQuote(double acctEquity, //11900.00  USD
+    													Contract contract,  // EUR / USD
+    													double riskPercent, //0.01
+    													double stopLossPips, // 3
+    													double xRate
+    	){
+    		double pSize = 0;
+    		
+    		// use account balance and risk percentage calculate dollar amount risked
+    		double riskAmount = acctEquity * riskPercent;
+    		// 11900 * 0.01 = 119 USD
+    		
+    		//divide amount risked by the stop in pips to find the value per pip
+    		double pipValue = riskAmount / stopLossPips;
+    		// 119 / 3 = 39.67 
+    		
+    		// multiply value per pip by a known unit/pip value ratio of EUR/USD
+    		// in this case with 10K units (or one mini lot) each pip move is worth 1 USD
+    		pSize = pipValue * (10000 / 1);
+    		// 39.67 * 10000 = 39670.00
+    		
+    		return pSize;
+    	}
+    	
+     	/**
+    	 * Calculates position size for the case when account denomination is the same as the 
+    	 * base currency
+    	 * 
+    	 * @param acctEquity
+    	 * @param contract
+    	 * @param riskPercent
+    	 * @param stopLossPips
+    	 * @param xRates
+    	 * @return
+    	 */
+    	public double calcForexPositionSizeAcctInBase(double acctEquity, //11900.00  USD
+    													Contract contract,  // EUR / USD
+    													double riskPercent, //0.01
+    													double stopLossPips, // 3
+    													double xRate		// EUR/USD = 1.5000
+    	){
+    		double pSize = 0;
+    		
+    		// use account balance and risk percentage calculate EUR amount risked
+    		double riskInBaseAmount = acctEquity * riskPercent;
+    		// 11900 * 0.01 = 119 EUR
+    		
+    		// Now we have to convert this to USD because the value of a currency pair 
+    		// is calculated by the counter currency. Lets say,the current exchange rate 
+    		// for 1 EUR is 1.5 USD
+    		// All we have to do is to find the value in USD is to invert the current exchange rate 
+    		// for EUR/ USD and multiply by the amount of euros we wish to risk
+    		// (USD 1.5000 / EUR 1.0000) * EUR 119 = 178.5 USD
+    		double riskInCounterCurr = (xRate / 1) * riskInBaseAmount;
+    		
+    		//divide amount risked by the stop in pips to find the value per pip
+    		double pipValue = riskInCounterCurr / stopLossPips;
+    		// 178.5 / 3 = 59.5
+    		
+    		// multiply value per pip by a known unit/pip value ratio of EUR/USD
+    		// in this case with 10K units (or one mini lot) each pip move is worth 1 USD
+    		pSize = pipValue * (10000 / 1);
+    		// 59.5 * 10000 = 59500.00
+    		
+    		return pSize;
+    	}
  
+    	public double calcForexEmaShortClose(int period, ArrayDeque<Candle> cc) throws Exception{
+    		String fp = "calcForexEmaShortClose: ";
+    		//lg.debug(fp + "calculating EMA for closing price: period: " + period);
+    		
+    		Candle curr = cc.pop();
+    		
+       		//Step 1. Calculate SMA
+       		double sma = calcForexSmaClose(period,cc, curr);
+       		if(lg.isDebugEnabled())
+       			lg.debug(fp + "sma: " + sma);
+       		
+       		//Step 2. Calculating the weighting multiplier
+       		double multiplier = 2d/(period + 1d); 
+       		//if(lg.isDebugEnabled())
+       		//	lg.debug(fp + "multiplier: " + multiplier);
+       		
+    		Candle prev = cc.peek();
+   			double ema0 = prev.emaShort();
+   			double value = curr.close();
+   			lg.debug(fp + "ema0 :" + ema0 + ", curr value: " + value);
+       		double result = (value - ema0)*multiplier+ema0;
+       		//lg.debug(fp + "result of (value - ema0)*multiplier+ema0=" + result);
+       		lg.debug(fp + "emaShort: " + result);
+       		//curr.emaShort(result);
+       		cc.push(curr); //put it back
+       		
+       		return result;
+    	}
+    	
+    	public double calcForexEmaLongClose(int period, ArrayDeque<Candle> cc) throws Exception{
+    		String fp = "calcForexEmaLongClose: ";
+    		//lg.debug(fp + "calculating EMA for closing price: period: " + period);
+    		
+    		Candle curr = cc.pop();
+    		
+       		//Step 1. Calculate SMA
+       		double sma = calcForexSmaClose(period,cc, curr);
+       		if(lg.isDebugEnabled())
+       			lg.debug(fp + "sma: " + sma);
+       		
+       		//Step 2. Calculating the weighting multiplier
+       		double multiplier = 2d/(period + 1d); 
+       		//if(lg.isDebugEnabled())
+       		//	lg.debug(fp + "multiplier: " + multiplier);
+       		
+    		Candle prev = cc.peek();
+   			double ema0 = prev.emaLong();
+   			double value = curr.close();
+   			lg.debug(fp + "ema0 :" + ema0 + ", curr value: " + value);
+       		double result = (value - ema0)*multiplier+ema0;
+       		//lg.debug(fp + "result of (value - ema0)*multiplier+ema0=" + result);
+       		lg.debug(fp + "emaLong: " + result);
+       		//curr.emaShort(result);
+       		cc.push(curr); //put it back
+       		
+       		return result;
+    	}
+    	
+    	public double calcForexSmaClose(int period, ArrayDeque<Candle> cc, Candle c) throws Exception {
+    		double sma = 0;
+    		double sum = 0;
+    		int cnt = 0;
+    		
+    		sum = sum + c.close();
+    		
+    		Iterator<Candle> it = cc.iterator();
+    		while(it.hasNext()){
+    			cnt++;			
+    			if(cnt>(period-1))
+    				break;
+    			sum=+it.next().close();
+    		}
+    		lg.debug("calcForexSmaClose: sum of " + cnt + " elements for period " + period);
+    		
+    		sma = sum / period;
+    		//lg.debug("calcForexSmaShortClose: sma: " + sma);
+    		return sma;
+    	}
+
        public static void main(String[] args){
               Calculator t = new Calculator();
-              if(lg.isDebugEnabled())
-                  lg.debug("test created");
-             
-              double basePrice= 28.7;
-              int smaSize=  30;
-              Candle b;
-              double dev = 0;
-              boolean positive = true;
-              int volume = 300000;
-              int cnt= 10;
-              long queueSize = 500;
+            //  if(lg.isDebugEnabled())
+             //     lg.debug("test created");
+      
+              int cacheSize = 30;
               String timeframeUnit = "MIN";
-              switch(timeframeUnit){
-              case "MIN":
-                     tfFactor = Constants.MIN;
-                     break;
-              case "HOUR":
-                     tfFactor = Constants.HOUR;
-                     break;
-              case "DAY":
-                     tfFactor = Constants.DAY;
-                     break;
-                     default:
-              }
-              int timeframeSize = 15;
-              ArrayDeque<Candle> queue = new ArrayDeque<>();
-              double closeP = 28.7;
-              double sma = 0;
-              if(lg.isDebugEnabled())
-                  lg.debug("variables assigned");
-             
-              Random rValue = new Random(System.currentTimeMillis());
-              Random rSign = new Random(System.currentTimeMillis());
-              if(lg.isDebugEnabled())
-                  lg.debug("seeded randomizers");
-             
-              for(int i=0;i<queueSize; i++) {
-                     dev = rValue.nextDouble();
-                     positive = rSign.nextBoolean();
-                    
-                     if(!positive)
-                           dev = Math.abs(dev) * (-1);
-                    
-                     closeP = closeP+dev;
-                     if(lg.isDebugEnabled())
-                         lg.debug("closeP: " + closeP);
-                     b= new Candle(0,
-                                  basePrice,
-                                  basePrice,
-                                  basePrice,
-                                  closeP,       //close!
-                                  basePrice,
-                                  volume,
-                                  cnt
-                                  );
-                     queue.addFirst(b);        
-                    
-                     try {
-                           //sma = t.SMA(smaSize, timeframeSize, timeframeUnit,queue);
-                           if(lg.isDebugEnabled())
-                               lg.debug("sma["+i+"]: " + sma);
-                     }
-                    /* catch(NotEnoughDataException e){
-                           try {
-                                  Thread.sleep(400);
-                           }catch(InterruptedException ie){}
-                           continue;
-                     }*/
-                     catch(Exception e){
-                           lg.error("Error: " + e.getMessage());
-                     }
-              }
-              if(lg.isDebugEnabled())
-                  lg.debug("Queue is full: " + queue.size());
+              int timeframeSize = 10;
+              double basePrice = 18.7;
+              int period = 5;
+              ArrayDeque<Candle> initCache = Utils.fillCache(cacheSize, timeframeUnit, timeframeSize, basePrice);
+             //String fn = "C:/run/other/cache";
+              //ArrayDeque<Candle> initCache = readReusableCache(fn);
+            //  lg.info("initCache: " +  initCache);
+              
+              ArrayDeque<Candle> cache = new ArrayDeque<>();
+        	  try{
+        		  while(!initCache.isEmpty()){         	        
+            		  cache.push(initCache.removeLast());
+            		  t.calcADX_DMI(period, cache);
+        		  }
+        	  }
+        	  catch(Exception e){
+        	  lg.error("Error calculating ADX: " + e.getMessage());
+        	  }
+        	  
+        	  lg.info("Last candle: " + cache.peekFirst());
        }     
+       
+       @SuppressWarnings("unchecked")
+	private static ArrayDeque<Candle> readReusableCache(String fn){
+    	   ObjectInputStream fw=null;
+    	   ArrayDeque<Candle> q = null;
+    	   try{
+           	fw = new ObjectInputStream(new FileInputStream(fn));
+           	q = (ArrayDeque<Candle>)fw.readObject();
+           }
+           catch(Exception e){
+           	lg.error("Error reading cache: " + e.getMessage());
+           }
+           finally{
+           	try{
+       
+           		fw.close();
+           	}
+           	catch(Exception ex){}
+           }
+    	   
+    	   return q;
+       }
 }
