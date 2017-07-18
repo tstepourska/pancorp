@@ -3,34 +3,25 @@ package com.pancorp.tbroker.main;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import samples.testbed.advisor.FAMethodSamples;
-import samples.testbed.contracts.ContractSamples;
-import samples.testbed.orders.AvailableAlgoParams;
-import samples.testbed.orders.OrderSamples;
-import samples.testbed.scanner.ScannerSubscriptionSamples;
-
 import com.ib.client.Contract;
 import com.ib.client.EClientSocket;
 import com.ib.client.EReader;
 import com.ib.client.EReaderSignal;
-import com.ib.client.ExecutionFilter;
 import com.ib.client.Order;
-import com.ib.client.Types.FADataType;
-import com.ib.controller.AccountSummaryTag;
-import com.pancorp.tbroker.day.DataFactory;
+import com.ib.client.OrderState;
+import com.ib.client.OrderStatus;
+import com.pancorp.tbroker.data.DataFactory;
 import com.pancorp.tbroker.day.ForexBroker;
+import com.pancorp.tbroker.day.ForexBroker5min;
 import com.pancorp.tbroker.util.Constants;
 import com.pancorp.tbroker.util.Globals;
 import com.pancorp.tbroker.util.Utils;
@@ -39,8 +30,10 @@ public class BrokerManager {
 	private static Logger lg = LogManager.getLogger(BrokerManager.class);
 	
 	private volatile boolean orderPlaced;
+//	private volatile boolean tradeOpened;
 	private EClientSocket client;
 	private BrokerManagerEWrapperImpl wrapper;
+	//HashMap<Integer,ForexBroker5min> tMap;
 	HashMap<Integer,ForexBroker> tMap;
 	DataFactory dfac;	
 	public boolean working = true;
@@ -48,11 +41,14 @@ public class BrokerManager {
 	public boolean snapshotInProgress = false;
 	int workingStatus = Constants.WORKING_STATUS_IDLE;  //0 - IDLE, 1-ACTIVE
 	
+	//int operationsMode = Constants.OPS_MODE_PAPER_TESTCACHE;
+	private int operationsMode = Constants.OPS_MODE_PAPER_LIVE;
+	
 	private List<Order> openOrderList;
 	
 	public static void main(String[] args) {
 		try {
-			resetWorkingFile();
+			//resetWorkingFile();
 			new BrokerManager().invoke(args);
 		}
 		catch(InterruptedException e){
@@ -67,13 +63,10 @@ public class BrokerManager {
 	}
 
 	public void invoke(String[] __args) throws InterruptedException, Exception {
+		orderPlaced = false;
 		wrapper = new BrokerManagerEWrapperImpl(this);		
-		//final EClientSocket m_client = wrapper.getClient();
 		client = wrapper.getClient();
-		
-		//I've added to try:
-		//m_client.setAsyncEConnect(false);
-		
+
 		final EReaderSignal m_signal = wrapper.getSignal();
 		//! [connect]
 		client.eConnect(Globals.host, Globals.port, Globals.paperClientId);//TWS		
@@ -99,29 +92,21 @@ public class BrokerManager {
         }.start();
         //! [ereader]
         Thread.sleep(1000);
-		
-		//orderOperations(wrapper.getClient(), wrapper.getCurrentOrderId());
-		//contractOperations(wrapper.getClient());
-        //hedgeSample(wrapper.getClient(), wrapper.getCurrentOrderId());
-        //testAlgoSamples(wrapper.getClient(), wrapper.getCurrentOrderId());
-        //bracketSample(wrapper.getClient(), wrapper.getCurrentOrderId());
-		//bulletins(wrapper.getClient());
-        //reutersFundamentals(wrapper.getClient());
-        //marketDataType(wrapper.getClient());
-        //historicalDataRequests(wrapper.getClient());
-        //accountOperations(wrapper.getClient());
-        //marketScanners(wrapper.getClient());
-        
 
         dfac = this.wrapper.getDataFactory();
         
-        //first reload market data
-        //HashMap<Integer,Contract> cMap = dfac.loadFullList();	    
-        //LinkedList<Contract> cMap = dfac.loadFullList();	
-       // this.wrapper.setConList(cMap);
+        this.openOrderList = new ArrayList<>();
 
-        //lg.debug("requesting market data for id " + rid + "::" + cMap.get(rid));
-       // nextSnapshot(wrapper.getClient(),cMap);
+		//initialize brokers
+        tMap = new HashMap<>();
+        lg.info("Brokers map initialized");
+    	
+		//*** Requesting all open orders ***
+      //  client.reqAllOpenOrders();
+        try {Thread.sleep(3000);}catch(InterruptedException ie){}
+        //*** Taking over orders to be submitted via TWS ***
+        //! [reqautoopenorders]
+        //client.reqAutoOpenOrders(true);
      
        	startTheDay();
        	
@@ -142,12 +127,92 @@ public class BrokerManager {
 		
 	}
 	
-	/**
-	 * Designed for a single ForexBroker instance
-	 */
-	public void resetBrokerMode(){
-		Iterator<Integer> it = this.tMap.keySet().iterator();
-		tMap.get(it.next()).setMode(Constants.MODE_OPENING);
+	public void orderCancelledCallback(int orderId){
+		this.clearOrder(orderId);
+		//this.orderPlaced = false;
+		//this.resetBrokerMode();
+	}
+	
+	public void orderStatusCallback(int orderId, String status, int permId, int parentId,int clientId){
+		String fp = "orderStatusCallback: ";
+		lg.debug(fp + "orderId: " + orderId);
+		if(orderId<=0){			
+			//if(this.openOrderList.isEmpty()){
+				//this.orderPlaced = false;
+				return;
+			//}
+		}
+		
+		//order id > 0, set orderPlaced flag immediately
+		this.setOrderPlaced(true);
+		//this.setBrokerMode(Constants.MODE_CLOSING);
+		
+		boolean found = false;
+		for(Order o: this.openOrderList){
+			if(o.orderId()==orderId){
+				lg.debug(fp + " found orderId: " + orderId + " in the list");
+				//found order in the list
+				found = true;
+				break;
+			}
+		}
+		
+		if(!found){
+			//create
+			Order o = new Order();
+			o.orderId(orderId);
+			o.parentId(parentId);
+			o.clientId(clientId);
+			
+			
+			this.openOrderList.add(o);		
+		}
+		/*
+		if(this.openOrderList.isEmpty()){
+			lg.info("setOrderFilled: order list is empty, resetting");
+			//reset 
+			this.orderPlaced = false;
+			this.resetBrokerMode();
+		}*/
+	}
+	
+	public void openOrderCallback(int orderId, Contract contract, Order order, OrderState orderState){
+		String fp = "openOrderCallback: ";
+		lg.debug(fp + "orderId: " + orderId);
+		if(orderId<=0){			
+			//if(this.openOrderList.isEmpty()){
+				//this.orderPlaced = false;
+				return;
+			//}
+		}
+		boolean found = false;
+		if(orderState==null || (
+				(orderState.status().equals(OrderStatus.ApiPending)) ||
+				(orderState.status().equals(OrderStatus.PendingSubmit)) ||
+				(orderState.status().equals(OrderStatus.PreSubmitted)) ||
+				(orderState.status().equals(OrderStatus.Submitted)) ||
+				(orderState.status().equals(OrderStatus.PendingCancel)) ||
+				(orderState.status().equals(OrderStatus.Unknown)) )
+		){
+			//order id > 0, set orderPlaced flag immediately
+			this.setOrderPlaced(true);
+			//this.setBrokerMode(Constants.MODE_CLOSING);
+			
+			for(Order o: this.openOrderList){
+				if(o.orderId()==orderId){
+					lg.debug(fp + " found orderId: " + orderId + " in the list");
+					//found order in the list
+					found = true;
+					break;
+				}
+			}
+			
+			//if found in the list, then ok, do nothing
+			if(!found){
+				this.openOrderList.add(order);
+			}
+		}
+	
 	}
 	
 	public void startTheDay(){
@@ -159,41 +224,56 @@ public class BrokerManager {
 		//m_client.eConnect("127.0.0.1", 4001, 0);  //IB Gateway
 		}
 		lg.trace("Connected");
-	
-		//initialize brokers
-        tMap = new HashMap<>();
-        lg.info("Brokers map initialized");
- 
 		lg.trace("Loading contracts");   
         //load the list of stocks to monitor and start broker threads
-        HashMap<Integer,Contract> stocks = dfac.loadDayList();
-        lg.trace("loaded contract list: " + stocks.size());
+        HashMap<Integer,Contract> contracts = dfac.loadDayList();
+        lg.trace("loaded contract list: " + contracts.size());
+        
+        this.wrapper.setConList(contracts);
 				
-        Iterator<Integer> keys = stocks.keySet().iterator();
+        Iterator<Integer> keys = contracts.keySet().iterator();
         int key;
+        //ForexBroker5min t;
         ForexBroker t;
-        //String sym;
         Contract contract;
-       int i=0;
-       // String sym;
+        int i=0;
         while(keys.hasNext()){
         	key = keys.next();
-        	contract = stocks.get(key);
+        	contract = contracts.get(key);
  	
         	try {
         		t = new ForexBroker(contract,key,dfac,Constants.TFU_MIN, wrapper, this);
         		t.setName("Broker_"+contract.symbol());
         		//lg.trace("created Broker for id " + key);
         	
-        		tMap.put(key, t);
-        		//lg.trace("requesting real time bars for id " + key);
-        	
-        		try {
-        		t.start();
-            	
-            	//realTimeBars(wrapper.getClient(), key, contract);
+        		try {      	
+        		switch(this.operationsMode){    		
+        			case Constants.OPS_MODE_PAPER_LIVE:
+        				//load data for the last available 4 hrs to calibrate
+        				//t.calibrateOnLocalData();
+        				tMap.put(key, t);
+        				t.start();
+        				lg.info("PAPER LIVE operations mode, loading historical data for the last 4 hrs for calibration");
+        				historicalDataRequests(wrapper.getClient(), key, contract);
+        				//wait();
+        				
+        				//lg.info("PAPER LIVE operations mode, requesting real time bars");
+        				//realTimeBars(wrapper.getClient(), key, contract);
+        				break;
+        			case Constants.OPS_MODE_PAPER_HISTORICAL:
+        				tMap.put(key, t);
+        				t.start();
         		//historicalDataRequests(wrapper.getClient(), key, contract);
-        		this.setupBacktestCache(key);
+        			case Constants.OPS_MODE_PAPER_TESTCACHE:
+        				tMap.put(key, t);
+        				t.start();
+        				lg.info("PAPER TESTCACHE operations mode, loading test cache from local database");
+        				this.setupBacktestCache(key);
+        				break;
+        				default:
+        					//not supported Ops mode, do nothing
+        					lg.info("Not supported operations mode, do nothing");
+        		}
         		
             	//for testing only:
             	//nextSnapshot(wrapper.getClient(),key, contract);
@@ -235,7 +315,8 @@ public class BrokerManager {
 		 Iterator<Integer> it = tMap.keySet().iterator();
 		 if(lg.isTraceEnabled())
 		 lg.trace("endTheDay: for each running Broker: ");
-		ForexBroker t;
+		//ForexBroker5min t;
+		 ForexBroker t;
 		 Integer key;
 		 while(it.hasNext()){
 			key = it.next();
@@ -259,15 +340,15 @@ public class BrokerManager {
 		 
 		 try {
 			 //waiting for all to shut down
-				Thread.sleep(7000);
-				 }
-				 catch(InterruptedException ie){lg.error("Caught Interrupted Exception");}
+			Thread.sleep(7000);
+		}
+		catch(InterruptedException ie){lg.error("Caught Interrupted Exception");}
 		 
-		 dfac.cleanUp();
-		 if(lg.isTraceEnabled())
+		dfac.cleanUp();
+		if(lg.isTraceEnabled())
 			  lg.trace("Closed data factory");
-		 tMap.clear();
-		 if(lg.isTraceEnabled())
+		tMap.clear();
+		if(lg.isTraceEnabled())
 			  lg.trace("Cleared the map");
 			
 		this.workingStatus = Constants.WORKING_STATUS_IDLE;
@@ -342,218 +423,76 @@ public class BrokerManager {
 		}
 	}
 	
-	public void setOrderFilled(int orderId, int parentId, int clientId){
-		
-	}
-	
-	
-	private static void orderOperations(EClientSocket client, int nextOrderId) throws InterruptedException {
-		
-		//Requesting the next valid id 
-		//! [reqids]
-        //The parameter is always ignored.
-        client.reqIds(-1);
-        //! [reqids]
-        //Thread.sleep(1000);
-        /*** Requesting all open orders ***/
-        //! [reqallopenorders]
-        client.reqAllOpenOrders();
-        //! [reqallopenorders]
-        //Thread.sleep(1000);
-        /*** Taking over orders to be submitted via TWS ***/
-        //! [reqautoopenorders]
-        client.reqAutoOpenOrders(true);
-        //! [reqautoopenorders]
-        //Thread.sleep(1000);
-        /*** Requesting this API client's orders ***/
-        //! [reqopenorders]
-        client.reqOpenOrders();
-        //! [reqopenorders]
-        //Thread.sleep(1000);
-		
-        /*** Placing/modifying an order - remember to ALWAYS increment the nextValidId after placing an order so it can be used for the next one! ***/
-        //! [order_submission]
-        client.placeOrder(nextOrderId++, ContractSamples.USStock(), OrderSamples.LimitOrder("SELL", 1, 50));
-        //! [order_submission]
-        
-        //! [faorderoneaccount]
-        Order faOrderOneAccount = OrderSamples.MarketOrder("BUY", 100);
-        // Specify the Account Number directly
-        faOrderOneAccount.account("DU119915");
-        client.placeOrder(nextOrderId++, ContractSamples.USStock(), faOrderOneAccount);
-        //! [faorderoneaccount]
-        
-        //! [faordergroupequalquantity]
-        Order faOrderGroupEQ = OrderSamples.LimitOrder("SELL", 200, 2000);
-        faOrderGroupEQ.faGroup("Group_Equal_Quantity");
-        faOrderGroupEQ.faMethod("EqualQuantity");
-        client.placeOrder(nextOrderId++, ContractSamples.USStock(), faOrderGroupEQ);
-        //! [faordergroupequalquantity]
-        
-        //! [faordergrouppctchange]
-        Order faOrderGroupPC = OrderSamples.MarketOrder("BUY", 0); ;
-        // You should not specify any order quantity for PctChange allocation method
-        faOrderGroupPC.faGroup("Pct_Change");
-        faOrderGroupPC.faMethod("PctChange");
-        faOrderGroupPC.faPercentage("100");
-        client.placeOrder(nextOrderId++, ContractSamples.EurGbpFx(), faOrderGroupPC);
-        //! [faordergrouppctchange]
-        
-        //! [faorderprofile]
-        Order faOrderProfile = OrderSamples.LimitOrder("BUY", 200, 100);
-        faOrderProfile.faProfile("Percent_60_40");
-        client.placeOrder(nextOrderId++, ContractSamples.EuropeanStock(), faOrderProfile);
-        //! [faorderprofile]
-        
-		//client.placeOrder(nextOrderId++, ContractSamples.USStock(), OrderSamples.PeggedToMarket("BUY", 10, 0.01));
-		//client.placeOrder(nextOrderId++, ContractSamples.EurGbpFx(), OrderSamples.MarketOrder("BUY", 10));
-        //client.placeOrder(nextOrderId++, ContractSamples.USStock(), OrderSamples.Discretionary("SELL", 1, 45, 0.5));
-		
-        //! [reqexecutions]
-        client.reqExecutions(10001, new ExecutionFilter());
-        //! [reqexecutions]
-        
-        Thread.sleep(10000);
-        
-    }
-	/*
-	private static void OcaSample(EClientSocket client, int nextOrderId) {
-		
-		//OCA order
-		//! [ocasubmit]
-		List<Order> OcaOrders = new ArrayList<Order>();
-		OcaOrders.add(OrderSamples.LimitOrder("BUY", 1, 10));
-		OcaOrders.add(OrderSamples.LimitOrder("BUY", 1, 11));
-		OcaOrders.add(OrderSamples.LimitOrder("BUY", 1, 12));
-		OcaOrders = OrderSamples.OneCancelsAll("TestOCA_" + nextOrderId, OcaOrders, 2);
-		for (Order o : OcaOrders) {
-			
-			client.placeOrder(nextOrderId++, ContractSamples.USStock(), o);
-		}
-		//! [ocasubmit]
-		
-	}
-*/	
-	private static void tickDataOperations(EClientSocket client) throws InterruptedException {
-		
-		/*** Requesting real time market data ***/
-		//Thread.sleep(1000);
-		//! [reqmktdata]
-		client.reqMktData(1001, ContractSamples.StockComboContract(), "", false, null);
-		//! [reqmktdata]
-		
-		//! [reqmktdata_snapshot]
-		client.reqMktData(1003, ContractSamples.FutureComboContract(), "", true, null);
-		//! [reqmktdata_snapshot]
-		
-		//! [reqmktdata_genticks]
-		//Requesting RTVolume (Time & Sales), shortable and Fundamental Ratios generic ticks
-		client.reqMktData(1004, ContractSamples.USStock(), "233,236,258", false, null);
-		//! [reqmktdata_genticks]
-		//! [reqmktdata_contractnews]
-		client.reqMktData(1005, ContractSamples.USStock(), "mdoff,292:BZ", false, null);
-		client.reqMktData(1006, ContractSamples.USStock(), "mdoff,292:BT", false, null);
-		client.reqMktData(1007, ContractSamples.USStock(), "mdoff,292:FLY", false, null);
-		client.reqMktData(1008, ContractSamples.USStock(), "mdoff,292:MT", false, null);
-		//! [reqmktdata_contractnews]
-		//! [reqmktdata_broadtapenews]
-		client.reqMktData(1009, ContractSamples.BTbroadtapeNewsFeed(), "mdoff,292", false, null);
-		client.reqMktData(1010, ContractSamples.BZbroadtapeNewsFeed(), "mdoff,292", false, null);
-		client.reqMktData(1011, ContractSamples.FLYbroadtapeNewsFeed(), "mdoff,292", false, null);
-		client.reqMktData(1012, ContractSamples.MTbroadtapeNewsFeed(), "mdoff,292", false, null);
-		//! [reqmktdata_broadtapenews]
-		//! [reqoptiondatagenticks]
-        //Requesting data for an option contract will return the greek values
-        client.reqMktData(1002, ContractSamples.OptionWithLocalSymbol(), "", false, null);
-        //! [reqoptiondatagenticks]
-		
-		Thread.sleep(10000);
-		//! [cancelmktdata]
-		client.cancelMktData(1001);
-		client.cancelMktData(1002);
-		client.cancelMktData(1003);
-		//! [cancelmktdata]
-		
-	}
-	
-	private static void historicalDataRequests(EClientSocket client, int id, Contract contract) throws InterruptedException {
-		
-		/*** Requesting historical data ***/
-        //! [reqhistoricaldata]
-		Calendar cal = Calendar.getInstance();
-		cal.add(Calendar.MONTH, -6);
-		SimpleDateFormat form = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
-		String formatted = form.format(cal.getTime());
-		client.reqHistoricalData(id, contract, formatted, "1 M", "1 min", "MIDPOINT", 1, 1, null);
-		//Thread.sleep(10000);
-		/*** Canceling historical data requests ***/
-		//client.cancelHistoricalData(id);
-
-		//! [reqhistoricaldata]
-		
-	}
-	/*
-	private static void historicalDataRequests(EClientSocket client) throws InterruptedException {
-		
-		///Requesting historical data 
-        //! [reqhistoricaldata]
-		Calendar cal = Calendar.getInstance();
-		cal.add(Calendar.MONTH, -6);
-		SimpleDateFormat form = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
-		String formatted = form.format(cal.getTime());
-		client.reqHistoricalData(4001, ContractSamples.EurGbpFx(), formatted, "1 M", "1 day", "MIDPOINT", 1, 1, null);
-		client.reqHistoricalData(4002, ContractSamples.EuropeanStock(), formatted, "10 D", "1 min", "TRADES", 1, 1, null);
-		Thread.sleep(2000);
-		/// Canceling historical data requests 
-		client.cancelHistoricalData(4001);
-        client.cancelHistoricalData(4002);
-		//! [reqhistoricaldata]
-		
-	}
-	*/
-	private static void realTimeBars(EClientSocket client, int id, Contract contract) throws InterruptedException {
-		lg.trace("realTimeBars");
-		//Requesting real time bars 
-        //! [reqrealtimebars]
-        client.reqRealTimeBars(id, contract, 5, Constants.BAR_WHAT_TO_SHOW_MIDPOINT, false, null); //Constants.BAR_SIZE  //0
-        //! [reqrealtimebars]
-        //Thread.sleep(5000);
-        // Canceling real time bars will happen on callback 
-        //! [cancelrealtimebars]
-        //client.cancelRealTimeBars(3001);
-        //! [cancelrealtimebars]
-		
-	}
-	
-/*	private static void realTimeBars(EClientSocket client) throws InterruptedException {
-		
-		/// Requesting real time bars 
-        //! [reqrealtimebars]
-        client.reqRealTimeBars(3001, ContractSamples.EurGbpFx(), 5, "MIDPOINT", true, null);
-        //! [reqrealtimebars]
-        //Thread.sleep(5000);
-        /// Canceling real time bars 
-        //! [cancelrealtimebars]
-        //client.cancelRealTimeBars(3001);
-        //! [cancelrealtimebars]
-		
+	/*public synchronized boolean isTradeOpened(){
+		return this.tradeOpened;
 	}*/
 	
-	private static void marketDepthOperations(EClientSocket client) throws InterruptedException {
+	/**
+	 * Callback from wrapper.orderStatus
+	 * @param orderId
+	 * @param parentId
+	 * @param clientId
+	 */
+	public void clearOrder(int orderId) { //, int parentId, int clientId){
+		for(Order o: this.openOrderList){
+			if(o.orderId()==orderId){
+				this.openOrderList.remove(o);
+				break;
+			}
+		}
 		
-		/*** Requesting the Deep Book ***/
-        //! [reqmarketdepth]
-        client.reqMktDepth(2001, ContractSamples.EurGbpFx(), 5, null);
-        //! [reqmarketdepth]
-        Thread.sleep(2000);
-        /*** Canceling the Deep Book request ***/
-        //! [cancelmktdepth]
-        client.cancelMktDepth(2001);
-        //! [cancelmktdepth]
-		
+		//list is empty, trade is closed
+		if(this.openOrderList.isEmpty()){
+			lg.info("setOrderFilled: order list is empty, resetting");
+			//reset 
+			this.orderPlaced = false;
+			//tradeOpened = false;
+			//this.resetBrokerMode();
+		}
+		else {
+			//list is not empty, trade is opened
+			//tradeOpened = true;
+		}
 	}
 	
-	private static void accountOperations(EClientSocket client) throws InterruptedException {
+	/**
+	 * @return the operationsMode
+	 */
+	public int getOperationsMode() {
+		return operationsMode;
+	}
+	
+	private void historicalDataRequests(EClientSocket client, int id, Contract contract) throws InterruptedException {	
+		//int emptyCnt = 0;
+		/*** Requesting historical data ***/
+		Calendar cal = Calendar.getInstance();
+		cal.add(Calendar.HOUR, -4);
+		//SimpleDateFormat form = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
+		//String formatted = form.format(cal.getTime());
+		String formatted = "";
+		//client.reqHistoricalData(id, contract, formatted, "1 D", "1 min", "MIDPOINT", 1, 1, null);
+		//client.reqHistoricalData(id, contract, formatted, "14400 S", "1 min", "MIDPOINT", 1, 1, null);  //144 seconds = 4 hrs
+		//client.reqHistoricalData(id, contract, formatted, "1 D", "5 mins", "MIDPOINT", 1, 1, null);  //285 5 min bars 
+		client.reqHistoricalData(id, contract, formatted, "36000 S", "5 mins", "MIDPOINT", 1, 1, null); //120 5 min bars
+		//client.reqHistoricalData(reqId, contract, endDateTime, durationStr, barSize.toString(), whatToShow.toString(), rthOnly ? 1 : 0, 2, Collections.<TagValue>emptyList() );
+		
+		//boolean progress = true;
+		int maxSize = this.tMap.get(id).getStrategy().getMaxCache();
+		lg.debug("historicalDataRequests: max cache size: " + maxSize);
+		
+		//on the callback from historical data finished requesting real time bars
+		
+		/*** Canceling historical data requests ***/
+		//client.cancelHistoricalData(id);
+	}
+
+	public void realTimeBars(EClientSocket client, int id, Contract contract) throws InterruptedException {
+		lg.trace("realTimeBars");
+		//Requesting real time bars 
+        client.reqRealTimeBars(id, contract, 5, Constants.BAR_WHAT_TO_SHOW_MIDPOINT, false, null); //Constants.BAR_SIZE  //0	
+	}
+	
+	 static void accountOperations(EClientSocket client) throws InterruptedException {
 		
         //client.reqAccountUpdatesMulti(9002, null, "EUstocks", true);
 		//! [reqpositionsmulti]
@@ -614,229 +553,10 @@ public class BrokerManager {
 		//! [cancelpositions]
     }
 	
-	private static void conditionSamples(EClientSocket client, int nextOrderId) {
-		
-		//! [order_conditioning_activate]
-		Order mkt = OrderSamples.MarketOrder("BUY", 100);
-		//Order will become active if conditioning criteria is met
-		mkt.conditionsCancelOrder(true);
-		mkt.conditions().add(OrderSamples.PriceCondition(208813720, "SMART", 600, false, false));
-		mkt.conditions().add(OrderSamples.ExecutionCondition("EUR.USD", "CASH", "IDEALPRO", true));
-		mkt.conditions().add(OrderSamples.MarginCondition(30, true, false));
-		mkt.conditions().add(OrderSamples.PercentageChangeCondition(15.0, 208813720, "SMART", true, true));
-		mkt.conditions().add(OrderSamples.TimeCondition("20160118 23:59:59", true, false));
-		mkt.conditions().add(OrderSamples.VolumeCondition(208813720, "SMART", false, 100, true));
-		client.placeOrder(nextOrderId++, ContractSamples.EuropeanStock(), mkt);
-		//! [order_conditioning_activate]
-		
-		//Conditions can make the order active or cancel it. Only LMT orders can be conditionally canceled.
-		//! [order_conditioning_cancel]
-		Order lmt = OrderSamples.LimitOrder("BUY", 100, 20);
-		//The active order will be cancelled if conditioning criteria is met
-		lmt.conditionsCancelOrder(true);
-		lmt.conditions().add(OrderSamples.PriceCondition(208813720, "SMART", 600, false, false));
-		client.placeOrder(nextOrderId++, ContractSamples.EuropeanStock(), lmt);
-		//! [order_conditioning_cancel]
-		
-	}
-	
-	private static void contractOperations(EClientSocket client) {
-		
-		//! [reqcontractdetails]
-		client.reqContractDetails(210, ContractSamples.OptionForQuery());
-		//! [reqcontractdetails]
-		
-	}
-	
-	private static void contractNewsFeed(EClientSocket client) {
-		
-		//! [reqcontractdetailsnews]
-		client.reqContractDetails(211, ContractSamples.NewsFeedForQuery());
-		//! [reqcontractdetailsnews]
-		
-	}
-	
-	private static void hedgeSample(EClientSocket client, int nextOrderId) throws InterruptedException {
-		
-		//F Hedge order
-		//! [hedgesubmit]
-		//Parent order on a contract which currency differs from your base currency
-		Order parent = OrderSamples.LimitOrder("BUY", 100, 10);
-		parent.orderId(nextOrderId++);
-		//Hedge on the currency conversion
-		Order hedge = OrderSamples.MarketFHedge(parent.orderId(), "BUY");
-		//Place the parent first...
-		client.placeOrder(parent.orderId(), ContractSamples.EuropeanStock(), parent);
-		//Then the hedge order
-		client.placeOrder(nextOrderId++, ContractSamples.EurGbpFx(), hedge);
-		//! [hedgesubmit]
-		
-	}
-	
-	private static void testAlgoSamples(EClientSocket client, int nextOrderId) throws InterruptedException {
-		
-		//! [algo_base_order]
-		Order baseOrder = OrderSamples.LimitOrder("BUY", 1000, 1);
-		//! [algo_base_order]
-		
-		//! [arrivalpx]
-		AvailableAlgoParams.FillArrivalPriceParams(baseOrder, 0.1, "Aggressive", "09:00:00 CET", "16:00:00 CET", true, true);
-		client.placeOrder(nextOrderId++, ContractSamples.USStockAtSmart(), baseOrder);
-		//! [arrivalpx]
-		
-		Thread.sleep(500);
-		
-		//! [darkice]
-		AvailableAlgoParams.FillDarkIceParams(baseOrder, 10, "09:00:00 CET", "16:00:00 CET", true);
-		client.placeOrder(nextOrderId++, ContractSamples.USStockAtSmart(), baseOrder);
-		//! [darkice]
-		
-		Thread.sleep(500);
-		
-		//! [ad]
-		AvailableAlgoParams.FillAccumulateDistributeParams(baseOrder, 10, 60, true, true, 1, true, true, "09:00:00 CET", "16:00:00 CET");
-		client.placeOrder(nextOrderId++, ContractSamples.USStockAtSmart(), baseOrder);
-		//! [ad]
-		
-		Thread.sleep(500);
-		
-		//! [twap]
-		AvailableAlgoParams.FillTwapParams(baseOrder, "Marketable", "09:00:00 CET", "16:00:00 CET", true);
-		client.placeOrder(nextOrderId++, ContractSamples.USStockAtSmart(), baseOrder);
-		//! [twap]
-		
-		Thread.sleep(500);
-		
-		//! [vwap]
-		AvailableAlgoParams.FillVwapParams(baseOrder, 0.2, "09:00:00 CET", "16:00:00 CET", true, true);
-		client.placeOrder(nextOrderId++, ContractSamples.USStockAtSmart(), baseOrder);
-		//! [vwap]
-		
-		Thread.sleep(500);
-		
-		//! [balanceimpactrisk]
-		AvailableAlgoParams.FillBalanceImpactRiskParams(baseOrder, 0.1, "Aggressive", true);
-		client.placeOrder(nextOrderId++, ContractSamples.USOptionContract(), baseOrder);
-		//! [balanceimpactrisk]
-		
-		Thread.sleep(500);
-		
-		//! [minimpact]
-		AvailableAlgoParams.FillMinImpactParams(baseOrder, 0.3);
-		client.placeOrder(nextOrderId++, ContractSamples.USOptionContract(), baseOrder);
-		//! [minimpact]
-		
-		//! [adaptive]
-		AvailableAlgoParams.FillAdaptiveParams(baseOrder, "Normal");
-		client.placeOrder(nextOrderId++, ContractSamples.USStockAtSmart(), baseOrder);
-		//! [adaptive]		
-		
-	}
-	
-	private static void bracketSample(EClientSocket client, int nextOrderId) throws InterruptedException {
-		
-		//BRACKET ORDER
-        //! [bracketsubmit]
-		List<Order> bracket = OrderSamples.BracketOrder(nextOrderId++, "BUY", 100, 30, 40, 20);
-		for(Order o : bracket) {
-			client.placeOrder(o.orderId(), ContractSamples.EuropeanStock(), o);
-		}
-		//! [bracketsubmit]
-		
-	}
-	
-	private static void bulletins(EClientSocket client) throws InterruptedException {
-		
-		//! [reqnewsbulletins]
-		client.reqNewsBulletins(true);
-		//! [reqnewsbulletins]
-		
-		Thread.sleep(2000);
-		
-		//! [cancelnewsbulletins]
-		client.cancelNewsBulletins();
-		//! [cancelnewsbulletins]
-		
-	}
-	
-	private static void reutersFundamentals(EClientSocket client) throws InterruptedException {
-		
-		//! [reqfundamentaldata]
-		client.reqFundamentalData(8001, ContractSamples.USStock(), "ReportsFinSummary");
-		//! [reqfundamentaldata]
-		
-		Thread.sleep(2000);
-		
-		//! [fundamentalexamples]
-		client.reqFundamentalData(8002, ContractSamples.USStock(), "ReportSnapshot"); //for company overview
-		client.reqFundamentalData(8003, ContractSamples.USStock(), "ReportRatios"); //for financial ratios
-		client.reqFundamentalData(8004, ContractSamples.USStock(), "ReportsFinStatements"); //for financial statements
-		client.reqFundamentalData(8005, ContractSamples.USStock(), "RESC"); //for analyst estimates
-		client.reqFundamentalData(8006, ContractSamples.USStock(), "CalendarReport"); //for company calendar
-		//! [fundamentalexamples]
-		
-		//! [cancelfundamentaldata]
-		client.cancelFundamentalData(8001);
-		//! [cancelfundamentaldata]
-		
-	}
-	
-	private static void marketScanners(EClientSocket client) throws InterruptedException {
-		
-		/*** Requesting all available parameters which can be used to build a scanner request ***/
-        //! [reqscannerparameters]
-        client.reqScannerParameters();
-        //! [reqscannerparameters]
-        Thread.sleep(2000);
-
-        /*** Triggering a scanner subscription ***/
-        //! [reqscannersubscription]
-        client.reqScannerSubscription(7001, ScannerSubscriptionSamples.HighOptVolumePCRatioUSIndexes(), null);
-        //! [reqscannersubscription]
-
-        Thread.sleep(2000);
-        /*** Canceling the scanner subscription ***/
-        //! [cancelscannersubscription]
-        client.cancelScannerSubscription(7001);
-        //! [cancelscannersubscription]
-		
-	}
-	
-	private static void testDisplayGroups(EClientSocket client) throws InterruptedException {
-		
-		//! [querydisplaygroups]
-		client.queryDisplayGroups(9001);
-		//! [querydisplaygroups]
-		
-		Thread.sleep(500);
-		
-		//! [subscribetogroupevents]
-		client.subscribeToGroupEvents(9002, 1);
-		//! [subscribetogroupevents]
-		
-		Thread.sleep(500);
-		
-		//! [updatedisplaygroup]
-		client.updateDisplayGroup(9002, "8314@SMART");
-		//! [updatedisplaygroup]
-		
-		Thread.sleep(500);
-		
-		//! [subscribefromgroupevents]
-		client.unsubscribeFromGroupEvents(9002);
-		//! [subscribefromgroupevents]
-		
-	}
-	
-	private static void marketDataType(EClientSocket client) {
-		
-		//! [reqmarketdatatype]
-        /*** Switch to live (1) frozen (2) delayed (3) or delayed frozen (4)***/
-        client.reqMarketDataType(2);
-        //! [reqmarketdatatype]
-		
-	}
-	
+	 public HashMap<Integer,ForexBroker> getTMap(){
+		 return this.tMap;
+	 }
+	 
 	public boolean working(){
 		BufferedReader r =null;
 		int i = 1;
@@ -857,6 +577,7 @@ public class BrokerManager {
 			}
 			catch(Exception e){
 				lg.error("Error parsing working line: " + e.getMessage());
+				//TODO 
 			}
 		}
 		catch(Exception e){
@@ -875,7 +596,7 @@ public class BrokerManager {
 		FileWriter w =null;
 		try{
 			w = new FileWriter(Globals.BASEDIR + Constants.WORKING_FILE,false);
-			w.write("1");
+			w.write(Constants.WORKING_STATUS_ACTIVE);
 		}
 		catch(Exception e){
 			Utils.logError(lg, e);

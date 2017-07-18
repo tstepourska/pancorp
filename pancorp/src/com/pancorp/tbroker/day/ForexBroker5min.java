@@ -1,59 +1,54 @@
 package com.pancorp.tbroker.day;
 
 import java.util.ArrayDeque;
-//import java.util.List;
-import java.util.List;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.pancorp.tbroker.strategy.*;
-import com.pancorp.tbroker.data.DataFactory;
+
 import com.pancorp.tbroker.event.*;
 import com.pancorp.tbroker.indicators.simple.MaxIndicator;
 import com.pancorp.tbroker.indicators.simple.MinIndicator;
 import com.pancorp.tbroker.main.BrokerManager;
 import com.pancorp.tbroker.main.BrokerManagerEWrapperImpl;
-import com.pancorp.tbroker.order.PlaceAttachedOrderPairT;
+import com.pancorp.tbroker.data.DataFactory;
 import com.pancorp.tbroker.order.PlaceOrderBracketT;
-import com.pancorp.tbroker.order.UpdateOrder;
+
 import com.ib.client.Contract;
-import com.ib.client.Order;
-import com.ib.client.OrderType;
-//import com.ib.client.Order;
 import com.pancorp.tbroker.model.*;
-//import com.pancorp.tbroker.util.Calculator;
 import com.pancorp.tbroker.util.Constants;
 import com.pancorp.tbroker.util.Utils;
 
-public class ForexBroker extends Thread 
+public class ForexBroker5min extends Thread 
 {
-	private static Logger lg = LogManager.getLogger(ForexBroker.class); 
+	private Logger lg = LogManager.getLogger(ForexBroker5min.class); 
 	
 	private Contract contract;
 	private int reqId;
 	private DataFactory datafactory;
 	private boolean working = true;
-	//private volatile ArrayDeque<IBar> ticks;
-	volatile ArrayDeque<Candle> candles;
-	//ArrayDeque<IBar> highs;
-	//ArrayDeque<IBar> lows;
-	volatile ArrayDeque<IBar> currentCandle = null;
+
+	ArrayDeque<Candle> candles;
+	ArrayDeque<IBar> highs;
+	ArrayDeque<IBar> lows;
+	ArrayDeque<IBar> currentCandle = null;
 	String tfUnit;
 	long tfFactor = 1; //5 sec
-	MaxIndicator max;
-	MinIndicator min;
-	int timeframeSize = 1;
+	//int periodLong = 21;
+	//int periodShort = 9;
+	int timeframeSize = 5; //1;
 	String timeframeUnit = Constants.TFU_MIN;
 	
-	//StrategyFX1 strategy;
-	//StrategyFX1A strategy;
 	IStrategy strategy;
+	double highestHigh = 0;
+	double lowestLow = 100000;
+
 	double latestClose = 0;
 	private BrokerManagerEWrapperImpl wrapper;
 	private BrokerManager manager;
 	
-	UpdateOrder uo = null;
+	MaxIndicator max;
+	MinIndicator min;
 	
 	/**
 	 * Creates an instance of a stock monitoring thread
@@ -62,8 +57,7 @@ public class ForexBroker extends Thread
 	 * @param df
 	 * @param tfu
 	 */
-	//public Broker(){
-	public ForexBroker(Contract c, int rid, DataFactory df, String tfu, BrokerManagerEWrapperImpl wr, BrokerManager mgr) throws Exception {
+	public ForexBroker5min(Contract c, int rid, DataFactory df, String tfu, BrokerManagerEWrapperImpl wr, BrokerManager mgr) throws Exception {
 		contract = c;
 		reqId = rid;
 		datafactory = df;
@@ -74,8 +68,7 @@ public class ForexBroker extends Thread
 		
 		switch(tfUnit){
 		case Constants.TFU_MIN:
-			tfFactor = Constants.MINUTE;
-			lg.info("tfFactor: " + tfFactor);
+			tfFactor = 5 * Constants.MINUTE;  //5 min
 			break;
 		case Constants.TFU_HOUR:
 			tfFactor = Constants.HOUR;
@@ -85,22 +78,19 @@ public class ForexBroker extends Thread
 			break;
 			default:
 		}
-
+		lg.info("tfFactor: " + tfFactor);
 		this.wrapper = wr;
 		this.manager = mgr;
 
 		//original strategy
 		//this.strategy = new StrategyFX1(); 
 		//this.strategy = new StrategyFX1A(); 
-		//with monitored exit
-		this.strategy = new StrategyFX1B(); 
-		
+		this.strategy = new MAPriceCrossoverStrategy();
 		//subscribe to data
 		this.datafactory.subscribe(this.reqId);
 		
 		//testing only TODo to comment
 		//this.datafactory.fillUpTestCache(this.reqId);
-		
 		max = new MaxIndicator();
 		min = new MinIndicator();
 		
@@ -118,12 +108,10 @@ public class ForexBroker extends Thread
 			tick = null;
 			
 			try {
-				if(datafactory.barCache.get(this.reqId).isEmpty()){
+				if((datafactory.barCache.get(this.reqId)).isEmpty())
 					throw skip;
-				}
 				
-				tick = datafactory.barCache.get(this.reqId).removeLast();
-				
+				tick = (datafactory.barCache.get(this.reqId)).removeLast();			
 				if(tick==null)
 					throw skip;
 
@@ -131,23 +119,11 @@ public class ForexBroker extends Thread
 			}
 			catch(SkipEvent se){
 				try{
-					//if(strategy.isCalibrated() && manager.getOperationsMode()==Constants.OPS_MODE_LIVE_TESTCACHE){
 						Thread.sleep(5000);
-					//}
-					//else
-					//	Thread.sleep(50);
 				}catch(InterruptedException ie){}
 			}
 			catch(Exception e){Utils.logError(lg, e);}
-			finally{
-				try{
-					if(strategy.isCalibrated() && manager.getOperationsMode()==Constants.OPS_MODE_LIVE_TESTCACHE){
-						Thread.sleep(2000);
-					}
-					//else
-					//	Thread.sleep(50);
-				}catch(InterruptedException ie){}
-			}
+			finally{}
 		}
 	}
 	
@@ -157,10 +133,13 @@ public class ForexBroker extends Thread
 	private void add(IBar t) throws Exception {
 		//translate latest tick into a candle
 		String fp = "add: ";
-
+		
+		//lg.debug(fp + ".");
+		
+		//try {
 		//add to current candle tick queue			
 		currentCandle.push(t);
-		//if(lg.isTraceEnabled())
+	//	if(lg.isTraceEnabled())
 		//	lg.trace(fp + "added tick to current candle, size: " + currentCandle.size());
 		//check  the current candle queue size
 		if(currentCandle.size()<tfFactor)	//current candle cache is not full
@@ -192,11 +171,16 @@ public class ForexBroker extends Thread
 			
 		latestClose = t.close();
 		Candle c = new Candle(time,open,latestClose,high,low,t.wap(),volume,t.count());
-
+		
+		//if(lg.isTraceEnabled())
+		//	lg.trace(fp + "latestClose: " + latestClose);
+		
+		/*if(lg.isDebugEnabled()){
+			lg.debug(fp + "newCandle: " + c);
+		}*/
+			
 		//adding it to a day candle queue 
 		candles.push(c);
-		if(lg.isDebugEnabled())
-			lg.debug(fp + "pushed new candle to candles cache, size: " + this.candles.size());
 		
 		//clear current candle cache to start a new candle
 		this.currentCandle.clear();
@@ -204,24 +188,30 @@ public class ForexBroker extends Thread
 		//	lg.trace(fp + "cleared current candle cache to start new candle");
 	
 		//remove extra candle
-		if(candles.size()>=this.strategy.getMaxCache()){
+		if(candles.size()>this.strategy.getMaxCache()){
 			candles.removeLast();
 		}
-
-		try {
-			//if(manager.isOrderPlaced()){
-				//TODO select order status to see if it is filled
-			//	if(manager.isTradeOpened());
-			//		strategy.evaluateExit(candles, manager.getOpenOrderList(), contract, this.latestClose);
-				
-				//if trade is not opened, but order placed, 
-				// do nothing, wait for order to be filled
-			//}
-			//else
-			//	strategy.evaluateEntry(candles);	
-			strategy.evaluate(candles, manager.isOrderPlaced(), false, //manager.isTradeOpened(), 
-					manager.getOpenOrderList(), contract, this.latestClose);
-			//ArrayDeque<Candle> candles, boolean orderPlaced, List<Order> orders, Contract contract, double latestClose5sec
+		
+		if(lg.isDebugEnabled())
+			lg.debug(fp + "pushed new candle to candles cache, size: " + this.candles.size());
+		
+		//recalculate highest high and lowest low
+		/*if(c.high()>highestHigh)
+			highestHigh = c.high();
+		if(c.low()<lowestLow)
+			lowestLow = c.low();
+			*/
+		//highestHigh = max.calculateHighestHighFromCache(candles); // calc.maxHigh(currentCandle);
+		//if(lg.isTraceEnabled())
+		//	lg.trace(fp + "high: " + high);
+		
+		//lowestLow = min.calculateLowestLowFromCache(candles); // calc.minLow(currentCandle);
+		//if(lg.isTraceEnabled())
+		//	lg.trace(fp + "low: " + low);
+		//lg.info("highestHigh: " + highestHigh + ", lowestLow: " + lowestLow);
+		
+		try {		
+			strategy.evaluate(candles, manager.isOrderPlaced(), manager.getOpenOrderList(),  contract, latestClose);
 		}
 		catch(OpenPositionEvent ope){
 			//IB allows up to 15 active orders per contract per side per account.
@@ -244,8 +234,7 @@ public class ForexBroker extends Thread
 					//TODO check quantity against amount in the account
 					try {
 					//placeOrder(currentPattern.getAction(), lmtPrice, Constants.DEFAULT_QUANTITY);	
-				//	PlaceOrderBracketT placeOrderThread = new PlaceOrderBracketT(//wrapper.getCurrentOrderId(), 
-						PlaceAttachedOrderPairT placeOrderThread = new PlaceAttachedOrderPairT(
+					PlaceOrderBracketT placeOrderThread = new PlaceOrderBracketT(//wrapper.getCurrentOrderId(), 
 							this.contract, 					// contract
 							lmtPrice, 						// limit price
 							//calc.calcForexPositionSizeAcctInQuote(acctEquity, contract, riskPercent, stopLossPips, xRate)
@@ -256,11 +245,8 @@ public class ForexBroker extends Thread
 							this.datafactory
 							);
 					placeOrderThread.start();
-					lg.trace("Place order thread started");
-					
-					//reset current pattern
-					//currentPattern = null;
-					//lg.trace("Current pattern reset");
+					lg.trace(fp + "Place order thread started");
+
 					//wait for order to be filled - see callback to wrapper
 					}
 					catch(Exception e){
@@ -269,28 +255,9 @@ public class ForexBroker extends Thread
 				}
 		}
 		catch(ClosePositionEvent cpe){
-			lg.trace("Caught ClosePositionEvent");
-			//List<Order> orders = cpe.getOrderList();
-			double stopPriceToUpdate =(double)Math.round(cpe.getLimitPrice() * 10000d) / 10000d; 
-			//if(orders.size()==1){
-				//only 1 order of type STP
-				//int oid = orders.get(0).orderId();
-				
-				manager.getOpenOrderList().get(0).auxPrice(stopPriceToUpdate);
+			lg.trace(fp + "Caught ClosePositionEvent: NOT IMPLEMENTED YET!");
+			//this.mode = Constants.MODE_OPENING;
 			
-				if(uo==null){
-				uo = new UpdateOrder(
-						//orders.get(0),
-						this.contract, 
-						//stopPriceToUpdate,
-						this.wrapper,
-						//this.manager,
-						this.datafactory
-						);
-				}
-				uo.invoke(manager.getOpenOrderList().get(0)); //pass Order as param
-				//uot.start();
-			//}
 		}
 		/*catch(TradingEvent te){
 				
@@ -301,7 +268,7 @@ public class ForexBroker extends Thread
 			
 		}
 		catch(Exception e){
-			lg.error("Error evaluating candle pattern: " + e.getMessage());
+			lg.error(fp + "Error evaluating candle pattern: " + e.getMessage());
 		}
 	}
 	
@@ -328,6 +295,7 @@ public class ForexBroker extends Thread
 		this.working = working;
 	}
 
+
 	/**
 	 * @return the strategy
 	 */
@@ -338,16 +306,12 @@ public class ForexBroker extends Thread
 	/**
 	 * @param strategy the strategy to set
 	 */
-	public void setStrategy(StrategyFX1 strategy) {
+	public void setStrategy(IStrategy strategy) {
 		this.strategy = strategy;
 	}
 	
-	public synchronized ArrayDeque<Candle> getCache(){
+	public ArrayDeque<Candle> getCache(){
 		return this.candles;
-	}
-	
-	public synchronized ArrayDeque<IBar> getCurrentCandle(){
-		return this.currentCandle;
 	}
 
 	/**
@@ -364,10 +328,6 @@ public class ForexBroker extends Thread
 		this.reqId = reqId;
 	}
 
-	/**
-	 * @param mode the mode to set
-	 */
-
 	public void addHistorical(int reqId, long time, double open, double high, double low, double close, long volume, double wap, int count) throws Exception {
 		//translate latest tick into a candle
 		String fp = "addHistorical: ";
@@ -377,10 +337,6 @@ public class ForexBroker extends Thread
 		candles.push(c);
 		if(lg.isDebugEnabled())
 			lg.debug(fp + "pushed new candle to candles cache, size: " + this.candles.size());
-		
-		//if(candles.size()>=240){
-		//	notify();
-		//}
 	}
 
 }

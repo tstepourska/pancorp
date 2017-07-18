@@ -8,8 +8,8 @@ public enum Globals {
 	
 	///////// IB CONNECTION PROPERTIES ////////////////////
 	//public static int port				 = 7496;	//real trading TWS
-	//public static int port				 = 7497;	//paper trading TWS
-	public static int port				 = 4002;	//IB Gateway paper
+	public static int port				 = 7497;	//paper trading TWS
+	//public static int port				 = 4002;	//IB Gateway paper
 	public static String host            = "127.0.0.1";
 	public static int masterClientId	 = 19640509;
 	public static int paperClientId		 = 19980331;

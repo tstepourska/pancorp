@@ -1,10 +1,6 @@
 package com.pancorp.tbroker.util;
 
-import java.util.GregorianCalendar;
-import java.util.LinkedList;
-import java.util.TimeZone;
-
-import javax.xml.datatype.XMLGregorianCalendar;
+//import javax.xml.datatype.XMLGregorianCalendar;
 
 public enum Constants {
 
@@ -39,7 +35,7 @@ public enum Constants {
 	public static final int DIR_NONE	= 0;
 	
 	//quantity of 5 sec bars in a time frame unit
-    public static final long MIN = 12;  // 1*12;
+    public static final long MINUTE = 12;  // 1*12;
     public static final long HOUR =720; // 1*12*60;
     public static final long DAY = 17280;  //1*12*60*24;
     
@@ -58,9 +54,16 @@ public enum Constants {
 
 	///// modes for ContractFollowingThread
 	// just started, accepting new Ticks, recalculating and making decisions for opening a position
-	public static final int MODE_OPENING			= 1;
+	//public static final int MODE_OPENING			= 1;
 	// have an open position, monitoring it until close, or force to close
-	public static final int MODE_CLOSING			= 0;
+	//public static final int MODE_CLOSING			= 0;
+	
+	public static final int OPS_MODE_LIVE_LIVE			= 0;
+	public static final int OPS_MODE_PAPER_LIVE			= 1;
+	public static final int OPS_MODE_LIVE_TESTCACHE		= 2;
+	public static final int OPS_MODE_PAPER_TESTCACHE	= 3;
+	public static final int OPS_MODE_LIVE_HISTORICAL	= 4;
+	public static final int OPS_MODE_PAPER_HISTORICAL	= 5;
 	
 	public static final int TRIGGER_ACTION_NONE						= -1;
 	public static final int TRIGGER_ACTION_PATTERN_TO_CONFIRM		= 0;
@@ -75,7 +78,7 @@ public enum Constants {
 	public static final int EMA_TYPE_TRUE_RANGE	    = 6;
 	
 	public static final int DEFAULT_QUANTITY		= 100;
-	public static final int DEFAULT_FOREX_QUANTITY		= 20000;
+	public static final int DEFAULT_FOREX_QUANTITY	= 20000;
 	
 	public static final String WORKING_FILE			= "bin/brokermanager.work";
 	
@@ -87,16 +90,21 @@ public enum Constants {
 	 */
 	//public static final double TOTAL_STOP_LOSS_PERCENT = 0.05;
 	
+	public static final double PIPS_PROFIT_TAKER = 0.0019;
+	public static final double PIPS_STOP_LOSS	= 0.0009;
+	
 	/**
 	 * Percent of original amount spent on a single position that will trigger 
 	 * stop loss order; deduct percent that can be lost (usually 0.03-0.07) from 1 (100%)
 	 * TODO   is is the same for long and short positions?
 	 */
+	//TODO - does not comply with good money management!
 	public static final double STOP_LOSS_PERCENT_FACTOR   = 0.975; //allowed to lose up to 2.5%
 	
 	/**
 	 * Percent of original price/amount to trigger take profit order
 	 */
+	//TODO - does not comply with good money management!
 	public static final double TAKE_PROFIT_PERCENT_FACTOR   = 1.0375; //3.75% gain triggers takeProfit order
 	
 	/**

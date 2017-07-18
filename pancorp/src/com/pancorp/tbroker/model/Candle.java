@@ -41,6 +41,7 @@ public class Candle extends Bar implements IBar, Serializable {
 	private double smaPlusDI;
 	private double smaPlusDM;
 	private double smaMinusDM;
+	
 	private double smaClose;
 	
 	private boolean firstInCache = false;
@@ -59,12 +60,13 @@ public class Candle extends Bar implements IBar, Serializable {
 	private double plusDMEma;
 	private double smaTrueRange;
 	
-	private double closeEma;
-	private double emaShort = 0;
-	private double emaLong = 0;
-	//private double smaShort = 0;
-	//private double smaLong = 0;
-	//private double slope = 0;
+	//private double closeEma;
+	private double emaFast = 0;
+	private double emaSlow = 0;
+	private double emaMedium = 0;
+	private double smaFast = 0;
+	private double smaSlow = 0;
+	private double smaMedium = 0;
 	
 	private double williamsR = 0;
 /*
@@ -139,7 +141,7 @@ public class Candle extends Bar implements IBar, Serializable {
 		
 		return sb.toString();
 	}
-	
+	/*
 	public void closeEma(double d){
 		this.closeEma = d;
 	}
@@ -147,7 +149,7 @@ public class Candle extends Bar implements IBar, Serializable {
 	public double closeEma(){
 		return this.closeEma;
 	}
-	
+	*/
 	public void plusDMEma(double d){
 		this.plusDMEma = d;
 	}
@@ -390,44 +392,45 @@ public class Candle extends Bar implements IBar, Serializable {
 	/**
 	 * @return the maShort
 	 */
-	public double emaShort() {
-		return emaShort;
+	public double emaFast() {
+		return emaFast;
 	}
 
 	/**
 	 * @param maShort the maShort to set
 	 */
-	public void emaShort(double maShort) {
-		this.emaShort = maShort;
+	public void emaFast(double f) {
+		this.emaFast = f;
+	}
+	
+	/**
+	 * @return the emaMedium
+	 */
+	public double emaMedium() {
+		return emaMedium;
 	}
 
 	/**
-	 * @return the maLong
+	 * @param emaMedium the emaMedium to set
 	 */
-	public double emaLong() {
-		return emaLong;
+	public void emaMedium(double f) {
+		this.emaMedium = f;
 	}
 
 	/**
-	 * @param maLong the maLong to set
+	 * @return the emaSlow
 	 */
-	public void emaLong(double maLong) {
-		this.emaLong = maLong;
+	public double emaSlow() {
+		return emaSlow;
 	}
 
 	/**
-	 * @return the slope
+	 * @param emaSlow the emaSlow to set
 	 */
-/*	public double slope() {
-		return slope;
-	}*/
+	public void emaSlow(double s) {
+		this.emaSlow = s;
+	}
 
-	/**
-	 * @param slope the slope to set
-	 */
-/*	public void slope(double slope) {
-		this.slope = slope;
-	}*/
 
 	/**
 	 * @return the williamsR
@@ -486,32 +489,47 @@ public class Candle extends Bar implements IBar, Serializable {
 	}
 
 	/**
-	 * @return the smaShort
+	 * @return the smaFast
 	 */
-/*	public double smaShort() {
-		return smaShort;
+	public double smaFast() {
+		return smaFast;
 	}
-*/
-	/**
-	 * @param smaShort the smaShort to set
-	 */
-/*	public void smaShort(double smaShort) {
-		this.smaShort = smaShort;
-	}*/
 
 	/**
-	 * @return the smaLong
+	 * @param smaFast the smaFast to set
 	 */
-/*	public double smaLong() {
-		return smaLong;
-	}*/
+	public void smaFast(double sma) {
+		this.smaFast = sma;
+	}
+	
+	/**
+	 * @return the smaMedium
+	 */
+	public double smaMedium() {
+		return smaMedium;
+	}
 
 	/**
-	 * @param smaLong the smaLong to set
+	 * @param smaMedium the smaMedium to set
 	 */
-/*	public void smaLong(double smaLong) {
-		this.smaLong = smaLong;
-	}*/
+	public void smaMedium(double sma) {
+		this.smaMedium = sma;
+	}
+
+
+	/**
+	 * @return the smaSlow
+	 */
+	public double smaSlow() {
+		return smaSlow;
+	}
+
+	/**
+	 * @param smaSlow the smaSlow to set
+	 */
+	public void smaSlow(double sma) {
+		this.smaSlow = sma;
+	}
 
 	/**
 	 * @return the avgBodyLen

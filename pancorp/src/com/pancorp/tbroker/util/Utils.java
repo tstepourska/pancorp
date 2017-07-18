@@ -145,7 +145,7 @@ public class Utils {
        // String timeframeUnit = "MIN";
         switch(timeframeUnit){
         case "MIN":
-               tfFactor = Constants.MIN;
+               tfFactor = Constants.MINUTE;
                break;
         case "HOUR":
                tfFactor = Constants.HOUR;
@@ -241,7 +241,7 @@ public class Utils {
        // String timeframeUnit = "MIN";
         switch(timeframeUnit){
         case "MIN":
-               tfFactor = Constants.MIN;
+               tfFactor = Constants.MINUTE;
                break;
         case "HOUR":
                tfFactor = Constants.HOUR;
@@ -327,7 +327,7 @@ public class Utils {
        // String timeframeUnit = "MIN";
         switch(timeframeUnit){
         case "MIN":
-               tfFactor = Constants.MIN;
+               tfFactor = Constants.MINUTE;
                break;
         case "HOUR":
                tfFactor = Constants.HOUR;

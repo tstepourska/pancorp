@@ -1,6 +1,7 @@
 package com.pancorp.tbroker.strategy;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -12,11 +13,14 @@ import com.ib.client.Order;
 import com.pancorp.tbroker.event.ClosePositionEvent;
 import com.pancorp.tbroker.event.NotEnoughDataException;
 import com.pancorp.tbroker.indicators.ma.EMA;
+import com.pancorp.tbroker.indicators.ma.SMA;
 //import com.pancorp.tbroker.indicators.oscillators.StochasticOscillatorDIndicator;
 //import com.pancorp.tbroker.indicators.oscillators.StochasticOscillatorKIndicator;
 import com.pancorp.tbroker.indicators.oscillators.StochasticOscillatorD;
 import com.pancorp.tbroker.indicators.oscillators.StochasticOscillatorK;
+import com.pancorp.tbroker.indicators.simple.Fibonacci;
 import com.pancorp.tbroker.model.Candle;
+//import com.pancorp.tbroker.order.UpdateOrderT;
 import com.pancorp.tbroker.util.Constants;
 
 /**
@@ -77,14 +81,20 @@ Trying exit strategy:
  * @author pankstep
  *
  */
-public class StrategyFX1 implements IStrategy 
+public class StrategyFX1B implements IStrategy 
 {
-	private static Logger lg = LogManager.getLogger(StrategyFX1.class); 
+	private static Logger lg = LogManager.getLogger(StrategyFX1B.class); 
 	
 	private boolean calibrated = false;
-	private int emaFastPeriod = 50;
+	//private boolean pivotPointFound = false;
+	private int smaFastPeriod = 3;
+	private int emaMediumPeriod = 50;
 	private int emaSlowPeriod = 100;
 	private static final double EMA_PIP_DIFF = 0.0002;  //2 pips
+	private static final double PRICE_LIMIT_DEV = 0.00005;  
+	private static final double FIB_PERCENT = 0.236;
+	
+	private String openedTradeAction;
 	
 	private int stocKPeriod = 5;
 	private int stocDPeriod = 3;
@@ -101,117 +111,119 @@ public class StrategyFX1 implements IStrategy
 	StochasticOscillatorD stochasticD;
 	
 	private double entryPoint = 0;
-	double highestHigh = 0;
-	double lowestLow = 10000;
+	//TODO - ??actual price or difference from entry??
+	double farthestFromEntry = 0;
+//	double lowest = 10000;
 	EMA ema;
+	SMA sma;
+	boolean mediumAboveSlow = true;
 	
-	public StrategyFX1() { 
+	public StrategyFX1B() { 
 		stochasticK = new StochasticOscillatorK();
 		stochasticD = new StochasticOscillatorD();
-		ema = new EMA(this.emaFastPeriod, this.emaSlowPeriod);
+		ema = new EMA(this.emaMediumPeriod, this.emaSlowPeriod); //50, 100
+		sma = new SMA(); //for smaFastPeriod
+		
+		openedTradeAction = "NONE";
 	}
 	
-	/**
-	 * Not used, for interface only
-	 */
-	public void evaluate(ArrayDeque<Candle> candles, boolean orderPlaced, List<Order> orders, Contract contract, double latestClose5sec) 
+	public void evaluate(ArrayDeque<Candle> candles, boolean orderPlaced, boolean __tradeOpened, List<Order> orders, Contract contract, double latestClose5sec) 
 			throws NotEnoughDataException, OpenPositionEvent, ClosePositionEvent, Exception {
 		String fp = "evaluate: ";
-		lg.trace(fp);
-	}
-
-	/**
-	 * 
-	 */
-	public void evaluateEntry(ArrayDeque<Candle> candles)  throws OpenPositionEvent, NotEnoughDataException, Exception {
-		String fp = "evaluateEntry: ";
-		lg.trace(fp);
-
+		//lg.trace(fp);
+		Candle c = candles.peekFirst();
+		double close = c.close();
+		
 		if(candles.size()<stocKPeriod){
 			lg.debug(fp + "Size less than " + stocKPeriod);
-			fillFastEma(candles.peekFirst());
-			fillSlowEma(candles.peekFirst());
+			fillFastSma(c,close);
+			fillMediumEma(c,close);
+			fillSlowEma(c,close);
 			throw new NotEnoughDataException();
 		}
 		
 		calculateStochastic(candles);
 		lg.debug(fp + "stochasticK: " + candles.peek().stochasticK());
-		
-		if(candles.size()<emaFastPeriod){
-			lg.debug(fp + "Size less than " +emaFastPeriod + ": " + candles.size());
-			fillFastEma(candles.peekFirst());
-			fillSlowEma(candles.peekFirst());
+	
+		//sma3 - for exit only
+		if(candles.size()<smaFastPeriod){
+			lg.debug(fp + "Size less than smaFastPeriod " +smaFastPeriod + ": " + candles.size());
+			fillFastSma(c,close);
+			fillMediumEma(c,close);
+			fillSlowEma(c,close);
 			throw new NotEnoughDataException();
-		}
+		}	
+		double sma3 = sma.calculateClose(candles,smaFastPeriod); 
+		lg.debug(fp + "sma3: " + sma3);
+		candles.peekFirst().smaFast(sma3);
 		
-		double ema50 = ema.calculateFastClose(candles); //calc.calcForexEmaShortClose(emaFastPeriod, candles);
+		if(candles.size()<emaMediumPeriod){
+			lg.debug(fp + "Size less than " +emaMediumPeriod + ": " + candles.size());
+			fillMediumEma(c,close);
+			fillSlowEma  (c,close);
+			throw new NotEnoughDataException();
+		}	
+		double ema50 = ema.calculateMediumClose(candles, emaMediumPeriod); //calc.calcForexEmaShortClose(emaFastPeriod, candles);
 		lg.debug(fp + "ema50: " + ema50);
-		//candles.peek().emaFast(ema50);
 		
 		if(candles.size()<emaSlowPeriod){		
 			lg.debug(fp + "Size less than " +emaSlowPeriod + ": " + candles.size());
-			fillSlowEma(candles.peekFirst());
+			fillSlowEma(c,close);
 			throw new NotEnoughDataException();
 		}
-
 		double ema100 = ema.calculateSlowClose(candles); // calc.calcForexEmaLongClose(emaSlowPeriod, candles);
 		lg.debug(fp + "ema100: " + ema100);
-		//candles.peek().emaSlow(ema100);	
-
+		
 		if(!calibrated){
 			calibrated = true;
 			lg.info(fp + "set calibrated=true");
 		}
 		
-		//OpenPositionEvent event = null;
-		Candle curr = null;
-		//previous candle		
-		Candle prev = null;
-		Candle secondPrev = null;
-				
-	/*	if(candles.size()<3){
-			local3Cache.push(candles.peek());
-			throw new NotEnoughDataException();
-		}*/
+		if(orderPlaced){		
+			//if(tradeOpened)
+				evaluateExit(candles, orders, contract, latestClose5sec);
+		}
+		else{
+			evaluateEntry(candles, ema100, ema50);
+		}
+	}
+
+	/**
+	 * 
+	 */
+	private void evaluateEntry(ArrayDeque<Candle> candles, double ema100, double ema50)  throws OpenPositionEvent, NotEnoughDataException, Exception {
+		String fp = "evaluateEntry: ";
+		lg.trace(fp);
 
 		//temporary remove newly added candle to be able to check previous candle(s)
-		curr = candles.pop();
-		prev 		= candles.pop();	
-		secondPrev = candles.peek();  //did not remove
-		
-		//do not eliminate, for checking previous candles at least one condition not met
-		//if(sk > stocOversold || sk < stocOverbought){
-			//TODO reset any flags or patterns here
-		//	return null;
-		//}
-		
-		//double prevSK = candles.peek().stochasticK();
-		//if(lg.isTraceEnabled())
-		//	lg.trace(fp + "popped latest candle, calc: " + this.calc);
+		Candle curr = candles.pop();
+		Candle prev 		= candles.pop();	
+		Candle secondPrev = candles.peek();  //did not remove
 
 		//don't forget to put pack popped candles!
 		candles.push(prev);
 		candles.push(curr);
 		
-		/////////////////
-		
-			lg.info("fast sma50 "+curr.smaFast()+",  slow sma100 " + curr.smaSlow());
+		/////////////////	
+		lg.info("fast sma50 "+curr.emaMedium()+",  slow sma100 " + curr.smaSlow());
 		////////////////
 
 		//looking for a long entry (confirmed)
 		if(ema50 > ema100) {// &&  (ema50 - ema100) >= EMA_PIP_DIFF){ //fast ema is above slow ema by at least 2 pips
-			lg.info("fast ema50 "+ema50+" is above slow ema100 " + ema100);
+			mediumAboveSlow = true;
+			lg.info("medium ema50 "+ema50+" is above slow ema100 " + ema100);
 			checkLongEntry(curr, prev,secondPrev);
 		}
 		//looking for a short entry (confirmed)
 		else if(ema50 < ema100) { // && (ema100 - ema50) >= EMA_PIP_DIFF){ //fast ema is below slow ema by at least 2 pips
-			lg.info("fast ema50 "+ ema50+" is BELOW slow ema100 "+ema100);
+			mediumAboveSlow = false;
+			lg.info("medium ema50 "+ ema50+" is BELOW slow ema100 "+ema100);
 			checkShortEntry(curr, prev,secondPrev);
 		}
+		else {//ema50==ema100
 		
-		//return null; 
+		}
 	}
-	
 	
 	private void calculateStochastic(ArrayDeque<Candle> cc) throws NotEnoughDataException, Exception {
 		if(cc==null || cc.size()<stocKPeriod)
@@ -224,17 +236,21 @@ public class StrategyFX1 implements IStrategy
 	    cc.peekFirst().stochasticD(D);	
 	}
 	
-	private void fillFastEma(Candle c){
-		double close = c.close();
-		c.emaFast(close);
-		c.smaFast(close);
-		lg.trace("Filled fast ema with close value");
+	private void fillFastSma(Candle c, double cl){
+		c.emaFast(cl);
+		c.smaFast(cl);
+		lg.trace("Filled fast sma with close value");
 	}
 	
-	private void fillSlowEma(Candle c){
-		double close = c.close();
-		c.emaSlow(close);
-		c.smaSlow(close);
+	private void fillMediumEma(Candle c, double cl){
+		c.emaMedium(cl);
+		c.smaMedium(cl);
+		lg.trace("Filled medium ema with close value");
+	}
+	
+	private void fillSlowEma(Candle c, double cl){
+		c.emaSlow(cl);
+		c.smaSlow(cl);
 		lg.trace("Filled slow ema with close value");
 	}
 
@@ -257,7 +273,8 @@ public class StrategyFX1 implements IStrategy
 			//prevEma50 = prev.emaShort();
 			//prevEma100 = prev.emaLong();
 			
-			if(prevStochasticK > 0 && prevStochasticK < this.stocOversold){ 
+			if(//prevStochasticK > 0 && 
+					prevStochasticK < this.stocOversold){ 
 				createOpenLongPositionEvent(curr);
 			}
 		}
@@ -280,92 +297,130 @@ public class StrategyFX1 implements IStrategy
 			prevStochasticK = prev.stochasticK();
 			lg.debug(fp + "prevStochasticK: " + prevStochasticK);
 		
-			if(prevStochasticK <=100 && prevStochasticK > this.stocOverbought){ 
+			if(//prevStochasticK <=100 && 
+					prevStochasticK > this.stocOverbought){ 
 				createOpenShortPositionEvent(curr);
 			}
 		}
 		
 		return openShort;
 	}
+
+	public void evaluateExit(ArrayDeque<Candle> candles, List<Order> orders, Contract contract, double latestClose5sec)  throws ClosePositionEvent, NotEnoughDataException, Exception {
+		String fp = "evaluateExit: ";
+		lg.debug(fp);
+		
+		//temporary remove newly added candle to be able to check previous candle(s)
+		Candle curr 		= candles.peekFirst(); //.pop();
+	//	Candle prev 		= candles.peekFirst(); //.pop();	
+	//	Candle secondPrev 	= candles.peekFirst();  //did not remove
+		//don't forget to put pack popped candles!
+		//candles.push(prev);
+		//candles.push(curr);
+		
+		double currSmaFast = curr.smaFast();
+	//	double prevSmaFast = prev.smaFast();
+	///	double secondPrevSmaFast = secondPrev.smaFast();
+		double fibPrice = 0;
+		double close = curr.close();
+
+		//get action of the parent order
+		String action = orders.get(0).getAction();
+		lg.info(fp + "action: " + action);
+
+		switch(this.openedTradeAction){
+		case Constants.ACTION_BUY: //looking for sell exit
+			/*if(prevSmaFast > currSmaFast && prevSmaFast > secondPrevSmaFast){
+				//prev is a high pivot point 
+			}
+			else if(prevSmaFast > currSmaFast && prevSmaFast > secondPrevSmaFast){
+				//prev is a low pivot point 
+			}*/
+			//check farthest from entry point (max)
+			if(currSmaFast>this.farthestFromEntry){ 
+				//set max and keep going
+				this.farthestFromEntry = currSmaFast;
+				lg.info("New high point: " + this.farthestFromEntry);
+			}
+			else{
+				fibPrice = Fibonacci.getRetracement(Constants.DIR_WHITE, close, this.entryPoint, FIB_PERCENT);
+				lg.info(fp + "fibPrice: " + fibPrice);
+				if(close > fibPrice){
+					//keep going
+					lg.info(fp + "close " + close + " is higher than fibPrice " + fibPrice + ", OK");
+				}
+				else {
+					//price less than retracement percent, sell
+					lg.info(fp + "close " + close + " is equal or lower than fibPrice " + fibPrice + ", selling");
+					this.createCloseLongPositionEvent(curr,orders,contract);
+				}
+			}
+	
+			break;
+		case Constants.ACTION_SELL:  //looking for buying exit
+			/*if(prevSmaFast > currSmaFast && prevSmaFast > secondPrevSmaFast){
+				//prev is a high pivot point 
+			}
+			else if(prevSmaFast > currSmaFast && prevSmaFast > secondPrevSmaFast){
+				//prev is a low pivot point 
+			}*/
+			//check farthest from entry point (max)
+			if(currSmaFast<this.farthestFromEntry){ 
+				//set max and keep going
+				this.farthestFromEntry = currSmaFast;
+				lg.info("New low point: " + this.farthestFromEntry);
+			}
+			else{
+				//TODO check 
+				fibPrice = Fibonacci.getRetracement(Constants.DIR_BLACK, close, this.entryPoint, FIB_PERCENT);
+				if(close > fibPrice){
+					//keep going
+					lg.info(fp + "close " + close + " is lower than fibPrice " + fibPrice + ", OK");
+				}
+				else {
+					//price less than retracement percent, sell
+					lg.info(fp + "close " + close + " is equal or higher than fibPrice " + fibPrice + ", buying");
+					this.createCloseShortPositionEvent(curr,orders,contract);
+				}
+			}
+			break;
+			default:
+		}
+	}
 	
 	private void createOpenLongPositionEvent(Candle c) throws OpenPositionEvent {
-		OpenPositionEvent event = new OpenPositionEvent(Constants.ACTION_BUY, c.close());
-		this.entryPoint = c.close();
+		this.entryPoint = c.close()+PRICE_LIMIT_DEV;
+		OpenPositionEvent event = new OpenPositionEvent(Constants.ACTION_BUY, this.entryPoint);	
 		lg.debug("createOpenLongPositionEvent: throwing OpenPositionEvent: " + event.getAction() + " at " + event.getLimitPrice());
+		
+		openedTradeAction = Constants.ACTION_BUY;
+		this.farthestFromEntry = 0;
 		throw event;
 	}
 	
 	private void createOpenShortPositionEvent(Candle c) throws OpenPositionEvent {
-		//OpenPositionEvent event = new OpenPositionEvent(Constants.ACTION_SSHORT, c.close());
-		this.entryPoint = c.close();
-		OpenPositionEvent event = new OpenPositionEvent(Constants.ACTION_SELL, c.close());
+		this.entryPoint =  c.close()-PRICE_LIMIT_DEV;
+		OpenPositionEvent event = new OpenPositionEvent(Constants.ACTION_SELL,this.entryPoint);
 		lg.debug("createOpenShortPositionEvent: throwing OpenPositionEvent: " + event.getAction() + " at " + event.getLimitPrice());
+		
+		openedTradeAction = Constants.ACTION_SELL;
+		this.farthestFromEntry = 10000;
 		throw event;
 	}
 	
-	public void evaluateExit(ArrayDeque<Candle> candles, List<Order> orders, Contract contract, double latestClose5min)  throws ClosePositionEvent, NotEnoughDataException, Exception {
-		String fp = "evaluateExit: ";
-		lg.debug(fp);
-		/*if(candles.size()>=maxCache){
-			candles.removeLast();
-		}*/
-		
-		if(candles.size()<stocKPeriod){
-			lg.debug(fp + "Size less than " + stocKPeriod);
-			fillFastEma(candles.peekFirst());
-			fillSlowEma(candles.peekFirst());
-			throw new NotEnoughDataException();
-		}
-		
-		calculateStochastic(candles);
-		lg.debug(fp + "stochasticK: " + candles.peek().stochasticK());
-		
-		if(candles.size()<emaFastPeriod){
-			lg.debug(fp + "Size less than " +emaFastPeriod + ": " + candles.size());
-			fillFastEma(candles.peekFirst());
-			fillSlowEma(candles.peekFirst());
-			throw new NotEnoughDataException();
-		}
-		
-		double ema50 = ema.calculateFastClose(candles); //calc.calcForexEmaShortClose(emaFastPeriod, candles);
-		lg.debug(fp + "ema50: " + ema50);
-		//candles.peek().emaFast(ema50);
-		
-		if(candles.size()<emaSlowPeriod){		
-			lg.debug(fp + "Size less than " +emaSlowPeriod + ": " + candles.size());
-			fillSlowEma(candles.peekFirst());
-			throw new NotEnoughDataException();
-		}
+	private void createCloseLongPositionEvent(Candle c, List<Order> orders, Contract contract) throws ClosePositionEvent {
+		ClosePositionEvent event = new ClosePositionEvent(Constants.ACTION_SELL, c.close()-PRICE_LIMIT_DEV); //dev value is a tad lower than closing
+		event.setOrderList(orders);
+		lg.debug("createCloseLongPositionEvent");//: throwing ClosePositionEvent: " + event.getAction() + " at " + event.getLimitPrice());
 
-		double ema100 = ema.calculateSlowClose(candles); // calc.calcForexEmaLongClose(emaSlowPeriod, candles);
-		lg.debug(fp + "ema100: " + ema100);
-		//candles.peek().emaSlow(ema100);	
-
-		if(!calibrated){
-			if(candles.size()>=this.emaSlowPeriod){
-				calibrated = true;
-				lg.info(fp + "set calibrated=true");
-			}
-		}
-		
-		//get action of the parent order
-		String action = orders.get(0).getAction();
-		lg.info(fp + "action: " + action);
-		
-		Candle c = candles.peek();
-		
-		switch(action){
-		case Constants.ACTION_BUY:
-		//recalculate highest high and lowest low
-		if(c.high()>highestHigh)
-			highestHigh = c.high();
-		break;
-		case Constants.ACTION_SELL:
-		if(c.low()<lowestLow)
-			lowestLow = c.low();
-		lg.info("highestHigh: " + highestHigh + ", lowestLow: " + lowestLow);
-		break;
-		}
+		throw event;
+	}
+	
+	private void createCloseShortPositionEvent(Candle c, List<Order> orders, Contract contract) throws ClosePositionEvent {
+		ClosePositionEvent event = new ClosePositionEvent(Constants.ACTION_BUY, c.close()+PRICE_LIMIT_DEV); //dev value is a tad higher than closing
+		event.setOrderList(orders);
+		lg.debug("createCloseShortPositionEvent: throwing ClosePositionEvent: " + event.getAction() + " at " + event.getLimitPrice());
+		throw event;
 	}
 
 	/**
@@ -398,13 +453,19 @@ public class StrategyFX1 implements IStrategy
 	
 	public void resetStrategy(){
 		this.entryPoint = 0;
+		this.farthestFromEntry = 0;
+		//this.pivotPointFound = false;
+	}
+
+	@Override
+	public void evaluateEntry(ArrayDeque<Candle> candles) throws OpenPositionEvent, ClosePositionEvent, Exception {
+		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void evaluate(ArrayDeque<Candle> candles, boolean orderPlaced, boolean tradeOpened, List<Order> orders,
-			Contract contract, double latestClose5min)
-			throws NotEnoughDataException, OpenPositionEvent, ClosePositionEvent, Exception {
+	public void evaluate(ArrayDeque<Candle> candles, boolean orderPlaced, List<Order> orders, Contract contract,
+			double latestClose5min) throws NotEnoughDataException, OpenPositionEvent, ClosePositionEvent, Exception {
 		// TODO Auto-generated method stub
 		
 	}

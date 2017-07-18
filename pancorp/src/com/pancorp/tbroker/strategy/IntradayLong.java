@@ -22,8 +22,8 @@ public class IntradayLong {
 	public static boolean maShortAboveLong(Candle newCandle){
 		boolean buy = false;
 		
-		if(newCandle.close() > newCandle.emaShort() && //> 1.10  &&		//price is above sma //at least by 10%
-			newCandle.emaShort() > newCandle.emaLong() && //> 1.10	&&	//sma (short)> ema (long) //at least by 10%
+		if(newCandle.close() > newCandle.emaFast() && //> 1.10  &&		//price is above sma //at least by 10%
+			newCandle.emaFast() > newCandle.emaSlow() && //> 1.10	&&	//sma (short)> ema (long) //at least by 10%
 			newCandle.getBody_len()<=0.05						// doji within 3 candles
 												// hummer within 3 candles
 												// 3 line strike
@@ -38,17 +38,16 @@ public class IntradayLong {
 	 *  Trend following:
 	 *  
  	 *   * -->Locate stock that breaking out up(down) strongly 
-	30 	 * -->Select 2 SMA to apply to the chart (ex. 5 and 10) 
-	31 	 * -->Make sure price has not been touching the 5 SMA or 10 SMA excessively in the last 10 bars 
-	32 	 * -->Wait for the price to close above(below) both moving averages in the counter direction  
-	33 	 * of the primary trend on the SAME BAR 
-	34 	 * -->Enter the trade on the next bar 
+	 	 * -->Select 2 SMA to apply to the chart (ex. 5 and 10) 
+	 	 * -->Make sure price has not been touching the 5 SMA or 10 SMA excessively in the last 10 bars 
+	 	 * -->Wait for the price to close above(below) both moving averages in the counter direction of the primary trend on the SAME BAR 
+	 	 * -->Enter the trade on the next bar 
 	 */
 	public static boolean ilMaCrossover(ArrayDeque<IBar> candles){
 		boolean buy = false;
 		//int n = 3;
 		if(lastNCandlesCrossoverPercent(candles, 3) &&	//at least last 3 candles crossover short SMA/EMA to above long SMA/EMA //- 10%
-		   lastNCandlesNotTouchingBothMa(candles, 10) &&	//last 10 candles close, low, open >= short SMA/EMA AND >= long SMA/EMA
+		   lastNCandlesNotTouchingBothMa(candles, 10) &&	//last 10 candles close, low, open > short SMA/EMA AND > long SMA/EMA
 			closeAboveOnBlack(candles)	//trend is up, close above short SMA/EMA and long SMA/EMA on the last BLACK! candle
 		){
 			buy = true;
@@ -66,7 +65,7 @@ public class IntradayLong {
 		
 		for(int i=0;i<n;i++){
 			c = (Candle)it.next();
-			b = c.emaShort()>c.emaLong();
+			b = c.emaFast()>c.emaSlow();
 			if(!b)
 				break;
 		}
@@ -90,8 +89,8 @@ public class IntradayLong {
 			open = c.open();
 			close = c.close();
 			low = c.low();
-			maShort = c.emaShort();
-			maLong = c.emaLong();
+			maShort = c.emaFast();
+			maLong = c.emaSlow();
 			
 			b = open>maShort && close>maShort && low > maShort && open>maLong && close>maLong && low > maLong;
 			
@@ -106,7 +105,7 @@ public class IntradayLong {
 		boolean b = false;
 		Candle c = (Candle)candles.peekFirst();
 		
-		if(c.close()>c.emaShort() && c.close()>c.emaLong() && c.getDirection()==Constants.DIR_BLACK);
+		if(c.close()>c.emaFast() && c.close()>c.emaSlow() && c.getDirection()==Constants.DIR_BLACK);
 			b= true;
 		
 		return b;

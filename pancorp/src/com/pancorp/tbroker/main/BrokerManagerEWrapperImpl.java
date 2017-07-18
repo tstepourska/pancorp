@@ -1,40 +1,31 @@
 package com.pancorp.tbroker.main;
 
-import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.ib.client.Contract;
-import com.ib.client.ContractDetails;
 import com.ib.client.EClientSocket;
 import com.ib.client.EJavaSignal;
 import com.ib.client.EReaderSignal;
 import com.ib.client.EWrapper;
 import com.ib.client.Order;
 import com.ib.client.OrderState;
-//import com.ib.controller.Bar;
 import com.ib.client.TickType;
 import com.pancorp.tbroker.adapter.AbstractMarketScannerEWrapperAdapter;
-//import com.pancorp.tbroker.data.MarketScanDataFactory;
-//import com.pancorp.tbroker.data.MarketScanDataFactory.ScannerLine;
-import com.pancorp.tbroker.day.DataFactory;
+import com.pancorp.tbroker.data.DataFactory;
 import com.pancorp.tbroker.model.DataTick;
 import com.pancorp.tbroker.util.Constants;
-//import com.pancorp.tbroker.day.*;
-//import com.pancorp.tbroker.model.*;
 import com.pancorp.tbroker.util.Globals;
 import com.pancorp.tbroker.util.Utils;
+import com.pancorp.tbroker.order.PlaceOrderBracketT;
 
 //! [ewrapperimpl]
 public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdapter implements EWrapper {
 	private static Logger lg = LogManager.getLogger(BrokerManagerEWrapperImpl.class);
-	
-	//! [ewrapperimpl]
 	
 	//! [socket_declare]
 	private EReaderSignal readerSignal;
@@ -127,6 +118,7 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 		if(lg.isTraceEnabled())
 			lg.trace("RealTimeBars. " + reqId + " - Time: " + time + ", Open: " + open + ", High: " + high + ", Low: " + low + ", Close: " + close + ", Volume: " + volume + ", Count: " + count + ", WAP: " + wap);
 
+		
 		dfac.recordTick(reqId, time, open, high, low, close, volume, wap, count);
 	}
 	
@@ -138,30 +130,34 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 		lg.info("OrderStatus: Id: "+orderId+", Status: "+status+", Filled"+filled+", Remaining: "+remaining
                 +", AvgFillPrice: "+avgFillPrice+", PermId: "+permId+", ParentId: "+parentId+", LastFillPrice: "+lastFillPrice+
                 ", ClientId: "+clientId+", WhyHeld: "+whyHeld);
-		
+
+		//update local database
 		int sqlStatus = dfac.updateOrder(orderId, status, filled, remaining, avgFillPrice, permId, parentId, lastFillPrice, clientId, whyHeld);
-		lg.info("orderStatus: database updated: " + sqlStatus);
+		lg.info("orderStatus: order updated: " + sqlStatus + " to status " + status);
 		//TODO
 		switch(status){
 		case "PreSubmitted":
 			break;
 		case "Filled":
 			//TODO call back to PlaceOrderThread or Manager to reset operations mode and other properties
-			manager.setOrderFilled(orderId, parentId, clientId);
+			manager.clearOrder(orderId); //, parentId, clientId);  //update BrokerManager list
 			break;
 		case "Cancelled":
-			manager.setOrderPlaced(false);
+			manager.clearOrder(orderId); //, parentId, clientId);  //update BrokerManager list
 			break;
 		case "ApiPending":
 			break;
 		case "ApiCancelled":
+			manager.clearOrder(orderId);
 			//TODO this one?
 			break;
 		case "PendingCancel":
 			break;
 		case "Submitted":
+			manager.orderStatusCallback(orderId,status, permId, parentId,clientId);
 			break;
 		case "Inactive":
+			manager.clearOrder(orderId);
 			break;
 		case "PendingSubmit":
 			break;
@@ -193,12 +189,14 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 		"\ninitMargin=" + orderState.initMargin()+
 		"\nmaintMargin="+orderState.maintMargin()+
 		"\nwarning="+orderState.warningText()+
-		"\nactiveStartDate: " + order.activeStartTime()
+		"\nactiveStartTime: " + order.activeStartTime()
 		);
 		
-		//TODO update order
-		//int sqlStatus = dfac.insertOrder(Globals.paperClientId, orderId, contract, order, orderState);
-		//lg.info("openOrder: inserted: " + sqlStatus);
+		//update in manager
+		this.manager.openOrderCallback(orderId, contract, order, orderState);
+		// update order in local database
+		int sqlStatus = dfac.updateOrder(orderId, contract, order, orderState);		
+		lg.info("openOrder: updated: " + sqlStatus);
 		
 		/*
 		order.account();
@@ -334,9 +332,7 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 	//! [openorderend]
 	@Override
 	public void openOrderEnd() {
-		lg.info("OpenOrderEnd");
-		
-		
+		lg.info("OpenOrderEnd");	
 	}
 	//! [openorderend]
 
@@ -353,10 +349,25 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 	//! [error]
 	@Override
 	public void error(int id, int errorCode, String errorMsg) {
+		List<Order> ol = null;
 		if(id==-1){
 			//not actually an error but a message
 			lg.info("Code: " + errorCode + ", Msg: " + errorMsg);
 			switch(errorCode){
+			case 504: //Not Connected (so order has ot been submitted, remove from the list and reset)
+				ol = this.manager.getOpenOrderList();
+				if(ol!=null && !ol.isEmpty()){
+				for(Order o : ol){
+					if(id==o.orderId()){
+						//update order status in database
+						this.dfac.updateOrder(id, "Error", 0, 0, 0, 0, 0, 0, Globals.paperClientId, null);
+						//remove order from the list
+						manager.clearOrder(id);//.getOpenOrderList().remove(o);
+					}
+				}
+				lg.info("Due to code 504 orders not submitted and have been deleted from the list");
+				}
+				break;
 			case 507:
 				this.clientSocket.eDisconnect();
 				System.exit(507);
@@ -372,8 +383,12 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 				this.manager.nextSnapshot(this.clientSocket,this.conList);
 			}
 			break;
+		case 202:  //Order Cancelled
+			dfac.updateOrder(id, "Cancelled", 0, 0, 0, 0, 0, 0, 0, null);
+			manager.orderCancelledCallback(id);
+			break;
 		case 110:  //The price does not conform to the minimum price variation for this contract.
-			List<Order> ol = this.manager.getOpenOrderList();
+			ol = this.manager.getOpenOrderList();
 			for(Order o : ol){
 				if(id==o.orderId()){
 					//update order status in database
@@ -383,14 +398,15 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 					
 					//reset mode to opening to allow open new position
 					if(manager.getOpenOrderList().isEmpty())
-						manager.resetBrokerMode();
+						manager.setOrderPlaced(false); //.resetBrokerMode();
 					break;
 				}
 			}
+			lg.info("Due to code 110 orders not submitted and have been deleted from the list");
 			break;
 		case 135:  //Can't find order with id = <>  - (parent order does not exist)
-			List<Order> ol2 = this.manager.getOpenOrderList();
-			for(Order o : ol2){
+			ol = this.manager.getOpenOrderList();
+			for(Order o : ol){
 				if(id==o.orderId()){
 					//update order status in database
 					this.dfac.updateOrder(id, "Error", 0, 0, 0, 0, 0, 0, Globals.paperClientId, null);
@@ -399,10 +415,59 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 					
 					//reset mode to opening to allow open new position
 					if(manager.getOpenOrderList().isEmpty())
-						manager.resetBrokerMode();
+						manager.setOrderPlaced(false); //.resetBrokerMode();
 					break;
 				}
 			}
+			lg.info("Due to code 135 orders not submitted and have been deleted from the list");
+			break;
+		case 399://Order Message: SELL 7K EUR.USD Forex Warning: Your order size is below the EUR 20000 IdealPro minimum and will be routed as an odd lot order.
+			break;
+		case 403:  // Code: 403, Msg: Invalid Stop Price
+			ol = this.manager.getOpenOrderList();
+			int parentID = 0;
+			for(Order o : ol){
+				if(id==o.orderId()){
+					parentID = o.parentId();
+					lg.info("removing order with ID " + id);
+					//update order status in database
+					this.dfac.updateOrder(id, "Error", 0, 0, 0, 0, 0, 0, Globals.paperClientId, null);
+					//remove order from the list
+					manager.clearOrder(id);//.getOpenOrderList().remove(o);
+					break;
+					//reset mode to opening to allow open new position
+					//if(manager.getOpenOrderList().isEmpty())
+					//	manager.resetBrokerMode();
+					//break;
+				}
+			}
+			for(Order o : ol){
+				if(o.parentId()==parentID){
+					lg.info("removing child of order " +parentID+ ", order with ID " + id);
+					int cho = o.orderId();
+					//TODO submit cancellation to IB
+					//update order status in database
+					this.dfac.updateOrder(cho, "Cancelled", 0, 0, 0, 0, 0, 0, Globals.paperClientId, null);
+					manager.clearOrder(cho);
+				}
+			}
+			break;
+		case 504: // Not connected (so order has not been submitted, need  to reset)
+			ol = this.manager.getOpenOrderList();
+			for(Order o : ol){
+				if(id==o.orderId()){
+					//update order status in database
+					this.dfac.updateOrder(id, "Error", 0, 0, 0, 0, 0, 0, Globals.paperClientId, null);
+					//remove order from the list
+					manager.clearOrder(id);//.getOpenOrderList().remove(o);
+					
+					//reset mode to opening to allow open new position
+					//if(manager.getOpenOrderList().isEmpty())
+					//	manager.resetBrokerMode();
+					//break;
+				}
+			}
+			lg.info("Due to code 504 orders not submitted and have been deleted from the list");
 			default:
 				
 		}
@@ -488,20 +553,39 @@ public class BrokerManagerEWrapperImpl extends AbstractMarketScannerEWrapperAdap
 	        long time = 0;
 	        
 	        try {
-	        java.util.Date parsedDate = formatter.parse(date);
+	        	if(date!=null && date.indexOf("finished")>=0){
+	        		lg.info("Finished collecting historical data");
+	        		historicalDataEnd(reqId);//, startDateStr, endDateStr);;
+	        		lg.info("After historicalDataEnd; returning..");
+
+	        		return;
+	        	}
+	        		
+	        	java.util.Date parsedDate = formatter.parse(date);
 	        	time = parsedDate.getTime();
+	        	 // dfac.recordTick(reqId, time, open, high, low, close, volume, wap, count);
+	        	manager.tMap.get(reqId).addHistorical(reqId, time, open, high, low, close, volume, wap, count);
 	        }
 	        catch(Exception e){
-	        	lg.error("historicalData: caought exception getting tick: " + e.getMessage());
-	        }        
-	        
-	        dfac.recordTick(reqId, time, open, high, low, close, volume, wap, count);
-	        
+	        	lg.error("historicalData: caught exception getting tick: " + e.getMessage());
+	        }        	        
 	 }
 
 	 //   @Override
-	  //  public void historicalDataEnd(int reqId, String startDateStr, String endDateStr) {
-	 //       lg.info("HistoricalDataEnd. "+reqId+" - Start Date: "+startDateStr+", End Date: "+endDateStr);
-	//    }
+	  public void historicalDataEnd(int reqId) { //, String startDateStr, String endDateStr) {
+	        lg.info("HistoricalDataEnd. "+reqId); //+" - Start Date: "+startDateStr+", End Date: "+endDateStr);
+	        
+	      //lg.info("Finished collecting historical data, cancelling historical data request");
+			//client.cancelHistoricalData(reqId);
+	        try {
+	        	lg.info("Finished collecting historical data, requesting real time bars");
+	        	lg.trace("Client: " + this.clientSocket + ", reqId: " + reqId + ", conList: " + conList);
+	        	this.manager.realTimeBars(this.clientSocket, reqId, conList.get(reqId));
+	        	lg.trace("real time bars requested");
+	        }
+	        catch(InterruptedException ie){
+	        	Utils.logError(lg, ie);
+	        }
+	  }
 
 }
